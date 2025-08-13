@@ -1,8 +1,8 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v16'; // ¡Aquí está la versión!
+const CACHE_NAME = 'final-fantasy-tasks-cache-v1'; //
 const urlsToCache = [
     '/finalfantasytask/',
     '/finalfantasytask/index.html',
-    '/finalfantasytask/style.css', // Corregido a style.css como está en tu index.html
+    '/finalfantasytask/style.css', 
     '/finalfantasytask/app-init.js',
     '/finalfantasytask/utils.js',
     '/finalfantasytask/app-state.js',

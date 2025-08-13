@@ -1,0 +1,199 @@
+/* style.css - Archivo principal que importa otros módulos CSS */
+
+@import 'base.css';
+@import 'layout.css';
+@import 'forms-modals.css';
+@import 'sections.css';
+
+
+/* Asegura que el texto de la fecha se vea bien en el centro */
+.date-navigation-wrapper .modal-instruction {
+    margin: 0; /* Elimina márgenes extra */
+    flex-grow: 1; /* Permite que el texto ocupe el espacio central */
+    text-align: center;
+    font-size: 1.1em; /* Un poco más grande para el texto de la fecha */
+    color: var(--ff-text-light); /* Asegura que el color sea legible */
+    font-weight: normal; /* Restablecer el peso de la fuente si es necesario */
+}
+
+.date-navigation-wrapper .modal-instruction strong {
+    font-size: 1.6em; /* ¡Hacer la fecha mucho más grande! */
+    color: var(--ff-accent-yellow); /* Color distintivo, como el de los puntos */
+    font-weight: bold; /* Asegurar que sea negrita */
+    display: inline-block; /* Permite aplicar transformaciones si es necesario */
+    padding: 0 5px; /* Pequeño padding horizontal para que no se pegue mucho a las flechas */
+    transition: all 0.2s ease-in-out; /* Transición suave */
+}
+
+/* Estilo para los botones de navegación de días (← →) */
+.nav-day-btn {
+    background-color: var(--ff-secondary); /* Un gris claro para los botones */
+    border: none;
+    border-radius: 50%; /* Redondos */
+    width: 35px; /* Tamaño del botón */
+    height: 35px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+.nav-day-btn:hover:not(:disabled) {
+    background-color: #125;
+    transform: translateY(-1px);
+}
+
+.nav-day-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Estilos para los íconos de flecha dentro de los botones de navegación */
+.nav-day-btn .arrow-icon {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.nav-day-btn .arrow-icon.left {
+    border-right: 8px solid var(--ff-primary-dark); /* Flecha apuntando a la izquierda */
+    margin-right: 2px;
+}
+
+.nav-day-btn .arrow-icon.right {
+    border-left: 8px solid var(--ff-primary-dark); /* Flecha apuntando a la derecha */
+    margin-left: 2px;
+}
+
+
+/* Asegura que el texto de la fecha se vea bien en el centro */
+.date-navigation-wrapper .modal-instruction {
+    margin: 0; /* Elimina márgenes extra */
+    flex-grow: 1; /* Permite que el texto ocupe el espacio central */
+    text-align: center;
+    font-size: 1.1em; /* Un poco más grande para el texto de la fecha */
+    color: var(--ff-text-light); /* Asegura que el color sea legible */
+}
+
+/* Estilo para los inputs y selects dentro de repeat-input-group */
+.repeat-input-group input[type="number"],
+.repeat-input-group select {
+    padding: 8px 10px;
+    border: 1px solid var(--ff-primary-dark);
+    border-radius: 8px;
+    background-color: var(--ff-bg-dark); /* Fondo oscuro para inputs */
+    color: var(--ff-text-light); /* Texto claro */
+    font-size: 0.9em;
+    flex-grow: 1;
+    min-width: 60px; /* Ancho mínimo para que se vean bien */
+}
+.repeat-input-group select {
+    -webkit-appearance: none; /* Eliminar estilo nativo de select en Webkit */
+    -moz-appearance: none; /* Eliminar estilo nativo de select en Mozilla */
+    appearance: none; /* Eliminar estilo nativo de select */
+    background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22%23ecf0f1%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5z%22%2F%3E%3C%2Fsvg%3E'); /* Icono de flecha personalizado */
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    padding-right: 30px; /* Espacio para el icono de flecha */
+}
+
+
+/* Ocultar el grupo de la fecha de fin de repetición cuando no esté activo */
+#repeatEndDateGroup:not(.active) {
+    display: none;
+}
+
+
+/* Contenedor de la fecha y botones de navegación */
+.date-navigation-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Espacio entre los elementos */
+    margin-bottom: 15px;
+    width: 100%; /* Asegura que ocupe todo el ancho disponible */
+}
+
+/* Estilo para los botones de navegación de días (← →) */
+.nav-day-btn {
+    background-color: var(--ff-bg-medium); /* Usando tu color de fondo medio */
+    border: none;
+    border-radius: 50%; /* Redondos */
+    width: 35px; /* Tamaño del botón */
+    height: 35px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow-sm); /* Usando tu sombra pequeña */
+    transition: var(--transition-speed); /* Usando tu velocidad de transición */
+    flex-shrink: 0;
+    padding: 0; /* Eliminar padding extra para que la flecha interna se centre */
+}
+
+.nav-day-btn:hover:not(:disabled) {
+    background-color: var(--ff-bg-light); /* Un color de fondo más claro para hover */
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md); /* Una sombra ligeramente mayor para hover */
+}
+
+.nav-day-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Estilos para los íconos de flecha dentro de los botones de navegación */
+.nav-day-btn .arrow-icon {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    transition: var(--transition-speed); /* Usando tu velocidad de transición */
+}
+
+.nav-day-btn .arrow-icon.left {
+    border-right: 8px solid var(--ff-text-light); /* Color de flecha para un buen contraste */
+    margin-right: 2px;
+}
+
+.nav-day-btn .arrow-icon.right {
+    border-left: 8px solid var(--ff-text-light); /* Color de flecha para un buen contraste */
+    margin-left: 2px;
+}
+
+/* Asegura que el texto de la fecha se vea bien en el centro */
+.date-navigation-wrapper .modal-instruction {
+    margin: 0; /* Elimina márgenes extra */
+    flex-grow: 1; /* Permite que el texto ocupe el espacio central */
+    text-align: center;
+    color: var(--ff-text-light); /* Asegura que el color sea legible */
+    font-weight: normal; /* Restablecer el peso de la fuente si es necesario */
+    line-height: 1.2; /* Ajustar el espaciado entre líneas para el <br> */
+}
+
+.date-navigation-wrapper .modal-instruction strong {
+    font-size: 1.6em; /* ¡Hacer la fecha mucho más grande! */
+    color: var(--ff-accent); /* Tu color de acento vibrante para destacarla */
+    font-weight: bold; /* Asegurar que sea negrita */
+    display: block; /* Permite que el <small> se coloque debajo */
+}
+
+/* Estilo para el texto "Hoy" o "Mañana" debajo de la fecha */
+.date-navigation-wrapper .modal-instruction small {
+    font-size: 0.8em; /* Más pequeño que el texto principal */
+    color: var(--ff-text-dark); /* Tu color de texto oscuro/secundario */
+    display: block; /* Asegura que esté en una nueva línea */
+    margin-top: 2px; /* Pequeño margen superior para separación */
+}

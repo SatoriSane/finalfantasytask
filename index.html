@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Fantasy Task</title>
+    <link rel="stylesheet" href="/finalfantasytask/style.css">
+    <link rel="manifest" href="/finalfantasytask/manifest.json">
+    <meta name="theme-color" content="#e74c3c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FF Task">
+    <link rel="apple-touch-icon" href="/finalfantasytask/images/icon-192x192.png">
+</head>
+<body class="no-seleccionable">
+
+    <header class="navbar" role="banner">
+        <h1 id="appName" aria-label="Nombre de la aplicación">Final Fantasy Task</h1>
+        <button id="totalPointsBtn" aria-live="polite" aria-label="Ver estadísticas de puntos">
+            <span class="points-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z" />
+                </svg>
+            </span>
+            <span id="pointsValue">0</span>
+        </button>
+    </header>
+    <div id="discreetMessagesContainer" aria-live="polite"></div>
+    <main>
+        <section id="tab-today" role="tabpanel" tabindex="0" aria-labelledby="navToday" class="active"
+            aria-hidden="false">
+            <h2 id="todayTitle">Misiones de Hoy</h2>
+            <div id="quickAddFormContainer" class="form-container">
+                <form id="quickAddForm" aria-label="Agregar tarea rápida a Hoy">
+                    <input id="quickAddNameInput" type="text" placeholder='Nombre de la tarea' autocomplete="off" required style="flex-grow: 1;"/>
+                    <input id="quickAddPointsInput" type="number" placeholder='Puntos' min="0" autocomplete="off" required style="width: 80px;"/>
+                    <button type="submit" class="primary">➕</button>
+                </form>
+            </div>
+            <div id="todayTasksList" role="list" aria-live="polite" aria-label="Lista de tareas para hoy"></div>
+            <button id="showQuickAddFab" class="fab" aria-label="Agregar nueva tarea" title="Agregar nueva tarea">➕</button>
+        </section>
+
+        <section id="tab-missions" role="tabpanel" tabindex="0" aria-labelledby="navMissions" aria-hidden="true">
+            <h2 id="missionsTitle">Libro de Misiones</h2>
+            <div class="form-toggle-btn">
+                <button id="showAddCategoryBtn" class="discreet-btn" aria-expanded="false"
+                    aria-controls="addCategoryFormContainer">
+                    <span class="icon">⭐</span> Nueva Categoría
+                </button>
+            </div>
+            <div id="addCategoryFormContainer" class="form-container">
+                <form id="addCategoryForm" aria-label="Formulario para agregar categoría">
+                    <input id="categoryInput" type="text" placeholder="Nombre de nueva categoría" autocomplete="off"
+                        required />
+                    <button type="submit" class="primary">➕</button>
+                </form>
+            </div>
+            <div id="missionsGrid" aria-live="polite" aria-label="Listado de categorías y misiones"></div>
+        </section>
+
+        <section id="tab-scheduled" role="tabpanel" tabindex="0" aria-labelledby="navScheduled" aria-hidden="true">
+            <h2 id="scheduledTitle">Misiones Programadas</h2>
+            <div id="scheduledMissionsList" aria-live="polite" aria-label="Listado de misiones programadas">
+            </div>
+        </section>
+
+        <section id="tab-shop" role="tabpanel" tabindex="0" aria-labelledby="navShop" aria-hidden="true">
+            <h2 id="shopTitle">Tienda</h2>
+            <div class="form-toggle-btn">
+                <button id="showAddShopItemBtn" class="discreet-btn" aria-expanded="false"
+                    aria-controls="addShopItemFormContainer">
+                    <span class="icon">🛒</span> Agregar Producto
+                </button>
+            </div>
+            <div id="addShopItemFormContainer" class="form-container">
+                <form id="addShopItemForm" aria-label="Agregar nuevo gasto">
+                    <input id="shopItemName" type="text" placeholder="Nombre gasto" autocomplete="off" required />
+                    <input id="shopItemCost" type="number" placeholder="Costo en puntos" min="1" required />
+                    <button type="submit" class="primary">➕</button>
+                </form>
+            </div>
+            <div id="shopList" aria-live="polite" aria-label="Listado de gastos"></div>
+        </section>
+
+        <section id="tab-history" role="tabpanel" tabindex="0" aria-labelledby="navHistory" aria-hidden="true">
+            <div class="history-header">
+                <h2 id="historyTitle">Historial de Puntos</h2>
+            </div>
+            <table aria-label="Historial de puntos diarios">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Gané</th>
+                        <th>Gasté</th>
+                        <th>Neto</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <div id="statsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="statsTitle"
+        aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeStatsModal" aria-label="Cerrar estadísticas">&times;</button>
+            <h2 id="statsTitle">Estadísticas de Hoy</h2>
+            <div class="stats-row" aria-label="Estadísticas de puntos ganados, gastados y netos hoy">
+                <div>
+                    <span class="stats-label">Ganados</span>
+                    <span id="pointsEarned" class="stats-value">0</span>
+                </div>
+                <div>
+                    <span class="stats-label">Neto Hoy</span>
+                    <span id="pointsNet" class="stats-value">0</span>
+                </div>
+                <div>
+                    <span class="stats-label">Gastos</span>
+                    <span id="pointsSpent" class="stats-value">0</span>
+                </div>
+            </div>
+            <button id="openResetOptionsBtn" class="icon-btn settings-icon" aria-label="Opciones de reinicio" title="Opciones de reinicio">⚙️</button>
+        </div>
+    </div>
+
+    <div id="resetConfirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="resetConfirmTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeResetConfirmModal" aria-label="Cerrar opciones de reinicio">&times;</button>
+            <h2 id="resetConfirmTitle">Opciones de Reinicio</h2>
+            <p style="margin-bottom: 1.5rem; text-align: center; color: var(--ff-text-light);">Elige cómo deseas reiniciar la aplicación. ¡Estas acciones son irreversibles!</p>
+            <div class="reset-options-container">
+                <button id="resetHistoryBtn" class="secondary reset-option-btn" aria-label="Reiniciar solo historial" title="Reiniciar solo historial">
+                    <span class="icon">🧹</span> Reiniciar Historial
+                </button>
+                <button id="resetAppBtn" class="primary reset-option-btn" aria-label="Reiniciar aplicación (eliminar todos los datos)" title="Reiniciar aplicación (eliminar todos los datos)">
+                    <span class="icon">🗑️</span> Reiniciar TODO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scheduleMissionModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="scheduleMissionTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeScheduleMissionModal" aria-label="Cerrar programador de misión">&times;</button>
+            <h2 id="scheduleMissionTitle">Programar Misión</h2>
+            <input type="hidden" id="missionToScheduleId">
+
+            <div id="advancedScheduleOptions" class="active-schedule-section">
+                <div class="date-navigation-wrapper">
+                    <button id="prevDayBtn" class="nav-day-btn" aria-label="Día anterior"><span class="arrow-icon left"></span></button>
+                    <p class="modal-instruction"><strong id="scheduleDateDisplay"></strong></p>
+                    <input type="date" id="hiddenScheduleDateInput" class="visually-hidden">
+                    <button id="nextDayBtn" class="nav-day-btn" aria-label="Día siguiente"><span class="arrow-icon right"></span></button>
+                </div>
+                
+                <label class="checkbox-container">
+                    <input type="checkbox" id="repeatMissionCheckbox"> Repetir misión
+                </label>
+
+                <div id="repeatOptionsContainer">
+                    <div class="repeat-input-group">
+                        <label for="repeatInterval">Cada</label>
+                        <input type="number" id="repeatInterval" min="1" value="1">
+                        <select id="repeatUnit">
+                            <option value="day">Día(s)</option>
+                            <option value="week">Semana(s)</option>
+                            <option value="month">Mes(es)</option>
+                        </select>
+                    </div>
+                    <div class="repeat-input-group" id="repeatEndDateGroup">
+                        <label for="repeatEndDate">Hasta (opcional):</label>
+                        <input type="date" id="repeatEndDate" min="">
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="secondary" id="cancelAdvancedScheduleBtn">Cancelar</button>
+                    <button class="primary" id="confirmScheduleBtn">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="customAlertDialog" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="customAlertTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeAlertDialog" aria-label="Cerrar aviso">&times;</button>
+            <h2 id="customAlertTitle">Aviso</h2>
+            <p id="customAlertMessage" style="margin-bottom: 1.5rem; text-align: center; color: var(--ff-text-light);"></p>
+            <button class="primary" id="customAlertCloseBtn" style="width: 100%;">Aceptar</button>
+        </div>
+    </div>
+
+    <div id="customConfirmDialog" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="customConfirmTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeConfirmDialog" aria-label="Cerrar confirmación">&times;</button>
+            <h2 id="customConfirmTitle">Confirmación</h2>
+            <p id="customConfirmMessage" style="margin-bottom: 1.5rem; text-align: center; color: var(--ff-text-light);"></p>
+            <div class="modal-actions">
+                <button class="secondary" id="customConfirmNoBtn">Cancelar</button>
+                <button class="primary" id="customConfirmYesBtn">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="motivationMessagesContainer" aria-live="polite"></div>
+
+    <nav class="tabs" role="tablist" aria-label="Pestañas principales">
+        <button id="navToday" role="tab" aria-selected="true" aria-controls="tab-today" tabindex="0" class="active">
+            <span class="icon">📜</span> Hoy
+        </button>
+        <button id="navMissions" role="tab" aria-selected="false" aria-controls="tab-missions" tabindex="-1">
+            <span class="icon">🗺️</span> Misiones
+        </button>
+        <button id="navScheduled" role="tab" aria-selected="false" aria-controls="tab-scheduled" tabindex="-1">
+            <span class="icon">🗓️</span> Programadas
+        </button>
+        <button id="navShop" role="tab" aria-selected="false" aria-controls="tab-shop" tabindex="-1">
+            <span class="icon">🛒</span> Tienda
+        </button>
+        <button id="navHistory" role="tab" aria-selected="false" aria-controls="tab-history" tabindex="-1">
+            <span class="icon">📈</span> Historial
+        </button>
+    </nav>
+    <script src="/finalfantasytask/app-init.js"></script>
+    <script src="/finalfantasytask/utils.js"></script>
+    <script src="/finalfantasytask/app-state.js"></script>
+    <script src="/finalfantasytask/ui-render.js"></script>
+    <script src="/finalfantasytask/ui-events.js"></script>
+    <script src="/finalfantasytask/script.js"></script>
+</body>
+</html>

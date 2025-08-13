@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-task-cache-v13';
+const CACHE_NAME = 'final-fantasy-task-cache-v15'; // ¡Incrementado a v15!
 const OFFLINE_URL = '/finalfantasytask/offline.html';
 
 const urlsToCache = [
@@ -19,14 +19,8 @@ const urlsToCache = [
     '/finalfantasytask/app-state.js',
     '/finalfantasytask/ui-render.js',
     '/finalfantasytask/ui-events.js',
-    '/finalfantasytask/script.js',
-
-    '/finalfantasytask/images/icon-48x48.png',
-    '/finalfantasytask/images/icon-72x72.png',
-    '/finalfantasytask/images/icon-96x96.png',
-    '/finalfantasytask/images/icon-144x144.png',
-    '/finalfantasytask/images/icon-192x192.png',
-    '/finalfantasytask/images/icon-512x512.png'
+    '/finalfantasytask/script.js'
+    // Referencias a iconos eliminadas para esta prueba
 ];
 
 self.addEventListener('install', (event) => {

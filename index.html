@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FF Task">
-    <!-- Icono de Apple Touch eliminado para esta prueba -->
+    <!-- Icono de Apple Touch eliminado para esta prueba, ya se manejará con los iconos genéricos del manifest -->
 </head>
 <body class="no-seleccionable">
 
@@ -229,5 +229,22 @@
     <script src="/finalfantasytask/ui-render.js"></script>
     <script src="/finalfantasytask/ui-events.js"></script>
     <script src="/finalfantasytask/script.js"></script>
+
+    <!-- Registro del Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/finalfantasytask/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado con éxito:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Fallo el registro del Service Worker:', error);
+                    });
+            });
+        } else {
+            console.log('El navegador no soporta Service Workers. La aplicación no será instalable como PWA.');
+        }
+    </script>
 </body>
 </html>

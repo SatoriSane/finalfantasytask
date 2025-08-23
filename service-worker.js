@@ -1,28 +1,31 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v100';
+const CACHE_NAME = 'final-fantasy-tasks-cache-v101';
 const OFFLINE_URL = 'offline.html';
 
-// Recursos esenciales para funcionar offline
+// Archivos esenciales para precache
 const urlsToCache = [
     '',             // raíz
-    OFFLINE_URL
-];
-
-// Archivos que siempre deben intentar descargarse de la red primero
-const networkFirstFiles = [
-    'app-init.js',
-    'app-state.js',
-    'basic.css',
-    'forms-modals.css',
+    OFFLINE_URL,
     'index.html',
-    'layout.css',
     'manifest.json',
-    'offline.html',
-    'script.js',
+    'base.css',
+    'components.css',
+    'forms-modals.css',
+    'layout.css',
     'sections.css',
     'style.css',
+    'shop.css',
+    'today.css',
+    'script.js',
+    'app-init.js',
+    'app-state.js',
     'ui-events.js',
-    'ui-render.js',
-    'utils.js'
+    'ui-render-general.js',
+    'ui-render-history.js',
+    'ui-render-missions.js',
+    'ui-render-scheduled.js',
+    'ui-render-shop.js',
+    'ui-render-today.js',
+    'utils.js',
 ];
 
 // ------------------- Install -------------------
@@ -32,7 +35,7 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => cache.addAll(urlsToCache))
             .then(() => self.skipWaiting())
-            .catch(error => console.error('Service Worker: Error precacheando:', error))
+            .catch(err => console.error('Service Worker: Error precacheando:', err))
     );
 });
 
@@ -50,7 +53,16 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        }).then(() => clients.claim())
+        }).then(() => {
+            clients.claim();
+
+            // Avisar a todas las páginas que hay nueva versión
+            self.clients.matchAll().then(allClients => {
+                allClients.forEach(client => {
+                    client.postMessage({ type: 'NEW_VERSION' });
+                });
+            });
+        })
     );
 });
 
@@ -60,7 +72,21 @@ self.addEventListener('fetch', event => {
 
     if (!event.request.url.startsWith('http')) return;
 
-    // Network First para archivos importantes
+    // Network First para archivos críticos
+    const networkFirstFiles = [
+        'index.html',
+        'app-init.js',
+        'app-state.js',
+        'script.js',
+        'ui-events.js',
+        'ui-render-general.js',
+        'ui-render-history.js',
+        'ui-render-missions.js',
+        'ui-render-scheduled.js',
+        'ui-render-shop.js',
+        'ui-render-today.js',
+    ];
+
     if (networkFirstFiles.some(file => requestUrl.pathname.endsWith(file))) {
         event.respondWith(
             fetch(event.request)

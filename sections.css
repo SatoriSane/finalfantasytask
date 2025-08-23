@@ -1,0 +1,342 @@
+/* sections.css - Estilos para las diferentes secciones de contenido */
+
+/* ===================== HOY ===================== */
+
+#todayTasksList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+#todayTasksList .task-card {
+    background: var(--ff-bg-light);
+    border-radius: var(--border-radius-md);
+    padding: 1.2rem 1.5rem;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), border-color var(--transition-speed);
+    border: 1px solid var(--ff-border);
+    position: relative;
+}
+
+#todayTasksList .task-card:hover:not(.completed) {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--ff-accent);
+}
+
+#todayTasksList .task-name {
+    font-weight: 600;
+    font-size: 1.2rem;
+    flex-grow: 1;
+}
+
+#todayTasksList .task-points {
+    font-weight: 700;
+    font-size: 1.4rem;
+    min-width: 60px;
+    text-align: right;
+    user-select: none;
+    font-family: 'Orbitron', sans-serif;
+}
+
+#todayTasksList .task-btn-complete {
+    background: var(--ff-bg-dark);
+    color: var(--positive-color);
+    border: 2px solid var(--ff-border);
+    border-radius:24%;
+    width: 45px;
+    height: 45px;
+    font-weight: 700;
+    font-size: 1.4rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--transition-speed);
+    margin-left: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #00000033;
+}
+
+#todayTasksList .task-btn-complete:hover:not(:disabled) {
+    color: var(--ff-bg-dark);
+    background-color: var(--positive-color);
+    transform: scale(1.15);
+}
+
+#todayTasksList .task-card.completed {
+    opacity: 0.5;
+    background-color: var(--ff-bg-dark);
+    border-color: transparent;
+}
+
+#todayTasksList .task-card.completed .task-name {
+    text-decoration: line-through;
+    color: var(--ff-text-dark);
+    font-style: italic;
+}
+
+#todayTasksList .task-card.completed .completed-message {
+    color: var(--ff-text-dark);
+    font-style: italic;
+    font-size: 1.1rem;
+    margin-left: 1.5rem;
+}
+
+/* ===================== MISIÓN ===================== */
+
+#missionsGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.category-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--ff-bg-dark);
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius-md);
+    margin-top: 2rem;
+    font-size: 1.2rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--ff-border);
+    font-family: 'Orbitron', sans-serif;
+    color: var(--ff-accent);
+    cursor: pointer;
+    user-select: none;
+    transition: background-color var(--transition-speed);
+}
+
+.cat-header:first-child {
+    margin-top: 0;
+}
+
+.collapse-arrow {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 6px 0 6px 8px;
+    border-color: transparent transparent transparent var(--ff-accent);
+    margin-right: 1rem;
+    transition: transform var(--transition-speed);
+}
+
+.cat-header:not(.collapsed) .collapse-arrow {
+    transform: rotate(90deg);
+}
+
+.cat-header.collapsed ~ .mission-list-container,
+.cat-header.collapsed ~ .form-container {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    visibility: hidden;
+    transition: max-height 0.1s ease-out, padding 0.2s ease-out;
+}
+
+.mission-list-container {
+    max-height: 1000px;
+    overflow: visible;
+    visibility: visible;
+    transition: max-height 0.3s ease-in;
+    margin-top: -1rem;
+    padding-bottom: 1rem;
+}
+
+.form-container {
+    transition: max-height 0.3s ease-in, padding 0.3s ease-in;
+}
+
+#missionsGrid .mission-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--ff-bg-light);
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-speed);
+    border: 1px solid var(--ff-border);
+    position: relative;
+    overflow: hidden;
+}
+
+#missionsGrid .mission-card:hover {
+    background-color: var(--ff-bg-medium);
+    border-color: var(--ff-accent);
+    transform: translateY(-3px);
+}
+
+#missionsGrid .mission-name {
+    font-weight: 600;
+    flex-grow: 1;
+    font-size: 1.1rem;
+    padding-left: 20px;
+}
+
+#missionsGrid .mission-points {
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--positive-color);
+    white-space: nowrap;
+}
+
+/* Drag & Drop categorías y misiones */
+.cat-header.is-dragging {
+    opacity: 0.5;
+    border: 2px dashed var(--ff-accent);
+}
+
+.cat-header.drag-over {
+    box-shadow: 0 0 10px 3px var(--ff-accent);
+    transform: scale(1.02);
+}
+
+.mission-card.is-dragging-mission {
+    opacity: 0.3;
+    border: 2px dashed var(--ff-accent);
+}
+
+.mission-card.drag-over-mission {
+    box-shadow: 0 0 8px 2px var(--ff-accent);
+    transform: translateY(-3px);
+}
+
+/* ===================== MISIÓN PROGRAMADA ===================== */
+
+#scheduledMissionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#scheduledMissionsList .date-group-header {
+    background: var(--ff-bg-dark);
+    padding: 0.8rem 1.2rem;
+    border-radius: var(--border-radius-sm);
+    margin-top: 1.5rem;
+    font-size: 1.0rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+    border: 1px solid var(--ff-border);
+    text-align: center;
+}
+
+#scheduledMissionsList .scheduled-mission-card {
+    background: var(--ff-bg-light);
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--ff-border);
+    transition: all var(--transition-speed);
+}
+
+#scheduledMissionsList .scheduled-mission-card:hover {
+    background-color: var(--ff-bg-medium);
+    border-color: var(--ff-accent);
+    transform: translateY(-3px);
+}
+
+#scheduledMissionsList .scheduled-mission-name {
+    font-weight: 600;
+    flex-grow: 1;
+    font-size: 1.1rem;
+}
+
+/* ===================== HISTORIAL ===================== */
+
+table {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    width: 100%;
+}
+
+th {
+    background: var(--ff-bg-dark);
+    color: var(--ff-accent);
+    font-weight: 700;
+    position: sticky;
+    top: 71px;
+    z-index: 998;
+    font-family: 'Orbitron', sans-serif;
+    border: 1px solid var(--ff-border);
+    border-bottom: 2px solid var(--ff-accent);
+}
+
+tr.history-main-row {
+    background: var(--ff-bg-light);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-speed);
+    cursor: pointer;
+    border: 1px solid var(--ff-border);
+}
+
+tr.history-main-row:hover {
+    background-color: var(--ff-bg-medium);
+    border-color: var(--ff-accent);
+}
+
+tr.history-main-row td {
+    border-top: 1px solid var(--ff-border);
+    border-bottom: 1px solid var(--ff-border);
+}
+
+tr.history-main-row td:first-child {
+    border-left: 1px solid var(--ff-border);
+    border-top-left-radius: var(--border-radius-md);
+    border-bottom-left-radius: var(--border-radius-md);
+}
+
+tr.history-main-row td:last-child {
+    border-right: 1px solid var(--ff-border);
+    border-top-right-radius: var(--border-radius-md);
+    border-bottom-right-radius: var(--border-radius-md);
+}
+
+tr.history-details-container td {
+    background: var(--ff-bg-light);
+    font-size: 0.9rem;
+    padding-left: 2rem;
+    font-style: italic;
+    color: var(--ff-text-light);
+    border-bottom: none;
+}
+
+tr.history-details-container {
+    display: none;
+}
+
+/* ⭐ NUEVOS ESTILOS PARA LOS PUNTOS NETOS DEL DÍA ⭐ */
+.net-points-summary {
+    display: block;
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.4rem 1rem;
+    border-radius: var(--border-radius-sm);
+}
+
+#tab-today h2 + .net-points-summary {
+    margin-top: -0.5rem;
+}

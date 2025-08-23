@@ -1,0 +1,9 @@
+/* style.css - Archivo principal que importa otros módulos CSS */
+
+@import 'base.css';
+@import 'layout.css';
+@import 'forms-modals.css';
+@import 'sections.css';
+@import 'components.css'; 
+@import 'today.css';    
+@import 'shop.css';     

@@ -1,0 +1,368 @@
+/* shop.css - Estilos específicos para la tienda */
+
+#shopList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.2rem;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    #shopList {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0.8rem;
+    }
+}
+
+/* 🛍️ Tarjetas de productos */
+.shop-card {
+    background: linear-gradient(135deg, 
+        rgba(var(--ff-bg-light-rgb), 0.9) 0%, 
+        rgba(var(--ff-bg-medium), 0.8) 100%);
+    border: 1px solid var(--ff-border);
+    border-radius: var(--border-radius-md);
+    padding: 1.2rem;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.shop-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--ff-accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.shop-card:hover::before {
+    opacity: 1;
+}
+
+.shop-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(var(--ff-accent-rgb), 0.4);
+}
+
+/* Estados especiales */
+.shop-card.purchased {
+    background: linear-gradient(135deg, 
+        rgba(88, 228, 120, 0.1) 0%, 
+        rgba(var(--ff-bg-light-rgb), 0.8) 100%);
+    border-color: rgba(88, 228, 120, 0.3);
+}
+
+.shop-card.recently-purchased {
+    background: linear-gradient(135deg, 
+        rgba(var(--ff-accent-rgb), 0.15) 0%, 
+        rgba(var(--ff-bg-light-rgb), 0.9) 100%);
+    border-color: var(--ff-accent);
+    box-shadow: 0 0 20px rgba(var(--ff-accent-rgb), 0.3);
+    animation: celebration 2s ease-out;
+}
+
+@keyframes celebration {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* 📱 Contenido principal de la tarjeta */
+.shop-card-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.shop-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.8rem;
+    min-height: auto;
+    margin-bottom: 0.5rem;
+}
+
+.shop-item-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+    line-height: 1.3;
+    flex: 1;
+    text-shadow: 0 0 6px rgba(var(--ff-accent-rgb), 0.5);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.shop-item-cost {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--ff-text-dark);
+    background: rgba(var(--ff-bg-dark), 0.4);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid rgba(var(--ff-border), 0.3);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.shop-item-cost svg {
+    width: 14px;
+    height: 14px;
+    fill: var(--ff-text-dark);
+    opacity: 0.8;
+}
+
+/* 🎯 Botones de acción con progreso integrado */
+.shop-actions {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.buy-btn, .purchased-btn, .locked-btn {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    border-radius: var(--border-radius-sm);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 500;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    position: relative;
+    overflow: hidden;
+    min-height: 36px;
+}
+
+/* Botón con progreso de fondo */
+.buy-btn {
+    background: rgba(var(--ff-bg-light-rgb), 0.6);
+    color: var(--ff-text-light);
+    border: 1px solid rgba(var(--ff-accent-rgb), 0.2);
+    position: relative;
+    --progress: 0%;
+}
+
+.buy-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--progress);
+    background: linear-gradient(135deg, var(--ff-accent), #72faff);
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+    border-radius: inherit;
+}
+
+.buy-btn span {
+    position: relative;
+    z-index: 2;
+    mix-blend-mode: difference;
+    font-weight: 700;
+    text-shadow: none;
+}
+
+.buy-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(var(--ff-accent-rgb), 0.2);
+    border-color: rgba(var(--ff-accent-rgb), 0.4);
+}
+
+.buy-btn.can-afford {
+    border-color: rgba(var(--ff-accent-rgb), 0.6);
+    box-shadow: 0 0 8px rgba(var(--ff-accent-rgb), 0.2);
+    --progress: 100%;
+}
+
+.buy-btn.can-afford span {
+    color: var(--ff-bg-dark);
+    mix-blend-mode: normal;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.buy-btn:active {
+    transform: translateY(0);
+}
+
+.purchased-btn {
+    background: linear-gradient(135deg, var(--positive-color), #7ff593);
+    color: var(--ff-bg-dark);
+    cursor: default;
+    box-shadow: 0 0 15px rgba(88, 228, 120, 0.3);
+}
+
+.purchased-btn::before {
+    content: '✓ ';
+    font-weight: 700;
+}
+
+.locked-btn {
+    background: rgba(var(--ff-text-dark), 0.15);
+    color: var(--ff-text-dark);
+    cursor: not-allowed;
+    opacity: 0.7;
+    border: 2px solid rgba(var(--ff-text-dark), 0.2);
+}
+
+.locked-btn::before {
+    content: '🔒 ';
+}
+
+/* Efecto de ondas al hacer click */
+.buy-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: 3;
+}
+
+.buy-btn:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+
+
+/* ❌ Botón eliminar */
+.delete-btn {
+    position: absolute;
+    top: 0.8rem;
+    right: 0.8rem;
+    background: rgba(var(--negative-color), 0.1);
+    color: var(--negative-color);
+    border: 1px solid rgba(var(--negative-color), 0.3);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.shop-card.show-delete .delete-btn,
+.shop-card:hover .delete-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.delete-btn:hover {
+    background: var(--negative-color);
+    color: var(--ff-bg-dark);
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 90, 95, 0.4);
+}
+
+/* 📱 Responsivo */
+@media (max-width: 480px) {
+    .shop-card {
+        padding: 1rem;
+    }
+    
+    .shop-item-header {
+        gap: 0.6rem;
+    }
+    
+    .shop-item-name {
+        font-size: 1.1rem;
+    }
+    
+    .shop-item-cost {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.5rem;
+    }
+    
+    .shop-item-cost svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .shop-actions {
+        margin-top: 1rem;
+    }
+    
+    .buy-btn, .purchased-btn, .locked-btn {
+        padding: 0.6rem;
+        font-size: 0.75rem;
+        min-height: 34px;
+    }
+}
+
+/* 🎨 Estados de interacción */
+.shop-card:focus-within {
+    outline: 2px solid rgba(var(--ff-accent-rgb), 0.5);
+    outline-offset: 2px;
+}
+
+/* Efecto de ondas al hacer click */
+.buy-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.buy-btn:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* 💫 Animación de entrada */
+.shop-card {
+    animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+}
+
+.shop-card:nth-child(2) { animation-delay: 0.1s; }
+.shop-card:nth-child(3) { animation-delay: 0.2s; }
+.shop-card:nth-child(4) { animation-delay: 0.3s; }
+.shop-card:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes slideInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

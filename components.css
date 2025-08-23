@@ -1,0 +1,299 @@
+/* components.css - Estilos para componentes reutilizables */
+
+/* ===================== BOTONES ICON-ICON ===================== */
+.icon-btn.schedule-btn {
+    background-color: #3A4767;
+    color: var(--ff-accent);
+    border: 1px solid var(--ff-border);
+}
+
+.icon-btn.schedule-btn:hover {
+    background-color: var(--ff-accent);
+    color: var(--ff-bg-dark);
+    transform: scale(1.15);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===================== BARRA DE PROGRESO DE REPETICIONES ===================== */
+.repetition-progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--progress-width, 0%);
+    background: linear-gradient(
+        to right,
+        rgba(var(--ff-accent-rgb), 0.03),
+        rgba(var(--ff-accent-rgb), 0.06)
+    );
+    border-radius: var(--border-radius-md);
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+
+    /* Animación suave al cambiar el ancho */
+    transition: width 0.6s ease-in-out;
+    z-index: 0;
+}
+
+
+/* Para task-card o mission-card que contiene barra */
+.task-card:has(.repetition-progress-bar),
+.mission-card:has(.repetition-progress-bar) {
+    background-color: var(--ff-bg-dark) !important;
+    border: 1px solid var(--ff-accent);
+}
+
+/* Contador de repeticiones encima de la barra */
+.repetition-counter {
+    font-size: 0.9em;
+    color: var(--ff-text-dark);
+    font-weight: 600;
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+}
+
+/* ===================== TARJETAS DE MISIÓN PROGRAMADA ===================== */
+.mission-card.is-scheduled-in-book {
+    border: 2px solid var(--ff-primary-color);
+    box-shadow: 0 0 8px rgba(var(--ff-primary-dark-rgb), 0.3);
+}
+
+.scheduled-mission-name .icon-scheduled {
+    margin-right: 8px;
+    font-size: 1.2em;
+    color: var(--ff-accent);
+}
+
+.recurrence-info {
+    font-size: 0.85rem;
+    color: var(--ff-text-dark);
+    margin-left: 0.5rem;
+    font-style: italic;
+    white-space: normal;
+    text-align: right;
+}
+
+/* ===================== BOTONES ELIMINAR ===================== */
+.task-card .delete-btn,
+.mission-card .delete-btn,
+.cat-header .delete-btn,
+.shop-card .delete-btn,
+.scheduled-mission-card .delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: transparent;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    border: 2px solid #cc3536;
+    z-index: 10;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+    transition: all 0.3s ease-in-out;
+}
+
+.show-delete .delete-btn {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+.delete-btn:hover {
+    transform: scale(1.1);
+}
+
+/* ===================== MENSAJES DE MOTIVACIÓN / CELEBRACIÓN ===================== */
+#motivationMessagesContainer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1020;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 90%;
+    max-width: 400px;
+}
+
+.motivation-message {
+    background: linear-gradient(45deg, var(--ff-accent), #72faff);
+    color: var(--ff-bg-dark);
+    padding: 0.8rem 1.5rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    white-space: normal;
+    word-break: break-word;
+    opacity: 0;
+    animation: popInAndFadeOut 4s forwards ease-out;
+    text-align: center;
+    border: 2px solid white;
+    transform: scale(0.8);
+    width: 100%;
+}
+
+@keyframes popInAndFadeOut {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) translateY(50px);
+    }
+    10% {
+        opacity: 1;
+        transform: scale(1.1) translateY(-10px);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    90% {
+        opacity: 1;
+        transform: scale(1) translateY(-20px);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8) translateY(-50px);
+    }
+}
+
+/* ===================== DRAG & DROP ===================== */
+.is-dragging {
+    opacity: 0.5;
+    border: 2px dashed var(--ff-accent) !important;
+}
+
+.drag-over {
+    box-shadow: 0 0 10px 3px var(--ff-accent) !important;
+    transform: scale(1.02);
+}
+
+/* ===================== MENSAJE DISCRETO (POP-UP) ===================== */
+.discreet-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background-color: rgba(var(--ff-primary-dark-rgb), 0.95);
+    color: var(--ff-text-light);
+    padding: 8px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(var(--ff-secondary-light-rgb), 0.3);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    font-size: 0.8em;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+    z-index: 1000;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.discreet-message.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ===================== BOTÓN PROGRAMAR MISIÓN (NO ICON-BTN) ===================== */
+.schedule-btn:not(.icon-btn) {
+    background-color: rgba(var(--ff-bg-medium-rgb), 0.8);
+    border: 3px solid rgba(var(--ff-border-rgb), 1);
+    border-radius: 50%;
+    color: var(--ff-accent);
+    font-size: 1.5em;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.schedule-btn:not(.icon-btn):hover {
+    background-color: rgba(var(--ff-bg-medium-rgb), 0.5);
+    border-color: var(--ff-accent);
+    color: #72faff;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+/* ===================== INPUTS DE REPETICIÓN DIARIA ===================== */
+.daily-reps-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.daily-reps-inputs label {
+    font-size: 0.9em;
+    color: var(--ff-text-dark);
+    text-align: left;
+    margin-bottom: 2px;
+}
+
+.daily-reps-inputs input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--ff-border);
+    border-radius: var(--border-radius-sm);
+    text-align: left;
+    box-sizing: border-box;
+}
+
+/* ===================== COMPONENTES ESPECÍFICOS DE MISIÓN ===================== */
+.mission-card .points-and-action {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.mission-card .mission-name {
+    font-weight: 600;
+    flex-grow: 1;
+    font-size: 1.1rem;
+    padding-left: 20px;
+}
+
+.mission-card .mission-points {
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--positive-color);
+    white-space: nowrap;
+}
+
+/* ===================== COMPONENTES DE TIENDA ===================== */
+.shop-item-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.shop-item-cost-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.shop-item-cost {
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--negative-color);
+}

@@ -93,24 +93,28 @@
         }
     }
 
-// --- Helper privado para añadir una tarea a hoy sin duplicar ---
-function _addTaskToTodayIfNotExists(task) {
-    const today = App.utils.getFormattedDate();
-    if (!state.tasksByDate[today]) state.tasksByDate[today] = [];
+    /**
+     * @description Añade una tarea a la lista de "Hoy" si aún no existe (basado en missionId).
+     * @param {object} task La tarea a añadir (debe contener name, points, missionId, dailyRepetitions).
+     */
+    function _addTaskToTodayIfNotExists(task) {
+        const today = App.utils.getFormattedDate();
+        if (!state.tasksByDate[today]) state.tasksByDate[today] = [];
 
-    const exists = state.tasksByDate[today].some(t => t.missionId === task.missionId);
-    if (!exists) {
-        state.tasksByDate[today].push({
-            id: App.utils.genId("task"),
-            name: task.name,
-            points: task.points,
-            missionId: task.missionId,
-            completed: false,
-            currentRepetitions: 0,
-            dailyRepetitions: { max: task.dailyRepetitions.max || 1 }
-        });
+        // Comprueba si ya existe una tarea con el mismo missionId para hoy
+        const exists = state.tasksByDate[today].some(t => t.missionId === task.missionId);
+        if (!exists) {
+            state.tasksByDate[today].push({
+                id: App.utils.genId("task"), // Generar un nuevo ID para la tarea de hoy
+                name: task.name,
+                points: task.points,
+                missionId: task.missionId,
+                completed: false,
+                currentRepetitions: 0,
+                dailyRepetitions: { max: task.dailyRepetitions.max || 1 }
+            });
+        }
     }
-}
 
     App.state = {
         /**
@@ -123,12 +127,11 @@ function _addTaskToTodayIfNotExists(task) {
         },
 
         getTodayPoints: function() {
-                    const todayStr = App.utils.getFormattedDate();
-                    const todayHistory = state.history.find(h => h.date === todayStr);
-                    return todayHistory ? todayHistory.earned : 0;
-                },
-        get: () => ({ ...state
-        }),
+            const todayStr = App.utils.getFormattedDate();
+            const todayHistory = state.history.find(h => h.date === todayStr);
+            return todayHistory ? todayHistory.earned : 0;
+        },
+        get: () => ({ ...state }),
 
         /**
          * @description Carga el estado de la aplicación desde localStorage,
@@ -186,8 +189,14 @@ function _addTaskToTodayIfNotExists(task) {
                     }
 
                     // ⭐ Asegurarse de que purchasedTodayDate exista para todos los items al cargar
+                    // ⭐ Y migrar a formato ISO si es necesario para el ordenamiento por tiempo.
                     loadedState.shopItems.forEach(item => {
-                        if (typeof item.purchasedTodayDate === 'undefined') item.purchasedTodayDate = null;
+                        if (typeof item.purchasedTodayDate === 'undefined') {
+                            item.purchasedTodayDate = null;
+                        } else if (item.purchasedTodayDate && typeof item.purchasedTodayDate === 'string' && item.purchasedTodayDate.length === 10) {
+                            // Si es solo una fecha YYYY-MM-DD, convertirla a ISO string con hora 00:00:00
+                            item.purchasedTodayDate = new Date(item.purchasedTodayDate + 'T00:00:00.000Z').toISOString();
+                        }
                     });
 
                     state = loadedState;
@@ -212,17 +221,21 @@ function _addTaskToTodayIfNotExists(task) {
 
                 // ⭐ Resetea el 'purchasedTodayDate' de los ítems de la tienda para el nuevo día
                 state.shopItems.forEach(item => {
-                    if (item.purchasedTodayDate && item.purchasedTodayDate !== today) {
-                        item.purchasedTodayDate = null;
+                    if (item.purchasedTodayDate) {
+                        // Compara solo la parte de la fecha del ISO string con la fecha actual
+                        const purchasedDateOnly = App.utils.getFormattedDate(new Date(item.purchasedTodayDate));
+                        if (purchasedDateOnly !== today) {
+                            item.purchasedTodayDate = null;
+                        }
                     }
                 });
 
+                // Asegúrate de que tasksByDate[today] exista antes de añadir tareas.
                 if (!state.tasksByDate[today]) {
                     state.tasksByDate[today] = [];
                 }
 
                 const newScheduledMissions = [];
-                const missionsToAddToTodayTasks = [];
                 const todayDateObj = App.utils.normalizeDateToStartOfDay(new Date());
 
                 state.scheduledMissions.forEach(scheduledMis => {
@@ -238,14 +251,12 @@ function _addTaskToTodayIfNotExists(task) {
                             const normalizedNextOccurrence = App.utils.normalizeDateToStartOfDay(nextOccurrence);
 
                             if (normalizedNextOccurrence.getTime() === todayDateObj.getTime()) {
-                                missionsToAddToTodayTasks.push({
-                                    id: App.utils.genId("task"),
+                                // ⭐ Usa _addTaskToTodayIfNotExists para añadir tareas recurrentes
+                                _addTaskToTodayIfNotExists({
                                     name: scheduledMis.name,
                                     points: scheduledMis.points,
                                     missionId: scheduledMis.missionId,
-                                    completed: false,
-                                    currentRepetitions: 0,
-                                    dailyRepetitions: { max: scheduledMis.dailyRepetitions.max }
+                                    dailyRepetitions: scheduledMis.dailyRepetitions
                                 });
 
                                 let futureScheduledDate = _findNextScheduledOccurrence(
@@ -271,13 +282,14 @@ function _addTaskToTodayIfNotExists(task) {
                         } else {
                             console.log(`Misión recurrente ${scheduledMis.name} no tiene futuras ocurrencias válidas o ha terminado. Se elimina.`);
                         }
-                    } else {
+                    } else { // Misiones no recurrentes
                         const scheduledDateObj = App.utils.normalizeDateToStartOfDay(scheduledMis.scheduledDate);
                         if (!scheduledDateObj) {
                             console.warn(`App.state: Saltando misión no recurrente con fecha inválida (o nula): ${scheduledMis.name}`);
                             return;
                         }
                         if (scheduledDateObj.getTime() === todayDateObj.getTime()) {
+                            // Ya usa _addTaskToTodayIfNotExists
                             _addTaskToTodayIfNotExists({
                                 name: scheduledMis.name,
                                 points: scheduledMis.points,
@@ -300,20 +312,20 @@ function _addTaskToTodayIfNotExists(task) {
                     if (uncompletedYesterdayTasks.length > 0) {
                         console.log(`App.state: Arrastrando ${uncompletedYesterdayTasks.length} tareas no completadas de ayer a hoy.`);
                         uncompletedYesterdayTasks.forEach(task => {
-                            missionsToAddToTodayTasks.push({
-                                id: App.utils.genId("task"),
+                            // ⭐ Usa _addTaskToTodayIfNotExists para arrastrar tareas de ayer
+                            _addTaskToTodayIfNotExists({
                                 name: task.name,
                                 points: task.points,
                                 missionId: task.missionId,
-                                completed: false,
-                                currentRepetitions: 0,
                                 dailyRepetitions: { max: task.dailyRepetitions.max }
                             });
                         });
                     }
                 }
 
-                state.tasksByDate[today].push(...missionsToAddToTodayTasks);
+                // La línea `state.tasksByDate[today].push(...missionsToAddToTodayTasks);`
+                // se elimina ya que ahora _addTaskToTodayIfNotExists lo maneja directamente.
+                
                 state.lastDate = today;
                 _saveStateToLocalStorage();
                 console.log("App.state: Final state after load and daily processing:", state);
@@ -519,6 +531,7 @@ function _addTaskToTodayIfNotExists(task) {
 
             const todayFormatted = App.utils.getFormattedDate(new Date());
             if (initialDateString === todayFormatted) {
+                // ⭐ Usa _addTaskToTodayIfNotExists aquí también
                 _addTaskToTodayIfNotExists({
                     name: missionToProgram.name,
                     points: missionToProgram.points,
@@ -640,7 +653,11 @@ function _addTaskToTodayIfNotExists(task) {
             const item = state.shopItems.find(item => item.id === itemId);
             if (!item) return;
         
-            if (item.purchasedTodayDate === App.utils.getFormattedDate()) {
+            // Obtener solo la parte de la fecha para la comparación diaria
+            const todayStr = App.utils.getFormattedDate(); 
+            const itemPurchasedDateOnly = item.purchasedTodayDate ? App.utils.getFormattedDate(new Date(item.purchasedTodayDate)) : null;
+
+            if (itemPurchasedDateOnly === todayStr) {
                 App.ui.events.showCustomAlert('Este artículo ya fue comprado hoy. Estará disponible de nuevo mañana.');
                 return;
             }
@@ -653,7 +670,7 @@ function _addTaskToTodayIfNotExists(task) {
             App.ui.events.showCustomConfirm(`¿Estás seguro de que quieres comprar "${item.name}" por ${item.cost} puntos?`, (confirmed) => {
                 if (confirmed) {
                     state.points -= item.cost;
-                    const todayStr = App.utils.getFormattedDate();
+                    
                     let histDay = state.history.find(h => h.date === todayStr);
                     if (!histDay) {
                         histDay = { date: todayStr, earned: 0, spent: 0, actions: [] };
@@ -662,8 +679,9 @@ function _addTaskToTodayIfNotExists(task) {
                     histDay.spent += item.cost;
                     histDay.actions.push({ name: `Comprado: ${item.name}`, points: -item.cost, type: 'gasto' });
         
-                    item.purchasedTodayDate = todayStr;
-                    item.justBought = true; // ⭐ marca que acaba de comprarse
+                    // ⭐ Almacenar la fecha y hora exactas en formato ISO.
+                    item.purchasedTodayDate = new Date().toISOString(); 
+                    // Ya no necesitamos 'justBought', la lógica de UI identificará el más reciente por la fecha.
         
                     _saveStateToLocalStorage();
         
@@ -704,7 +722,8 @@ function _addTaskToTodayIfNotExists(task) {
                 currentRepetitions: 0,
                 dailyRepetitions: { max: 1 } // Default a 1 para quick add
             };
-            state.tasksByDate[today].push(taskToAdd);
+            // ⭐ Usa _addTaskToTodayIfNotExists aquí también
+            _addTaskToTodayIfNotExists(taskToAdd);
             _saveStateToLocalStorage();
             if (App.ui.render.today) App.ui.render.today.renderTodayTasks();
             if (App.ui.render.general) App.ui.render.general.showDiscreetMessage(`¡"${task.name}" añadido a Hoy!`);
@@ -752,7 +771,5 @@ function _addTaskToTodayIfNotExists(task) {
         getScheduledMissionByOriginalMissionId: (originalMissionId) => {
             return state.scheduledMissions.find(sm => sm.missionId === originalMissionId);
         }
-        
     };
-    
 })(window.App = window.App || {});

@@ -280,20 +280,3 @@
 }
 
 /* ===================== COMPONENTES DE TIENDA ===================== */
-.shop-item-name {
-    font-weight: 600;
-    font-size: 1.1rem;
-}
-
-.shop-item-cost-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.shop-item-cost {
-    font-weight: 700;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.2rem;
-    color: var(--negative-color);
-}

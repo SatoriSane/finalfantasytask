@@ -193,9 +193,12 @@
     z-index: 2;
     color: var(--ff-text-light); /* Asegurar color claro por defecto */
     text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Sombra de texto */
-    display: flex; /* Para alinear el texto y el icono */
-    align-items: center;
-    gap: 0.3rem; /* Espacio entre texto y icono */
+    display: flex; /* Usar flex para alinear verticalmente */
+    align-items: center; /* Alinear verticalmente al centro */
+    justify-content: center; /* Centrar el contenido horizontalmente también */
+    gap: 0.3rem; /* Espacio entre icono y texto */
+    width: 100%; /* Asegurar que el span ocupe todo el ancho del botón */
+    white-space: nowrap; /* Evitar el salto de línea si es posible */
 }
 
 /* Estilo para el pequeño icono de candado dentro del botón "Bloqueado X%" */
@@ -205,6 +208,7 @@
     fill: none; /* Icono de candado suele ser solo stroke */
     stroke: var(--ff-text-light); /* Color del candado para contrastar con el fondo */
     stroke-width: 2;
+    flex-shrink: 0; /* Evitar que el icono se encoja */
 }
 
 .buy-btn:hover:not(.can-afford) {

@@ -41,7 +41,6 @@
             }
 
             // Identificar el último comprado buscando el 'purchasedTodayDate' más reciente.
-            // Esto asegura que el "más reciente" sea siempre el que tenga la fecha/hora más actual.
             let latestPurchaseDate = null;
             let lastBoughtItemId = null;
 
@@ -58,7 +57,6 @@
             // Asignar `recentlyPurchased` al ítem que realmente fue el último en ser comprado.
             shopItems.forEach(item => {
                 item.recentlyPurchased = item.id === lastBoughtItemId;
-                // La propiedad `justBought` ahora se gestiona internamente y se puede limpiar.
                 if (item.justBought) {
                     delete item.justBought;
                 }
@@ -104,7 +102,12 @@
             });
         },
 
-        // El resto de los métodos (_renderShopCard) permanecen sin cambios.
+        /**
+         * @description Renderiza una tarjeta individual de la tienda.
+         * @param {object} item - El objeto del ítem de la tienda.
+         * @param {number} userPoints - Los puntos actuales del usuario.
+         * @param {HTMLElement} container - El contenedor donde se añadirá la tarjeta.
+         */
         _renderShopCard: function(item, userPoints, container) {
             const isPurchased = item.purchasedTodayDate && !item.recentlyPurchased;
             const isLastPurchased = item.recentlyPurchased;
@@ -155,11 +158,21 @@
                 actionBtn.textContent = "logrado";
                 actionBtn.disabled = true;
             } else {
-                const progressPercentage = item.cost === 0 ? 100 : Math.min((userPoints / item.cost) * 100, 100);
+                const progressPercentage = item.cost === 0 ? 100 : Math.min(Math.round((userPoints / item.cost) * 100), 100);
                 
-                actionBtn.className = canAfford ? "buy-btn can-afford" : "buy-btn";
-                actionBtn.innerHTML = '<span>obtener</span>';
-                actionBtn.disabled = false;
+                // ⭐ Lógica para el texto del botón OBTENER/CANDADO + PORCENTAJE
+                if (canAfford) {
+                    actionBtn.className = "buy-btn can-afford";
+                    actionBtn.innerHTML = '<span>obtener</span>';
+                } else {
+                    actionBtn.className = "buy-btn"; // No añadir 'can-afford' aquí
+                    actionBtn.innerHTML = `<span><svg class="lock-icon-small" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg> ${progressPercentage}%</span>`;
+                }
+                
+                actionBtn.disabled = false; // Permitir clic para la animación de shake
                 
                 actionBtn.style.setProperty('--progress', progressPercentage + '%');
 
@@ -201,8 +214,46 @@
 
             container.appendChild(card);
 
+            if (isLastPurchased) {
+                setTimeout(() => {
+                    this._celebrationEffect(card);
+                }, 100);
+            }
         },
 
-
+        /**
+         * @description Aplica un efecto visual de "explosión de partículas" al comprar un ítem.
+         * @param {HTMLElement} card - La tarjeta del ítem que se ha comprado.
+         */
+        _celebrationEffect: function(card) {
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement("div");
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 6px;
+                    height: 6px;
+                    background: var(--ff-accent);
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 1000;
+                    animation: particle-burst 1.5s ease-out forwards;
+                `;
+                
+                const rect = card.getBoundingClientRect();
+                particle.style.left = (rect.left + rect.width / 2) + "px";
+                particle.style.top = (rect.top + rect.height / 2) + "px";
+                
+                const angle = (i / 12) * Math.PI * 2;
+                const velocity = 50 + Math.random() * 30;
+                particle.style.setProperty('--dx', Math.cos(angle) * velocity + 'px');
+                particle.style.setProperty('--dy', Math.sin(angle) * velocity + 'px');
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, 1500);
+            }
+        }
     };
 })(window.App = window.App || {});

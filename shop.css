@@ -44,24 +44,6 @@
     border-color: var(--ff-accent);
 }
 
-/* Línea superior no necesaria si la tarjeta ya tiene un borde que cambia */
-/* .shop-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    background-color: var(--ff-accent);
-}
-
-.shop-card:hover::before {
-    opacity: 1;
-} */
-
-
 /* Estados especiales */
 .shop-card.purchased {
     opacity: 0.5; /* Similar a task-card.completed */
@@ -78,7 +60,6 @@
 }
 
 .shop-card.recently-purchased {
-    /* Mantener algo de vivacidad pero aún coherente */
     border-color: var(--ff-accent);
     box-shadow: 0 0 15px rgba(var(--ff-accent-rgb), 0.3);
     animation: pulseBorder 1.5s ease-in-out infinite alternate; /* Animación para resaltar */
@@ -158,7 +139,7 @@
     margin-top: auto; /* Empuja los botones hacia abajo */
 }
 
-.buy-btn, .purchased-btn { /* .locked-btn no se usa en el JS actual, así que lo quitamos de la regla general */
+.buy-btn, .purchased-btn {
     flex: 1;
     padding: 0.8rem 1rem; /* Ajustado para un mejor aspecto */
     border-radius: var(--border-radius-md); /* Más redondeado, como Today */
@@ -212,6 +193,18 @@
     z-index: 2;
     color: var(--ff-text-light); /* Asegurar color claro por defecto */
     text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Sombra de texto */
+    display: flex; /* Para alinear el texto y el icono */
+    align-items: center;
+    gap: 0.3rem; /* Espacio entre texto y icono */
+}
+
+/* Estilo para el pequeño icono de candado dentro del botón "Bloqueado X%" */
+.buy-btn span .lock-icon-small {
+    width: 18px; /* Tamaño más pequeño para el icono dentro del botón */
+    height: 18px;
+    fill: none; /* Icono de candado suele ser solo stroke */
+    stroke: var(--ff-text-light); /* Color del candado para contrastar con el fondo */
+    stroke-width: 2;
 }
 
 .buy-btn:hover:not(.can-afford) {
@@ -257,21 +250,6 @@
     content: '✓ '; /* Icono de verificación */
     font-weight: 700;
 }
-
-/* .locked-btn no se usa en el JS, pero si se agregara, debería verse así */
-/*
-.locked-btn {
-    background: rgba(var(--ff-text-dark), 0.15);
-    color: var(--ff-text-dark);
-    cursor: not-allowed;
-    opacity: 0.7;
-    border: 2px solid rgba(var(--ff-text-dark), 0.2);
-}
-
-.locked-btn::before {
-    content: '🔒 ';
-}
-*/
 
 /* Efecto de ondas al hacer click (mantener) */
 .buy-btn::after {
@@ -363,12 +341,12 @@
 
 @keyframes slideOutDown {
     0% {
-        transform: translateY(0);
         opacity: 1;
+        transform: translateY(0);
     }
     100% {
-        transform: translateY(50px);
         opacity: 0;
+        transform: translateY(50px);
     }
 }
 

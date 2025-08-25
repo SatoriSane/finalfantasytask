@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v103';
+const CACHE_NAME = 'final-fantasy-tasks-cache-v104';
 const OFFLINE_URL = 'offline.html';
 
 // Archivos esenciales para precache

@@ -300,6 +300,21 @@
 
             if (openResetOptionsBtn) openResetOptionsBtn.addEventListener('click', App.ui.events.showResetOptionsModal);
             if (closeResetConfirmModalBtn) closeResetConfirmModalBtn.addEventListener('click', App.ui.events.closeResetConfirmModal);
+
+            const toggleScheduledBtn = document.getElementById('toggleScheduledMissionsBtn');
+            if (toggleScheduledBtn) {
+                toggleScheduledBtn.addEventListener('click', () => {
+                    const scheduledList = document.getElementById('scheduledMissionsList');
+                    const isExpanded = toggleScheduledBtn.getAttribute('aria-expanded') === 'true';
+
+                    toggleScheduledBtn.setAttribute('aria-expanded', !isExpanded);
+                    if (!isExpanded) {
+                        scheduledList.style.display = 'block';
+                    } else {
+                        scheduledList.style.display = 'none';
+                    }
+                });
+            }
         },
 
         /**

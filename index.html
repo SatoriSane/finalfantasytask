@@ -80,11 +80,13 @@
                 </form>
             </div>
             <div id="missionsGrid" aria-live="polite" aria-label="Listado de categorías y misiones"></div>
-        </section>
 
-        <section id="tab-scheduled" role="tabpanel" tabindex="0" aria-labelledby="navScheduled" aria-hidden="true">
-            <h2 id="scheduledTitle">Misiones Programadas</h2>
-            <div id="scheduledMissionsList" aria-live="polite" aria-label="Listado de misiones programadas">
+            <div class="scheduled-missions-container">
+                <button id="toggleScheduledMissionsBtn" class="discreet-btn" aria-expanded="false">
+                    <span class="icon">🗓️</span> Misiones Programadas
+                </button>
+                <div id="scheduledMissionsList" aria-live="polite" aria-label="Listado de misiones programadas" style="display: none;">
+                </div>
             </div>
         </section>
 
@@ -252,9 +254,6 @@
         </button>
         <button id="navMissions" role="tab" aria-selected="false" aria-controls="tab-missions" tabindex="-1">
             <span class="icon">🗺️</span> Misiones
-        </button>
-        <button id="navScheduled" role="tab" aria-selected="false" aria-controls="tab-scheduled" tabindex="-1">
-            <span class="icon">🗓️</span> Programadas
         </button>
         <button id="navShop" role="tab" aria-selected="false" aria-controls="tab-shop" tabindex="-1">
             <span class="icon">🛒</span> Tienda

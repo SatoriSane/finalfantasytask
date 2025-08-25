@@ -36,8 +36,12 @@
             // Llamar a las funciones de renderizado de los módulos específicos de cada pestaña.
             // Asegurarse de que los módulos existan antes de llamar a sus funciones.
             if (tabId === 'tab-today' && App.ui.render.today) { App.ui.render.today.renderTodayTasks(); }
-            if (tabId === 'tab-missions' && App.ui.render.missions) { App.ui.render.missions.renderMissions(); }
-            if (tabId === 'tab-scheduled' && App.ui.render.scheduled) { App.ui.render.scheduled.renderScheduledMissions(); }
+            if (tabId === 'tab-missions' && App.ui.render.missions) {
+                App.ui.render.missions.renderMissions();
+                if (App.ui.render.scheduled) {
+                    App.ui.render.scheduled.renderScheduledMissions();
+                }
+            }
             if (tabId === 'tab-history' && App.ui.render.history) { App.ui.render.history.renderHistory(); }
             if (tabId === 'tab-shop' && App.ui.render.shop) { App.ui.render.shop.renderShopItems(); }
         },

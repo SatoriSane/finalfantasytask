@@ -230,6 +230,8 @@
 .description-icon-svg {
     vertical-align: middle;
     color: var(--ff-text-dark);
+    width: 1.8rem;
+    height: 1.8rem;
 }
 
 /* Drag & Drop categorías y misiones */

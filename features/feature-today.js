@@ -196,7 +196,7 @@
                 if (task.missionId) {
                     const mission = App.state.getMissions().find(m => m.id === task.missionId);
                     if (mission && mission.description) {
-                        descriptionIcon = `<span class="description-icon" title="Tiene descripción"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="description-icon-svg"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h12v2H4z"></path></svg></span>`;
+                        descriptionIcon = `<span class="description-icon" title="Tiene descripción"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="description-icon-svg"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h12v2H4z"></path></svg></span>`;
                     }
                 }
                 taskNameDiv.innerHTML = `${task.name} ${descriptionIcon}`;

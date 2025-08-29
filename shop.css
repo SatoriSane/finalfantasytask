@@ -1,0 +1,372 @@
+/* shop.css - Estilos específicos para la tienda, adaptados para armonía */
+
+/* ===================== LAYOUT GENERAL ===================== */
+#shopList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Ajustado para tarjetas ligeramente más compactas */
+    gap: 1.2rem;
+    padding: 0 1rem; /* Consistente con el padding del wrapper de la barra global en Today */
+    margin-bottom: 2rem;
+    max-width: 900px; /* Consistente con el max-width de la sección Today */
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box; /* Asegura que el padding no cause desbordamiento */
+}
+
+@media (max-width: 768px) {
+    #shopList {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0 0.8rem;
+    }
+}
+
+/* ===================== TARJETAS DE PRODUCTOS ===================== */
+.shop-card {
+    background: var(--ff-bg-light); /* Consistente con task-card */
+    border-radius: var(--border-radius-md);
+    padding: 1.2rem 1.5rem; /* Consistente con task-card */
+    box-shadow: var(--shadow-md); /* Consistente con task-card */
+    display: flex; /* Flexbox para layout interno */
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), border-color var(--transition-speed);
+    border: 1px solid var(--ff-border); /* Consistente con task-card */
+    position: relative;
+    overflow: hidden; /* Para manejar el botón de eliminar flotante y la animación de entrada */
+    min-height: 120px; /* Asegura un tamaño mínimo */
+}
+
+/* Efecto hover similar a task-card */
+.shop-card:hover:not(.purchased) {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--ff-accent);
+}
+
+/* Estados especiales */
+.shop-card.purchased {
+    opacity: 0.5; /* Similar a task-card.completed */
+    background-color: var(--ff-bg-dark); /* Similar a task-card.completed */
+    border-color: transparent; /* Similar a task-card.completed */
+    cursor: default;
+}
+
+.shop-card.purchased .shop-item-name {
+    text-decoration: line-through;
+    color: var(--ff-text-dark);
+    font-style: italic;
+    text-shadow: none;
+}
+
+.shop-card.recently-purchased {
+    border-color: var(--ff-accent);
+    box-shadow: 0 0 15px rgba(var(--ff-accent-rgb), 0.3);
+    animation: pulseBorder 1.5s ease-in-out infinite alternate; /* Animación para resaltar */
+}
+
+/* Animación de borde para compra reciente */
+@keyframes pulseBorder {
+    0% { border-color: rgba(var(--ff-accent-rgb), 0.3); }
+    50% { border-color: var(--ff-accent); }
+    100% { border-color: rgba(var(--ff-accent-rgb), 0.3); }
+}
+
+/* 📱 Contenido principal de la tarjeta */
+.shop-card-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem; /* Ajuste para espacio */
+    flex-grow: 1;
+}
+
+.shop-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Centrar verticalmente */
+    gap: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.shop-item-name {
+    font-family: 'Orbitron', sans-serif; /* Mantenemos Orbitron para diferenciación */
+    font-size: 1.2rem; /* Más grande, similar a task-name */
+    font-weight: 700;
+    color: var(--ff-accent);
+    line-height: 1.2;
+    flex: 1;
+    text-shadow: 0 0 6px rgba(var(--ff-accent-rgb), 0.5);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2; /* Limitar a dos líneas si es muy largo */
+}
+
+.shop-item-cost {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-family: 'Orbitron', sans-serif; /* Mantenemos Orbitron */
+    font-weight: 700; /* Más peso para que resalte como task-points */
+    font-size: 1.4rem; /* Más grande, similar a task-points */
+    color: var(--ff-accent);
+    background: transparent; /* Fondo transparente */
+    padding: 0; /* Sin padding */
+    border-radius: var(--border-radius-sm);
+    border: none; /* Sin borde */
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 60px; /* Consistente con task-points */
+    text-align: right;
+    user-select: none;
+}
+
+.shop-item-cost svg {
+    width: 24px; /* Un poco más grande para coincidir con el icono de Today */
+    height: 24px; /* Un poco más grande para coincidir con el icono de Today */
+    fill: var(--ff-accent); /* Asegura el color del acento */
+    stroke: var(--ff-accent); /* Si el icono tiene stroke */
+    stroke-width: 1; /* Ajustar si es necesario */
+}
+
+/* 🎯 Botones de acción con progreso integrado */
+.shop-actions {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: flex-end;
+    margin-top: auto; /* Empuja los botones hacia abajo */
+}
+
+.buy-btn, .purchased-btn {
+    flex: 1;
+    padding: 0.8rem 1rem; /* Ajustado para un mejor aspecto */
+    border-radius: var(--border-radius-md); /* Más redondeado, como Today */
+    font-family: 'Inter', sans-serif; /* Usamos Inter para los botones */
+    font-weight: 600;
+    font-size: 1rem; /* Un poco más grande */
+    text-transform: uppercase;
+    letter-spacing: 0.5px; /* Ajuste del espaciado */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    position: relative;
+    overflow: hidden;
+    min-height: 45px; /* Altura mínima para una mejor interacción táctil */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Botón con progreso de fondo */
+.buy-btn {
+    background: rgba(var(--ff-bg-dark-rgb), 0.4); /* Fondo más oscuro y sutil */
+    color: var(--ff-text-light);
+    border: 2px solid rgba(var(--ff-border-rgb), 0.5); /* Borde más visible y alineado */
+    position: relative;
+    --progress: 0%;
+    box-shadow: var(--shadow-sm);
+}
+
+.buy-btn::before {
+    opacity: 0.9; /* Un poco más opaco */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--progress);
+    background: linear-gradient(
+        to right,
+        rgba(88, 228, 120, 0.3), /* Color positivo */
+        rgba(88, 228, 120, 0.6) /* Color positivo más fuerte */
+    );
+    box-shadow: 0 0 4px rgba(88, 228, 120, 0.3); /* Sombra para el progreso */
+    transition: width 0.6s ease-in-out; /* Transición suave como la barra global de Today */
+    z-index: 1;
+    border-radius: inherit;
+}
+
+.buy-btn span {
+    position: relative;
+    z-index: 2;
+    color: var(--ff-text-light); /* Asegurar color claro por defecto */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Sombra de texto */
+    display: flex; /* Usar flex para alinear verticalmente */
+    align-items: center; /* Alinear verticalmente al centro */
+    justify-content: center; /* Centrar el contenido horizontalmente también */
+    gap: 0.3rem; /* Espacio entre icono y texto */
+    width: 100%; /* Asegurar que el span ocupe todo el ancho del botón */
+    white-space: nowrap; /* Evitar el salto de línea si es posible */
+}
+
+/* Estilo para el pequeño icono de candado dentro del botón "Bloqueado X%" */
+.buy-btn span .lock-icon-small {
+    width: 18px; /* Tamaño más pequeño para el icono dentro del botón */
+    height: 18px;
+    fill: none; /* Icono de candado suele ser solo stroke */
+    stroke: var(--ff-text-light); /* Color del candado para contrastar con el fondo */
+    stroke-width: 2;
+    flex-shrink: 0; /* Evitar que el icono se encoja */
+}
+
+.buy-btn:hover:not(.can-afford) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--ff-accent);
+}
+
+.buy-btn.can-afford {
+    border-color: var(--positive-color); /* Borde positivo */
+    background: var(--positive-color); /* Fondo positivo cuando es asequible */
+    box-shadow: 0 0 15px rgba(88, 228, 120, 0.4); /* Sombra de brillo positivo */
+    --progress: 100%; /* Asegura el 100% de progreso */
+}
+
+.buy-btn.can-afford span {
+    color: var(--ff-bg-dark); /* Texto oscuro sobre fondo claro */
+    text-shadow: none; /* Sin sombra de texto aquí */
+    mix-blend-mode: normal;
+}
+
+.buy-btn.can-afford::before {
+    background: var(--positive-color); /* El fondo del progreso es el mismo que el del botón */
+    box-shadow: none;
+    opacity: 1;
+}
+
+.buy-btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.purchased-btn {
+    background: var(--ff-bg-dark); /* Fondo oscuro como las tarjetas completadas */
+    color: var(--ff-text-dark); /* Texto oscuro */
+    cursor: default;
+    opacity: 0.7; /* Opacidad similar a las tareas completadas */
+    box-shadow: var(--shadow-sm); /* Sombra sutil */
+    border: 1px solid var(--ff-border);
+}
+
+.purchased-btn::before {
+    content: '✓ '; /* Icono de verificación */
+    font-weight: 700;
+}
+
+/* Efecto de ondas al hacer click (mantener) */
+.buy-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: 3;
+}
+
+.buy-btn:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+
+/* ❌ Botón eliminar (idéntico a today.css) */
+.delete-btn {
+    position: absolute;
+    top: 0.8rem;
+    right: 0.8rem;
+    background: rgba(var(--negative-color-rgb), 0.1); /* Usar RGB para consistencia */
+    color: var(--negative-color);
+    border: 1px solid rgba(var(--negative-color-rgb), 0.3);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: scale(0.8);
+    z-index: 10; /* Asegurar que esté encima de otros elementos */
+}
+
+.shop-card.show-delete .delete-btn,
+.shop-card:hover .delete-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.delete-btn:hover {
+    background: var(--negative-color);
+    color: var(--ff-bg-dark);
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(var(--negative-color-rgb), 0.4);
+}
+
+
+/* 🎨 Estados de interacción */
+.shop-card:focus-within {
+    outline: 2px solid rgba(var(--ff-accent-rgb), 0.5);
+    outline-offset: 2px;
+}
+
+/* 💫 Animaciones */
+.shop-card {
+    animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+}
+
+/* Delays para las animaciones de entrada */
+.shop-card:nth-child(2) { animation-delay: 0.1s; }
+.shop-card:nth-child(3) { animation-delay: 0.2s; }
+.shop-card:nth-child(4) { animation-delay: 0.3s; }
+.shop-card:nth-child(5) { animation-delay: 0.4s; }
+.shop-card:nth-child(6) { animation-delay: 0.5s; }
+.shop-card:nth-child(7) { animation-delay: 0.6s; }
+
+
+@keyframes slideInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutDown {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+@keyframes particle-burst {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(0);
+        opacity: 0;
+    }
+}

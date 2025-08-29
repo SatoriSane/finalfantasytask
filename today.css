@@ -1,0 +1,225 @@
+/* today.css - Estilos específicos para la pestaña "Hoy" */
+
+/* ===================== HEADER Y BARRA GLOBAL ===================== */
+.today-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* Wrapper de barra global de puntos */
+.today-points-bar-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto 1rem auto;
+    gap: 1rem;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
+/* Icono de puntos a la izquierda */
+.points-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--ff-accent);
+}
+
+/* Barra de progreso */
+.net-points-bar {
+    flex-grow: 1;
+    height: 16px;
+    background-color: rgba(var(--ff-accent-rgb), 0.15);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+.points-progress {
+    height: 100%;
+    width: 0%;
+    border-radius: var(--border-radius-md);
+    background: linear-gradient(
+        to right,
+        rgba(88, 228, 120, 0.3),
+        rgba(88, 228, 120, 0.6)
+    );
+    box-shadow: 0 0 4px rgba(88, 228, 120, 0.3);
+    
+    /* Animación suave al cambiar el ancho */
+    transition: width 0.6s ease-in-out;
+}
+
+
+
+
+/* Puntos a la derecha */
+.net-points-value {
+    min-width: 60px;
+    text-align: right;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+}
+
+/* ===================== LISTA DE TAREAS ===================== */
+#todayTasksList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+#todayTasksList .task-card {
+    background: var(--ff-bg-light);
+    border-radius: var(--border-radius-md);
+    padding: 1.2rem 1.5rem;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), border-color var(--transition-speed);
+    border: 1px solid var(--ff-border);
+    position: relative; /* Para elementos posicionados absolutamente como el botón de eliminar */
+}
+
+#todayTasksList .task-card:hover:not(.completed) {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--ff-accent);
+}
+
+#todayTasksList .task-name {
+    font-weight: 600;
+    font-size: 1.2rem;
+    flex-grow: 1;
+}
+
+#todayTasksList .task-points {
+    font-weight: 700;
+    font-size: 1.4rem;
+    min-width: 60px;
+    text-align: right;
+    user-select: none;
+    font-family: 'Orbitron', sans-serif;
+}
+
+/* Botón completar */
+#todayTasksList .task-btn-complete {
+    background: #00000033;
+    color: var(--positive-color);
+    border: 2px solid var(--ff-border);
+    border-radius: 24%;
+    width: 45px;
+    height: 45px;
+    font-weight: 700;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-speed);
+    margin-left: 1.5rem;
+}
+
+#todayTasksList .task-btn-complete:hover:not(:disabled) {
+    color: var(--ff-bg-dark);
+    background-color: var(--positive-color);
+    transform: scale(1.15);
+}
+
+/* Estado completado */
+#todayTasksList .task-card.completed {
+    opacity: 0.5;
+    background-color: var(--ff-bg-dark);
+    border-color: transparent;
+    padding: 0rem 1rem;   /* menos espacio interno */
+    margin: 0.2rem 0;         /* menos separación vertical */
+    min-height: unset;        /* evita alturas mínimas heredadas */
+    gap: 0rem;   
+}
+
+#todayTasksList .task-card.completed .task-name {
+    text-decoration: line-through;
+    color: var(--ff-text-dark);
+    font-style: italic;
+    font-size: 1rem;
+}
+
+#todayTasksList .task-card.completed .completed-message {
+    color: var(--ff-text-dark);
+    font-style: italic;
+    font-size: 1.1rem;
+    margin-left: 1.5rem;
+}
+
+/* ===================== BOTÓN FLOTANTE AGREGAR TAREA ===================== */
+.floating-add-btn {
+    position: fixed;
+    bottom: 80px; /* Por encima de las pestañas */
+    right: 5px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--ff-primary);
+    border: none;
+    color: var(--ff-text-light);
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 1.3);
+    transition: all var(--transition-speed);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #52c8ff1c;
+}
+
+.floating-add-btn:hover {
+    background: var(--ff-bg-light);
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.floating-add-btn:active {
+    transform: scale(0.95);
+}
+
+.floating-add-btn .icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* ===================== REPETICIONES ===================== */
+.task-actions-reps {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.repetition-count {
+    display: inline-block;
+    min-width: 3ch;
+    text-align: center;
+    color: var(--ff-text-dark);
+}
+
+.repetition-count:empty {
+    visibility: hidden;
+}
+
+/* ===================== DRAG & DROP ===================== */
+.task-card.is-dragging-task {
+    opacity: 0.5;
+    border: 2px dashed var(--ff-accent);
+}
+
+.task-card.drag-over-task {
+    box-shadow: 0 0 8px 2px var(--ff-accent);
+    transform: translateY(-3px);
+}
+
+#todayTasksList.drag-over-container-today {
+    border: 2px dashed var(--ff-accent);
+    background-color: var(--ff-bg-medium);
+}

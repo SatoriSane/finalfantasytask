@@ -103,6 +103,11 @@ input:focus, select:focus {
     transition: opacity 0.4s ease, visibility 0.4s ease;
 }
 
+/* Confirmation modals should appear above other modals */
+#customConfirmDialog {
+    z-index: 1020;
+}
+
 .modal-overlay.visible {
     opacity: 1;
     visibility: visible;
@@ -898,6 +903,22 @@ input:focus, select:focus {
 #editMissionModal .modal-content,
 #editShopItemModal .modal-content {
     max-width: 450px;
+}
+
+/* Modal form styling - different from regular form-container */
+.modal-form {
+    display: flex !important;
+    flex-direction: column;
+    gap: 1.2rem;
+    width: 100%;
+    max-height: none;
+    opacity: 1;
+    overflow: visible;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
 }
 
 #editMissionModal form,

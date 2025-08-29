@@ -61,9 +61,21 @@
         deleteShopItem: function(itemId, skipConfirm = false) {
             const performDelete = () => {
                 const state = _get();
+                console.log('Before deletion - shop items count:', state.shopItems.length);
+                console.log('Deleting item with ID:', itemId);
+                console.log('Items before filter:', state.shopItems.map(item => item.id));
+                
+                const originalLength = state.shopItems.length;
                 state.shopItems = state.shopItems.filter(item => item.id !== itemId);
+                
+                console.log('After deletion - shop items count:', state.shopItems.length);
+                console.log('Items after filter:', state.shopItems.map(item => item.id));
+                console.log('Items actually removed:', originalLength - state.shopItems.length);
+                
                 _save();
+                console.log('State saved after deletion');
                 App.events.emit('shopItemsUpdated');
+                console.log('shopItemsUpdated event emitted');
             };
 
             if (skipConfirm) {

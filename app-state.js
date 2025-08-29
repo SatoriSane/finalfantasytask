@@ -66,7 +66,7 @@
 
     App.state = {
         getState: function() {
-            return { ...state };
+            return state;
         },
 
         getPointsHistory: function() {

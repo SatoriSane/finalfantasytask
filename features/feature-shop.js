@@ -164,11 +164,17 @@
             _animationTimeouts.forEach(timeout => clearTimeout(timeout));
             _animationTimeouts.clear();
             
-            container.innerHTML = "";
-
             const state = App.state.getState();
             const userPoints = state.points || 0;
             const shopItems = App.state.getShopItems();
+            
+            console.log('Shop render called - items count:', shopItems ? shopItems.length : 0);
+            console.log('Shop items:', shopItems);
+            console.log('Container innerHTML before clear:', container.innerHTML.length);
+            
+            // Force complete container clear
+            container.innerHTML = "";
+            console.log('Container innerHTML after clear:', container.innerHTML.length);
 
             if (!shopItems || shopItems.length === 0) {
                 container.innerHTML = `
@@ -239,31 +245,63 @@
         },
 
         openEditShopItemModal: function(itemId) {
+            console.log('Opening edit modal for item:', itemId); // Debug log
             const modal = document.getElementById('editShopItemModal');
             const item = App.state.getShopItems().find(i => i.id === itemId);
+            
+            if (!modal) {
+                console.error('Edit shop item modal not found in DOM');
+                return;
+            }
+            
             if (!item) {
                 console.error('Shop item not found:', itemId);
-                App.ui.events.showCustomAlert('No se encontró el producto.');
+                if (App.ui.general && App.ui.general.showCustomAlert) {
+                    App.ui.general.showCustomAlert('No se encontró el producto.');
+                } else {
+                    alert('No se encontró el producto.');
+                }
                 return;
             }
 
-            document.getElementById('editShopItemId').value = item.id;
-            document.getElementById('editShopItemName').value = item.name;
-            document.getElementById('editShopItemCost').value = item.cost;
+            // Populate modal fields
+            const idField = document.getElementById('editShopItemId');
+            const nameField = document.getElementById('editShopItemName');
+            const costField = document.getElementById('editShopItemCost');
+            
+            if (idField) idField.value = item.id;
+            if (nameField) nameField.value = item.name;
+            if (costField) costField.value = item.cost;
 
+            // Show modal
             modal.style.display = 'flex';
+            modal.classList.add('visible');
             modal.setAttribute('aria-hidden', 'false');
+            
+            // Focus on name field for better UX
+            if (nameField) {
+                setTimeout(() => nameField.focus(), 100);
+            }
+            
+            console.log('Modal should now be visible'); // Debug log
         },
 
         closeEditShopItemModal: function() {
             const modal = document.getElementById('editShopItemModal');
             modal.style.display = 'none';
+            modal.classList.remove('visible');
             modal.setAttribute('aria-hidden', 'true');
         },
 
         initListeners: function() {
-            App.events.on('shopItemsUpdated', () => this.render());
-            App.events.on('stateRefreshed', () => this.render());
+            App.events.on('shopItemsUpdated', () => {
+                console.log('shopItemsUpdated event received, re-rendering shop');
+                this.render();
+            });
+            App.events.on('stateRefreshed', () => {
+                console.log('stateRefreshed event received, re-rendering shop');
+                this.render();
+            });
 
             const showAddShopItemBtn = document.getElementById('showAddShopItemBtn');
             const addShopItemForm = document.getElementById('addShopItemForm');
@@ -319,8 +357,33 @@
 
             if (deleteButton) deleteButton.addEventListener('click', () => {
                 const itemId = document.getElementById('editShopItemId').value;
-                App.state.deleteShopItem(itemId);
+                const item = App.state.getShopItems().find(i => i.id === itemId);
+                const itemName = item ? item.name : 'este producto';
+                
+                // Close edit modal first
                 App.ui.shop.closeEditShopItemModal();
+                
+                // Then show confirmation with a small delay to ensure modal is closed
+                setTimeout(() => {
+                    if (App.ui.general && App.ui.general.showCustomConfirm) {
+                        App.ui.general.showCustomConfirm(
+                            `¿Estás seguro de que quieres eliminar "${itemName}" de la tienda?`, 
+                            (confirmed) => {
+                                if (confirmed) {
+                                    console.log('Deleting shop item:', itemId); // Debug log
+                                    App.state.deleteShopItem(itemId, true); // Skip confirmation since we already confirmed
+                                    console.log('Shop item deleted'); // Debug log
+                                }
+                            }
+                        );
+                    } else {
+                        if (confirm(`¿Estás seguro de que quieres eliminar "${itemName}" de la tienda?`)) {
+                            console.log('Deleting shop item:', itemId); // Debug log
+                            App.state.deleteShopItem(itemId, true);
+                            console.log('Shop item deleted'); // Debug log
+                        }
+                    }
+                }, 100);
             });
         }
     };

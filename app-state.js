@@ -105,12 +105,7 @@
 
                 const existingTask = state.tasksByDate[todayStr].find(t => t.missionId === sm.missionId);
 
-                if (existingTask) {
-                    // Si ya existe y fue saltada, no hacer nada. Si no, asegurarse de que no se duplique.
-                    if (existingTask.skippedForToday) {
-                        return;
-                    }
-                } else {
+                if (!existingTask) {
                     // Si no existe, añadirla a la lista de hoy.
                     state.tasksByDate[todayStr].push({
                         id: App.utils.genId("task"),
@@ -119,8 +114,7 @@
                         missionId: sm.missionId,
                         completed: false,
                         currentRepetitions: 0,
-                        dailyRepetitions: { max: sm.dailyRepetitions ? sm.dailyRepetitions.max : 1 },
-                        skippedForToday: false
+                        dailyRepetitions: { max: sm.dailyRepetitions ? sm.dailyRepetitions.max : 1 }
                     });
                 }
             });

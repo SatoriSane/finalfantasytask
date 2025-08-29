@@ -118,7 +118,7 @@
             }
 
             const state = App.state.getState();
-            const todayTasks = App.state.getTodayTasks().filter(task => !task.skippedForToday);
+            const todayTasks = App.state.getTodayTasks();
 
             if (!todayTasks || todayTasks.length === 0) {
                 container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">¡Hoy no tienes misiones programadas! Usa el botón ➕ para añadir una.</p>`;

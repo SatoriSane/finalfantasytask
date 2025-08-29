@@ -142,23 +142,7 @@
             const filteredAndSortedDisplayMissions = allMissionsToDisplay
                 .filter(m => {
                     const mDateNormalized = App.utils.normalizeDateToStartOfDay(m.scheduledDate);
-                    if (!mDateNormalized || mDateNormalized < todayNormalized) {
-                        return false;
-                    }
-                    
-                    // Filtrar misiones de hoy que fueron desprogramadas (skippedForToday)
-                    const todayFormatted = App.utils.getFormattedDate(new Date());
-                    if (m.scheduledDate === todayFormatted) {
-                        const todayTasks = App.state.getTodayTasks();
-                        const correspondingTask = todayTasks.find(task => 
-                            task.missionId === m.missionId && task.skippedForToday
-                        );
-                        if (correspondingTask) {
-                            return false; // Ocultar si fue desprogramada desde "hoy"
-                        }
-                    }
-                    
-                    return true;
+                    return mDateNormalized && mDateNormalized >= todayNormalized;
                 })
                 .sort((a, b) => {
                     const dateA = App.utils.normalizeDateToStartOfDay(a.scheduledDate);

@@ -66,18 +66,45 @@
         const tasks = state.tasksByDate[todayStr] || [];
         const task = tasks.find(t => t.id === taskId);
 
-        if (task) {
-            // Llamar a showCustomConfirm antes de desprogramar la tarea
+        if (task && task.missionId) {
             App.ui.general.showCustomConfirm(`¿Seguro que quieres quitar la misión "${task.name}" de hoy?`, (confirmed) => {
                 if (confirmed) {
-                    // Si el usuario confirma, proceder con la lógica de desprogramar
-                    task.skippedForToday = true;
+                    // Encontrar la misión programada correspondiente
+                    const scheduledMission = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
+                    
+                    if (scheduledMission) {
+                        if (scheduledMission.isRecurring) {
+                            // Para misiones recurrentes, modificar la programación
+                            if (scheduledMission.repeatUnit === 'week' && scheduledMission.daysOfWeek) {
+                                // Quitar el día actual de los días de la semana
+                                const todayDayOfWeek = new Date().getDay();
+                                scheduledMission.daysOfWeek = scheduledMission.daysOfWeek.filter(
+                                    day => parseInt(day, 10) !== todayDayOfWeek
+                                );
+                                
+                                // Si no quedan días, eliminar la programación completa
+                                if (scheduledMission.daysOfWeek.length === 0) {
+                                    state.scheduledMissions = state.scheduledMissions.filter(sm => sm.id !== scheduledMission.id);
+                                }
+                            } else {
+                                // Para otras recurrencias (diaria, mensual, etc.), eliminar completamente
+                                state.scheduledMissions = state.scheduledMissions.filter(sm => sm.id !== scheduledMission.id);
+                            }
+                        } else {
+                            // Para misiones no recurrentes, eliminar la programación
+                            state.scheduledMissions = state.scheduledMissions.filter(sm => sm.id !== scheduledMission.id);
+                        }
+                    }
+                    
+                    // Eliminar la tarea de hoy
+                    state.tasksByDate[todayStr] = tasks.filter(t => t.id !== taskId);
+                    
                     _save();
                     App.events.emit('todayTasksUpdated');
-                    App.events.emit('scheduledMissionsUpdated'); 
-                    App.events.emit('showDiscreetMessage', `"${task.name}" se ha quitado de hoy.`);
+                    App.events.emit('scheduledMissionsUpdated');
+                    App.events.emit('missionsUpdated'); // Para actualizar iconos
+                    App.events.emit('showDiscreetMessage', `"${task.name}" ha sido desprogramada.`);
                 } else {
-                    // Opcional: mostrar un mensaje si el usuario cancela
                     App.events.emit('showDiscreetMessage', `Acción cancelada.`);
                 }
             });

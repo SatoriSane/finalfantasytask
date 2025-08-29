@@ -95,6 +95,16 @@
                 tabButton.setAttribute('tabindex', '0');
             }
             
+            // Controlar visibilidad del botón de añadir tarea rápida
+            const quickAddBtn = document.getElementById('showQuickAddBtn');
+            if (quickAddBtn) {
+                if (tabId === 'tab-today') {
+                    quickAddBtn.style.display = 'flex';
+                } else {
+                    quickAddBtn.style.display = 'none';
+                }
+            }
+            
             // Las llamadas a renderizado específicas de cada módulo se manejan en script.js al cambiar de pestaña.
         },
 

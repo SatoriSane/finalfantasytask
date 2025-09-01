@@ -142,7 +142,18 @@
             const filteredAndSortedDisplayMissions = allMissionsToDisplay
                 .filter(m => {
                     const mDateNormalized = App.utils.normalizeDateToStartOfDay(m.scheduledDate);
-                    return mDateNormalized && mDateNormalized >= todayNormalized;
+                    if (!mDateNormalized || mDateNormalized < todayNormalized) {
+                        return false;
+                    }
+
+                    // Excluir si la fecha está en skippedDates
+                    const dateStr = App.utils.getFormattedDate(mDateNormalized);
+                    const originalScheduledMission = App.state.getScheduledMissions().find(sm => sm.id === m.id);
+                    if (originalScheduledMission && originalScheduledMission.skippedDates && originalScheduledMission.skippedDates.includes(dateStr)) {
+                        return false;
+                    }
+
+                    return true;
                 })
                 .sort((a, b) => {
                     const dateA = App.utils.normalizeDateToStartOfDay(a.scheduledDate);

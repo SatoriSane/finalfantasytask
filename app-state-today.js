@@ -73,26 +73,12 @@
                     const scheduledMission = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
                     
                     if (scheduledMission) {
-                        if (scheduledMission.isRecurring) {
-                            // Para misiones recurrentes, modificar la programación
-                            if (scheduledMission.repeatUnit === 'week' && scheduledMission.daysOfWeek) {
-                                // Quitar el día actual de los días de la semana
-                                const todayDayOfWeek = new Date().getDay();
-                                scheduledMission.daysOfWeek = scheduledMission.daysOfWeek.filter(
-                                    day => parseInt(day, 10) !== todayDayOfWeek
-                                );
-                                
-                                // Si no quedan días, eliminar la programación completa
-                                if (scheduledMission.daysOfWeek.length === 0) {
-                                    state.scheduledMissions = state.scheduledMissions.filter(sm => sm.id !== scheduledMission.id);
-                                }
-                            } else {
-                                // Para otras recurrencias (diaria, mensual, etc.), eliminar completamente
-                                state.scheduledMissions = state.scheduledMissions.filter(sm => sm.id !== scheduledMission.id);
-                            }
-                        } else {
-                            // Para misiones no recurrentes, eliminar la programación
-                            state.scheduledMissions = state.scheduledMissions.filter(sm => sm.id !== scheduledMission.id);
+                        if (!scheduledMission.skippedDates) {
+                            scheduledMission.skippedDates = [];
+                        }
+                        const todayFormatted = App.utils.getFormattedDate(new Date());
+                        if (!scheduledMission.skippedDates.includes(todayFormatted)) {
+                            scheduledMission.skippedDates.push(todayFormatted);
                         }
                     }
                     

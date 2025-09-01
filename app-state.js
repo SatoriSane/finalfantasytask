@@ -99,8 +99,9 @@
 
             state.scheduledMissions.forEach(sm => {
                 const isScheduledForToday = _isMissionScheduledForDate(sm, todayDateObj);
-                if (!isScheduledForToday) {
-                    return; // No está programada para hoy, continuar.
+                // Comprobar si la misión ha sido omitida para hoy
+                if (!isScheduledForToday || (sm.skippedDates && sm.skippedDates.includes(todayStr))) {
+                    return; // No está programada o ha sido omitida, continuar.
                 }
 
                 const existingTask = state.tasksByDate[todayStr].find(t => t.missionId === sm.missionId);

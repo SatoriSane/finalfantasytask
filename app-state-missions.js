@@ -181,35 +181,43 @@
             App.events.emit('showDiscreetMessage', `Categoría "${name}" añadida.`);
         },
 
-        deleteCategory: function(categoryId) {
-            App.events.emit('showCustomConfirm', '¿Seguro que quieres eliminar esta categoría? Todas las misiones que contenga también se eliminarán.', (confirmed) => {
-                if (confirmed) {
-                    const state = _get();
-                    const categoryName = state.categories.find(c => c.id === categoryId)?.name || 'Categoría';
-                    
-                    // Eliminar todas las misiones de esta categoría
-                    const missionsToDelete = state.missions.filter(m => m.categoryId === categoryId);
-                    missionsToDelete.forEach(mission => {
-                        // Eliminar de tareas programadas
-                        state.scheduledMissions = state.scheduledMissions.filter(sm => sm.missionId !== mission.id);
-                        // Eliminar de tareas diarias
-                        for (const date in state.tasksByDate) {
-                            state.tasksByDate[date] = state.tasksByDate[date].filter(t => t.missionId !== mission.id);
-                        }
-                    });
-                    
-                    // Eliminar las misiones de la categoría
-                    state.missions = state.missions.filter(m => m.categoryId !== categoryId);
-                    // Eliminar la categoría
-                    state.categories = state.categories.filter(c => c.id !== categoryId);
-                    
-                    _save();
-                    App.events.emit('missionsUpdated');
-                    App.events.emit('todayTasksUpdated');
-                    App.events.emit('scheduledMissionsUpdated');
+        deleteCategory: function(categoryId, skipConfirm = false) {
+            const performDelete = () => {
+                const state = _get();
+                const categoryName = state.categories.find(c => c.id === categoryId)?.name || 'Categoría';
+
+                const missionsToDelete = state.missions.filter(m => m.categoryId === categoryId);
+                missionsToDelete.forEach(mission => {
+                    state.scheduledMissions = state.scheduledMissions.filter(sm => sm.missionId !== mission.id);
+                    for (const date in state.tasksByDate) {
+                        state.tasksByDate[date] = state.tasksByDate[date].filter(t => t.missionId !== mission.id);
+                    }
+                });
+
+                state.missions = state.missions.filter(m => m.categoryId !== categoryId);
+                state.categories = state.categories.filter(c => c.id !== categoryId);
+
+                _save();
+                App.events.emit('missionsUpdated');
+                App.events.emit('todayTasksUpdated');
+                App.events.emit('scheduledMissionsUpdated');
+                if (!skipConfirm) {
                     App.events.emit('showDiscreetMessage', `Categoría "${categoryName}" y sus misiones eliminadas.`);
                 }
-            });
+            };
+
+            if (skipConfirm) {
+                performDelete();
+            } else {
+                App.events.emit('showCustomConfirm', {
+                    message: '¿Seguro que quieres eliminar esta categoría? Todas las misiones que contenga también se eliminarán.',
+                    callback: (confirmed) => {
+                        if (confirmed) {
+                            performDelete();
+                        }
+                    }
+                });
+            }
         },
 
         getMissionById: (id) => _get().missions.find(m => m.id === id),

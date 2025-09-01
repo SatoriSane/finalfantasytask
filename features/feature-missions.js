@@ -185,12 +185,43 @@
                     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
                 });
 
-                catHeader.addEventListener('click', (e) => {
-                    if (e.target.tagName !== 'BUTTON') {
+                let pressTimer = null;
+                let longPressTriggered = false;
+
+                const handlePressStart = (e) => {
+                    if (e.target.closest('button')) return;
+                    longPressTriggered = false;
+                    pressTimer = window.setTimeout(() => {
+                        longPressTriggered = true;
+                        if (navigator.vibrate) navigator.vibrate(50);
+                        App.state.deleteCategory(cat.id);
+                    }, 800);
+                };
+
+                const handlePressEnd = (e) => {
+                    clearTimeout(pressTimer);
+                    if (longPressTriggered) {
+                        e.preventDefault();
                         e.stopPropagation();
+                    }
+                };
+
+                catHeader.addEventListener('mousedown', handlePressStart);
+                catHeader.addEventListener('mouseup', handlePressEnd);
+                catHeader.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+                catHeader.addEventListener('touchstart', handlePressStart, { passive: true });
+                catHeader.addEventListener('touchend', handlePressEnd);
+                catHeader.addEventListener('touchcancel', () => clearTimeout(pressTimer));
+
+                catHeader.addEventListener('click', (e) => {
+                    if (longPressTriggered) {
+                        e.stopImmediatePropagation();
+                        return;
+                    }
+                    if (!e.target.closest('button')) {
                         catHeader.classList.toggle('collapsed');
                     }
-                });
+                }, true);
 
                 const arrowSpan = document.createElement("span");
                 arrowSpan.className = "collapse-arrow";
@@ -232,15 +263,6 @@
                 };
                 buttonsWrapper.appendChild(showFormBtn);
 
-                const deleteCatBtn = document.createElement("button");
-                deleteCatBtn.innerHTML = '❌';
-                deleteCatBtn.className = "delete-btn";
-                deleteCatBtn.title = "Eliminar categoría";
-                deleteCatBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    App.state.deleteCategory(cat.id);
-                };
-                buttonsWrapper.appendChild(deleteCatBtn);
                 catHeader.appendChild(buttonsWrapper);
                 categoryWrapper.appendChild(catHeader);
 

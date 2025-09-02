@@ -224,7 +224,16 @@
                 try {
                     state = JSON.parse(s);
                     dataLoadedSuccessfully = true;
-                    console.log("App.state: State loaded successfully.");
+
+                    // --- Migración y retrocompatibilidad ---
+                    // Asegura que las nuevas propiedades existan para evitar errores con datos antiguos.
+                    if (typeof state.missionStats === 'undefined') {
+                        state.missionStats = {};
+                    }
+                    if (typeof state.dailyBonusMission === 'undefined') {
+                        state.dailyBonusMission = null;
+                    }
+
                 } catch (e) {
                     console.error("App.state: Error parsing localStorage data:", e);
                     this.resetAllData(); // Reinicia si hay un error de parseo

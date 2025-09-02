@@ -277,6 +277,28 @@
                 }
             });
 
+            // Import/Export Listeners
+            const importFileInput = document.getElementById('importFile');
+
+            document.getElementById('exportDataBtn')?.addEventListener('click', () => {
+                App.data.exportData();
+                this.closeResetConfirmModal();
+            });
+
+            document.getElementById('importDataBtn')?.addEventListener('click', () => {
+                importFileInput?.click();
+            });
+
+            importFileInput?.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    App.data.importData(file);
+                }
+                this.closeResetConfirmModal();
+                importFileInput.value = ''; // Reset for next import
+            });
+
+
             // Reset Listeners
             document.getElementById('resetHistoryBtn')?.addEventListener('click', () => {
                 this.closeResetConfirmModal();

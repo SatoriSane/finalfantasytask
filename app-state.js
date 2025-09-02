@@ -89,6 +89,12 @@
         },
         get: () => state,
 
+        loadState: function(importedState) {
+            state = importedState;
+            _saveStateToLocalStorage();
+            App.events.emit('stateRefreshed');
+        },
+
         processScheduledMissionsForToday: function() {
             const todayStr = App.utils.getFormattedDate();
             if (!state.tasksByDate[todayStr]) {

@@ -162,6 +162,14 @@
             <h2 id="resetConfirmTitle">Opciones de Reinicio</h2>
             <p style="margin-bottom: 1.5rem; text-align: center; color: var(--ff-text-light);">Elige cómo deseas reiniciar la aplicación. ¡Estas acciones son irreversibles!</p>
             <div class="reset-options-container">
+                <button id="exportDataBtn" class="secondary reset-option-btn" aria-label="Exportar datos de la aplicación" title="Guardar una copia de seguridad de tus datos">
+                    <span class="icon">💾</span> Exportar Datos
+                </button>
+                <button id="importDataBtn" class="secondary reset-option-btn" aria-label="Importar datos a la aplicación" title="Cargar datos desde una copia de seguridad">
+                    <span class="icon">📂</span> Importar Datos
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+
                 <button id="resetHistoryBtn" class="secondary reset-option-btn" aria-label="Reiniciar solo historial" title="Reiniciar solo historial">
                     <span class="icon">🧹</span> Reiniciar Historial
                 </button>
@@ -412,6 +420,7 @@
     <script src="app-state-today.js"></script>
     <script src="app-state-shop.js"></script>
     <script src="features/feature-ui.js"></script>
+    <script src="features/feature-data.js"></script>
     <script src="features/feature-today.js"></script>
     <script src="features/feature-missions.js"></script>
     <script src="features/feature-shop.js"></script>

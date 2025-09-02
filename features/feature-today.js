@@ -175,13 +175,14 @@
                     }
                 });
 
-                const progressBar = document.createElement("div");
-                progressBar.className = "repetition-progress-bar";
-                taskCard.appendChild(progressBar);
-
                 const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
                 const currentReps = task.currentRepetitions || 0;
                 const progressPercentage = task.completed ? 100 : (currentReps / maxReps) * 100;
+
+                // Barra de progreso que rellena todo el task-card
+                const progressBar = document.createElement("div");
+                progressBar.className = "repetition-progress-bar";
+                taskCard.appendChild(progressBar);
 
                 const prev = _prevTaskProgress[task.id] ?? progressPercentage;
                 progressBar.style.width = prev + "%";
@@ -191,6 +192,14 @@
                     });
                 }
                 _prevTaskProgress[task.id] = progressPercentage;
+
+                // Badge de repeticiones (solo si hay múltiples)
+                if (maxReps > 1) {
+                    const badge = document.createElement("div");
+                    badge.className = "repetition-badge";
+                    badge.textContent = `${currentReps}/${maxReps}`;
+                    taskCard.appendChild(badge);
+                }
 
                 const taskNameDiv = document.createElement("span");
                 taskNameDiv.className = "task-name";
@@ -218,12 +227,6 @@
 
                 const actionsContainer = document.createElement("div");
                 actionsContainer.className = "task-actions-reps";
-                if (maxReps > 1) {
-                    const repCountSpan = document.createElement("span");
-                    repCountSpan.className = "repetition-count";
-                    repCountSpan.textContent = `${currentReps}/${maxReps}`;
-                    actionsContainer.appendChild(repCountSpan);
-                }
 
                 if (!task.completed) {
                     const completeButton = document.createElement("button");

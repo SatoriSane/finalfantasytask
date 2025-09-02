@@ -298,7 +298,8 @@
         getBonusMissionForToday: function() {
             const todayStr = App.utils.getFormattedDate();
 
-            if (state.dailyBonusMission && state.dailyBonusMission.date === todayStr) {
+            // Si ya existe un bonus para hoy y es válido (no es null), lo devuelve.
+            if (state.dailyBonusMission && state.dailyBonusMission.date === todayStr && state.dailyBonusMission.missionId) {
                 return state.dailyBonusMission.missionId;
             }
 

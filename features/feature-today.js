@@ -143,6 +143,8 @@
 
             todayTasks.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
 
+                        const bonusMissionId = App.state.getBonusMissionForToday();
+
             todayTasks.forEach(task => {
                 const taskCard = document.createElement("div");
                 taskCard.className = `task-card ${task.completed ? "completed" : ""}`;
@@ -204,7 +206,14 @@
 
                 const taskPointsSpan = document.createElement("span");
                 taskPointsSpan.className = `task-points ${task.points >= 0 ? "positive" : "negative"}`;
-                taskPointsSpan.textContent = `${task.points >= 0 ? "＋" : "−"}${Math.abs(task.points)}`;
+                
+                                const isBonusMission = task.missionId && task.missionId === bonusMissionId;
+                let pointsText = `${task.points >= 0 ? "＋" : "−"}${Math.abs(task.points)}`;
+                if (isBonusMission) {
+                    pointsText += ` <span class="bonus-multiplier">x2</span>`;
+                }
+                taskPointsSpan.innerHTML = pointsText;
+
                 taskCard.appendChild(taskPointsSpan);
 
                 const actionsContainer = document.createElement("div");
@@ -220,7 +229,11 @@
                     const completeButton = document.createElement("button");
                     completeButton.className = "task-btn-complete";
                     completeButton.innerHTML = "✓";
-                    completeButton.title = `Completar (${task.points >= 0 ? "＋" : "−"}${Math.abs(task.points)} puntos)`;
+                    let buttonPoints = Math.abs(task.points);
+                    if (isBonusMission) {
+                        buttonPoints *= 2;
+                    }
+                    completeButton.title = `Completar (${task.points >= 0 ? "＋" : "−"}${buttonPoints} puntos)`;
                     completeButton.onclick = (e) => {
                         e.stopPropagation();
                         App.state.completeTaskRepetition(task.id);

@@ -55,6 +55,11 @@
             currentRepetitions: 0,
             dailyRepetitions: { max: (task.dailyRepetitions && task.dailyRepetitions.max) || 1 }
         });
+
+        // Registrar la aparición de la misión
+        if (task.missionId) {
+            App.state.trackMissionAppearance(task.missionId);
+        }
         
         _save();
         App.events.emit('todayTasksUpdated');
@@ -137,13 +142,22 @@
             }
 
             task.currentRepetitions += 1;
-            const pointsAwarded = task.points;
+
+            const bonusMissionId = App.state.getBonusMissionForToday();
+            let pointsAwarded = task.points;
+            if (task.missionId && task.missionId === bonusMissionId) {
+                pointsAwarded *= 2;
+            }
 
             App.state.addPoints(pointsAwarded);
             App.state.addHistoryAction(`Misión: ${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})`, pointsAwarded, 'tarea');
 
             if (task.currentRepetitions >= task.dailyRepetitions.max) {
                 task.completed = true;
+                // Registrar la finalización de la misión
+                if (task.missionId) {
+                    App.state.trackMissionCompletion(task.missionId);
+                }
                 App.events.emit('showMotivationMessage', App.utils.getMotivationMessage(task.points));
             } else {
                 App.events.emit('showDiscreetMessage', `¡${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})! +${pointsAwarded}`);

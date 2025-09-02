@@ -225,7 +225,8 @@
         getCategories: () => _get().categories,
         getMissions: () => _get().missions,
         getScheduledMissions: () => _get().scheduledMissions,
-        getScheduledMissionByOriginalMissionId: (id) => _get().scheduledMissions.find(sm => sm.missionId === id)
+        getScheduledMissionByOriginalMissionId: (id) => _get().scheduledMissions.find(sm => sm.missionId === id),
+
     };
 
     Object.assign(App.state, missionState);

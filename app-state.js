@@ -9,6 +9,8 @@
         scheduledMissions: [], // Cada misión programada ahora tendrá dailyRepetitions: { max }
         shopItems: [], // ⭐ Restaurado: Items de la tienda
         history: [],
+        missionStats: {}, // NUEVO: Para rastrear apariciones y compleciones de misiones
+        dailyBonusMission: null, // { date: "YYYY-MM-DD", missionId: "..." }
         habits: { // NUEVO: Sección de hábitos
             challenges: [], // Retos para dejar hábitos
             routines: []    // Rutinas para crear hábitos
@@ -123,6 +125,8 @@
                         currentRepetitions: 0,
                         dailyRepetitions: { max: sm.dailyRepetitions ? sm.dailyRepetitions.max : 1 }
                     });
+                    // Registrar la aparición de la misión
+                    this.trackMissionAppearance(sm.missionId);
                 }
             });
         },
@@ -201,7 +205,12 @@
                 }
             });
 
-            // 5. Actualizar la fecha de última carga y guardar
+            // 5. Limpiar la misión con bonus del día anterior
+            if (state.dailyBonusMission && state.dailyBonusMission.date !== today) {
+                state.dailyBonusMission = null;
+            }
+
+            // 6. Actualizar la fecha de última carga y guardar
             state.lastDate = today;
             _saveStateToLocalStorage();
         },
@@ -246,6 +255,8 @@
             state = {
                 points: 0, categories: [], missions: [], tasksByDate: {},
                 scheduledMissions: [], shopItems: [], history: [], lastDate: "",
+                missionStats: {}, // Reiniciar también las estadísticas
+                dailyBonusMission: null,
                 habits: { challenges: [], routines: [] }
             };
             localStorage.removeItem("pointsAppState");
@@ -263,7 +274,69 @@
 
         // --- Getters de Estado ---
         getHistory: () => [...state.history],
-                getPoints: () => state.points,
+        getPoints: () => state.points,
+
+        trackMissionAppearance: function(missionId) {
+            const todayStr = App.utils.getFormattedDate();
+            if (!state.missionStats[missionId]) {
+                state.missionStats[missionId] = { appearances: [], completions: [] };
+            }
+            if (!state.missionStats[missionId].appearances.includes(todayStr)) {
+                state.missionStats[missionId].appearances.push(todayStr);
+            }
+        },
+
+        getBonusMissionForToday: function() {
+            const todayStr = App.utils.getFormattedDate();
+
+            if (state.dailyBonusMission && state.dailyBonusMission.date === todayStr) {
+                return state.dailyBonusMission.missionId;
+            }
+
+            const todayTasks = state.tasksByDate[todayStr] || [];
+            const missionIdsForToday = [...new Set(todayTasks.map(t => t.missionId).filter(Boolean))];
+
+            if (missionIdsForToday.length === 0) {
+                return null; 
+            }
+
+            const thirtyDaysAgo = App.utils.addDateUnit(new Date(), -30, 'day');
+            let worstMissionId = null;
+            let lowestRatio = Infinity;
+
+            missionIdsForToday.forEach(missionId => {
+                const stats = state.missionStats[missionId];
+                if (!stats) return;
+
+                const recentAppearances = stats.appearances.filter(dateStr => new Date(dateStr) >= thirtyDaysAgo).length;
+                const recentCompletions = stats.completions.filter(dateStr => new Date(dateStr) >= thirtyDaysAgo).length;
+
+                if (recentAppearances > 0) {
+                    const ratio = recentCompletions / recentAppearances;
+                    if (ratio < lowestRatio) {
+                        lowestRatio = ratio;
+                        worstMissionId = missionId;
+                    }
+                }
+            });
+
+            state.dailyBonusMission = {
+                date: todayStr,
+                missionId: worstMissionId
+            };
+            
+            return worstMissionId;
+        },
+
+        trackMissionCompletion: function(missionId) {
+            const todayStr = App.utils.getFormattedDate();
+            if (!state.missionStats[missionId]) {
+                state.missionStats[missionId] = { appearances: [], completions: [] };
+            }
+            if (!state.missionStats[missionId].completions.includes(todayStr)) {
+                state.missionStats[missionId].completions.push(todayStr);
+            }
+        },
 
         recordResistance: function(challengeId, challengeName) {
             const challenge = this.getAbstinenceChallengeById(challengeId);

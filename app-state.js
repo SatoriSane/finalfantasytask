@@ -306,7 +306,7 @@
             const missionIdsForToday = [...new Set(todayTasks.map(t => t.missionId).filter(Boolean))];
 
             if (missionIdsForToday.length === 0) {
-                return null; 
+                return null;
             }
 
             const thirtyDaysAgo = App.utils.addDateUnit(new Date(), -30, 'day');
@@ -329,11 +329,18 @@
                 }
             });
 
+            // --- LÓGICA DE RESPALDO ---
+            // Si no se encontró ninguna misión con estadísticas (ej. datos importados),
+            // se asigna el bonus a la primera misión de hoy para garantizar que siempre haya una.
+            if (worstMissionId === null && missionIdsForToday.length > 0) {
+                worstMissionId = missionIdsForToday[0];
+            }
+
             state.dailyBonusMission = {
                 date: todayStr,
                 missionId: worstMissionId
             };
-            
+
             return worstMissionId;
         },
 

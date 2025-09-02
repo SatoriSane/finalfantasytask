@@ -187,19 +187,45 @@
 
                 let pressTimer = null;
                 let longPressTriggered = false;
+                let startX, startY;
+                const moveThreshold = 10; // pixels
+
+                const cancelLongPress = () => {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                };
 
                 const handlePressStart = (e) => {
                     if (e.target.closest('button')) return;
+
                     longPressTriggered = false;
+                    if (e.type === 'touchstart') {
+                        startX = e.touches[0].clientX;
+                        startY = e.touches[0].clientY;
+                    }
+
                     pressTimer = window.setTimeout(() => {
                         longPressTriggered = true;
                         if (navigator.vibrate) navigator.vibrate(50);
                         App.state.deleteCategory(cat.id);
+                        pressTimer = null;
                     }, 800);
                 };
 
+                const handlePressMove = (e) => {
+                    if (!pressTimer) return;
+
+                    if (e.type === 'touchmove') {
+                        const moveX = Math.abs(e.touches[0].clientX - startX);
+                        const moveY = Math.abs(e.touches[0].clientY - startY);
+                        if (moveX > moveThreshold || moveY > moveThreshold) {
+                            cancelLongPress();
+                        }
+                    }
+                };
+
                 const handlePressEnd = (e) => {
-                    clearTimeout(pressTimer);
+                    cancelLongPress();
                     if (longPressTriggered) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -208,10 +234,12 @@
 
                 catHeader.addEventListener('mousedown', handlePressStart);
                 catHeader.addEventListener('mouseup', handlePressEnd);
-                catHeader.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+                catHeader.addEventListener('mouseleave', cancelLongPress);
+
                 catHeader.addEventListener('touchstart', handlePressStart, { passive: true });
                 catHeader.addEventListener('touchend', handlePressEnd);
-                catHeader.addEventListener('touchcancel', () => clearTimeout(pressTimer));
+                catHeader.addEventListener('touchcancel', cancelLongPress);
+                catHeader.addEventListener('touchmove', handlePressMove, { passive: true });
 
                 catHeader.addEventListener('click', (e) => {
                     if (longPressTriggered) {

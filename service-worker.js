@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v24'; // Incremented version
+const CACHE_NAME = 'final-fantasy-tasks-cache-v1'; // Incremented version
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear
@@ -27,7 +27,8 @@ const APP_FILES = [
     'features/feature-shop.js',
     'features/feature-today.js',
     'features/feature-ui.js',
-
+    'features/feature-data.js',
+    
     // Estilos CSS
     'base.css',
     'components.css',

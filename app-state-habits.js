@@ -147,7 +147,7 @@
                     const nextAllowed = new Date(challenge.nextAllowedTime);
                     
                     // Auto level up when timer reaches 0
-                    if (now >= nextAllowed && !challenge.isAvailableToConsume) {
+                    if (now >= nextAllowed) {
                         challenge.currentLevel++;
                         challenge.isAvailableToConsume = true;
                         challenge.automaticLevelUps = (challenge.automaticLevelUps || 0) + 1; // Track automatic level ups

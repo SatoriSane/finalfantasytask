@@ -37,54 +37,65 @@
         return `${seconds}s`;
     };
 
-    // Update timers for all abstinence challenge cards
-    const updateAbstinenceTimers = () => {
-        const challengeCards = document.querySelectorAll('.abstinence-card');
-        if (challengeCards.length === 0) {
-            if (timerUpdateInterval) {
-                clearInterval(timerUpdateInterval);
-                timerUpdateInterval = null;
-            }
-            return;
+// Update timers for all abstinence challenge cards
+const updateAbstinenceTimers = () => {
+    const challengeCards = document.querySelectorAll('.abstinence-card');
+    if (challengeCards.length === 0) {
+        if (timerUpdateInterval) {
+            clearInterval(timerUpdateInterval);
+            timerUpdateInterval = null;
+        }
+        return;
+    }
+
+    challengeCards.forEach(card => {
+        const challengeId = card.dataset.id;
+        const challenge = App.state.getAbstinenceChallengeById(challengeId);
+        if (!challenge || !challenge.isActive) return;
+
+        const now = new Date();
+        const nextAllowed = new Date(challenge.nextAllowedTime);
+        const timeRemaining = nextAllowed.getTime() - now.getTime();
+        const isAllowed = timeRemaining <= 0;
+
+        // 🚀 Auto-avanzar de nivel si ya terminó la espera
+        if (isAllowed && !challenge._autoAdvanced) {
+            App.state.processConsumption(challengeId); 
+            challenge._autoAdvanced = true; // evitar múltiples disparos en el mismo tick
+            return; // dejamos que el re-render (habitsUpdated) se encargue de refrescar la UI
+        } else if (!isAllowed) {
+            // reset flag si vuelve a estar en espera
+            challenge._autoAdvanced = false;
         }
 
-        challengeCards.forEach(card => {
-            const challengeId = card.dataset.id;
-            const challenge = App.state.getAbstinenceChallengeById(challengeId);
-            if (!challenge || !challenge.isActive) return;
+        // Update timer display
+        const timerElement = card.querySelector('.timer-display');
+        if (timerElement) {
+            timerElement.textContent = formatTimeRemaining(timeRemaining);
+        }
 
-            const now = new Date();
-            const nextAllowed = new Date(challenge.nextAllowedTime);
-            const timeRemaining = nextAllowed.getTime() - now.getTime();
-            const isAllowed = timeRemaining <= 0;
+        // Update overall challenge progress bar
+        const createdAt = new Date(challenge.createdAt);
+        const durationMs = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
+        const elapsedMs = now.getTime() - createdAt.getTime();
+        const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
 
-            // Update timer display
-            const timerElement = card.querySelector('.timer-display');
-            if (timerElement) {
-                timerElement.textContent = formatTimeRemaining(timeRemaining);
-            }
+        const progressFill = card.querySelector('.progress-fill');
+        if (progressFill) progressFill.style.width = `${progressPercent}%`;
+        
+        const progressLabel = card.querySelector('.progress-label');
+        if (progressLabel) progressLabel.textContent = `Progreso del reto: ${Math.round(progressPercent)}%`;
 
-            // Update overall challenge progress bar
-            const createdAt = new Date(challenge.createdAt);
-            const durationMs = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
-            const elapsedMs = now.getTime() - createdAt.getTime();
-            const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
+        // Update consume button
+        const consumeBtn = card.querySelector('.consume-btn');
+        if (consumeBtn) {
+            consumeBtn.textContent = isAllowed ? 'Consumir' : 'Esperando...';
+            consumeBtn.classList.toggle('available', isAllowed);
+            consumeBtn.classList.toggle('waiting', !isAllowed);
+        }
+    });
+};
 
-            const progressFill = card.querySelector('.progress-fill');
-            if (progressFill) progressFill.style.width = `${progressPercent}%`;
-            
-            const progressLabel = card.querySelector('.progress-label');
-            if (progressLabel) progressLabel.textContent = `Progreso del reto: ${Math.round(progressPercent)}%`;
-
-            // Update consume button
-            const consumeBtn = card.querySelector('.consume-btn');
-            if (consumeBtn) {
-                consumeBtn.textContent = isAllowed ? 'Consumir' : 'Esperando...';
-                consumeBtn.classList.toggle('available', isAllowed);
-                consumeBtn.classList.toggle('waiting', !isAllowed);
-            }
-        });
-    };
 
     // Render abstinence challenges
     const renderAbstinenceChallenges = (challenges) => {

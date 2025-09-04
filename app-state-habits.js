@@ -137,51 +137,80 @@
         },
 
         // Process all abstinence challenges (called periodically)
+ // app-state-habits.js
+
+// ... (resto del código del archivo sin cambios) ...
+
+        // Process all abstinence challenges (called periodically)
+        // VERSIÓN MEJORADA CON LÓGICA DE "CATCH-UP"
         processAbstinenceChallenges: function() {
             const state = App.state.get();
             let needsRender = false;
+            const now = new Date(); // Obtenemos la hora actual una sola vez para ser consistentes
             
             state.habits.challenges.forEach(challenge => {
-                if (challenge.type === 'abstinence' && challenge.isActive) {
-                    const now = new Date();
-                    const nextAllowed = new Date(challenge.nextAllowedTime);
+                // Nos aseguramos de que el reto está activo y es del tipo correcto
+                if (challenge.type !== 'abstinence' || !challenge.isActive) {
+                    return; // 'return' dentro de un forEach es como 'continue' en un bucle normal
+                }
+
+                // --- BUCLE DE ACTUALIZACIÓN (CATCH-UP) ---
+                // Mientras el tiempo límite del reto haya pasado y el botón no esté disponible...
+                // Este bucle se ejecutará tantas veces como niveles se hayan superado mientras la app estaba cerrada.
+                while (now >= new Date(challenge.nextAllowedTime) && !challenge.isAvailableToConsume) {
                     
-                    // Auto level up when timer reaches 0
-                    if (now >= nextAllowed) {
-                        challenge.currentLevel++;
-                        challenge.isAvailableToConsume = true;
-                        challenge.automaticLevelUps = (challenge.automaticLevelUps || 0) + 1; // Track automatic level ups
-                        
-                        // Award points for level up
-                        const pointsEarned = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
-                        challenge.totalPoints += pointsEarned;
-                        
-                        // Calculate next level's wait time and set new timer
-                        const currentWaitMs = convertToMilliseconds(challenge.currentInterval.value, challenge.currentInterval.unit);
-                        const newWaitMs = currentWaitMs * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1);
-                        challenge.nextAllowedTime = new Date(now.getTime() + newWaitMs).toISOString();
-                        
-                        // Update global points and history
-                        App.state.addPoints(pointsEarned);
-                        App.state.addHistoryAction(`${challenge.name} - Nivel ${challenge.currentLevel}`, pointsEarned, 'abstinencia');
-                        
-                        needsRender = true;
-                        
-                        if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
-                            App.ui.general.showDiscreetMessage(`¡Nivel ${challenge.currentLevel}! +${pointsEarned} puntos 🎉`);
-                        }
-                    }
-                    
-                    // Check if challenge duration has expired
+                    // Comprobación de finalización DENTRO del bucle:
+                    // Si el reto ya debería haber terminado, lo marcamos y salimos del bucle de catch-up.
                     const createdAt = new Date(challenge.createdAt);
                     const durationMs = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
-                    
-                    if (now.getTime() - createdAt.getTime() >= durationMs) {
+                    if (new Date(challenge.nextAllowedTime).getTime() - createdAt.getTime() >= durationMs) {
                         challenge.isActive = false;
                         needsRender = true;
-                        if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
-                            App.ui.general.showDiscreetMessage(`¡Reto "${challenge.name}" completado! 🏆`);
-                        }
+                        App.events.emit('showDiscreetMessage', `¡Reto "${challenge.name}" completado! 🏆`);
+                        break; // Salimos del 'while' para este reto
+                    }
+                    
+                    // Subimos de nivel
+                    challenge.currentLevel++;
+                    challenge.automaticLevelUps = (challenge.automaticLevelUps || 0) + 1;
+                    
+                    // Otorgamos los puntos del nivel que ACABA de superar
+                    const pointsEarned = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 2));
+                    challenge.totalPoints += pointsEarned;
+                    
+                    // Actualizamos los puntos globales y el historial
+                    App.state.addPoints(pointsEarned);
+                    App.state.addHistoryAction(`${challenge.name} - Nivel ${challenge.currentLevel-1}`, pointsEarned, 'abstinencia');
+                    
+                    // Calculamos el tiempo de espera para el NUEVO nivel
+                    const currentWaitMs = convertToMilliseconds(challenge.currentInterval.value, challenge.currentInterval.unit);
+                    const newWaitMs = currentWaitMs * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1);
+                    
+                    // ¡CLAVE! Actualizamos el 'nextAllowedTime' para la siguiente iteración del bucle.
+                    // El bucle se detendrá cuando este nuevo tiempo sea en el futuro.
+                    const lastAllowedTime = new Date(challenge.nextAllowedTime);
+                    challenge.nextAllowedTime = new Date(lastAllowedTime.getTime() + newWaitMs).toISOString();
+
+                    needsRender = true;
+                    App.events.emit('showDiscreetMessage', `¡Nivel ${challenge.currentLevel-1}! +${pointsEarned} puntos 🎉`);
+                }
+
+                // Si el reto sigue activo después del bucle de catch-up,
+                // significa que el 'nextAllowedTime' ya está en el futuro.
+                // Ahora marcamos el botón como disponible.
+                if (challenge.isActive && now >= new Date(challenge.nextAllowedTime) && !challenge.isAvailableToConsume) {
+                     challenge.isAvailableToConsume = true;
+                     needsRender = true;
+                }
+
+                 // Comprobación final de duración (por si el bucle no se ejecutó)
+                const createdAtFinal = new Date(challenge.createdAt);
+                const durationMsFinal = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
+                if (challenge.isActive && (now.getTime() - createdAtFinal.getTime() >= durationMsFinal)) {
+                    challenge.isActive = false;
+                    needsRender = true;
+                    if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
+                        App.ui.general.showDiscreetMessage(`¡Reto "${challenge.name}" completado! 🏆`);
                     }
                 }
             });
@@ -193,7 +222,8 @@
             }
             return false;
         },
-        
+
+// ... (resto del archivo, como la función startAbstinenceProcessor, que no necesita cambios)
 
         // Start the abstinence challenge processor
         startAbstinenceProcessor: function() {

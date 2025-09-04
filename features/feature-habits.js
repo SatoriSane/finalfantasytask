@@ -56,19 +56,8 @@ const updateAbstinenceTimers = () => {
         const now = new Date();
         const nextAllowed = new Date(challenge.nextAllowedTime);
         const timeRemaining = nextAllowed.getTime() - now.getTime();
-        const isAllowed = timeRemaining <= 0;
 
-        // 🚀 Auto-avanzar de nivel si ya terminó la espera
-        if (isAllowed && !challenge._autoAdvanced) {
-            App.state.processConsumption(challengeId); 
-            challenge._autoAdvanced = true; // evitar múltiples disparos en el mismo tick
-            return; // dejamos que el re-render (habitsUpdated) se encargue de refrescar la UI
-        } else if (!isAllowed) {
-            // reset flag si vuelve a estar en espera
-            challenge._autoAdvanced = false;
-        }
-
-        // Update timer display
+        // Update timer display - always show remaining time
         const timerElement = card.querySelector('.timer-display');
         if (timerElement) {
             timerElement.textContent = formatTimeRemaining(timeRemaining);
@@ -86,13 +75,20 @@ const updateAbstinenceTimers = () => {
         const progressLabel = card.querySelector('.progress-label');
         if (progressLabel) progressLabel.textContent = `Progreso del reto: ${Math.round(progressPercent)}%`;
 
-        // Update consume button
+        // Update consume button based on availability flag
         const consumeBtn = card.querySelector('.consume-btn');
         if (consumeBtn) {
-            consumeBtn.textContent = isAllowed ? 'Consumir' : 'Esperando...';
-            consumeBtn.classList.toggle('available', isAllowed);
-            consumeBtn.classList.toggle('waiting', !isAllowed);
+            if (challenge.isAvailableToConsume) {
+                consumeBtn.textContent = 'Consumir';
+                consumeBtn.classList.add('available');
+                consumeBtn.classList.remove('waiting');
+            } else {
+                consumeBtn.textContent = 'Esperando...';
+                consumeBtn.classList.add('waiting');
+                consumeBtn.classList.remove('available');
+            }
         }
+        
     });
 };
 
@@ -125,17 +121,19 @@ const updateAbstinenceTimers = () => {
             const timeRemaining = nextAllowed.getTime() - now.getTime();
             const isAllowed = timeRemaining <= 0;
 
-            const statusClass = isActive ? (isAllowed ? 'available' : 'waiting') : 'completed';
-            const buttonText = isActive ? (isAllowed ? 'Consumir' : 'Esperando...') : 'Completado';
-            const buttonClass = isActive ? (isAllowed ? 'available' : 'waiting') : 'completed';
+            const statusClass = isActive ? (challenge.isAvailableToConsume ? 'available' : 'waiting') : 'completed';
+            const buttonText = isActive ? (challenge.isAvailableToConsume ? 'Consumir' : 'Esperando...') : 'Completado';
+            const buttonClass = isActive ? (challenge.isAvailableToConsume ? 'available' : 'waiting') : 'completed';
             const createdAtDate = new Date(createdAt);
             const durationMs = convertToMilliseconds(totalDuration.value, totalDuration.unit);
             const elapsedMs = now.getTime() - createdAtDate.getTime();
             const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
             const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, currentLevel - 1));
 
-            const totalConsumptions = challenge.successfulConsumptions + regressionCount;
-            const successRate = totalConsumptions > 0 ? (challenge.successfulConsumptions / totalConsumptions) * 100 : 100;
+            const automaticLevelUps = challenge.automaticLevelUps || 0;
+            const temptationFalls = challenge.temptationFalls || 0;
+            const totalEvents = automaticLevelUps + temptationFalls;
+            const successRate = totalEvents > 0 ? (automaticLevelUps / totalEvents) * 100 : 100;
 
             let complianceClass = '';
             if (successRate >= 80) complianceClass = 'compliance-high';
@@ -292,13 +290,11 @@ const updateAbstinenceTimers = () => {
         const challenge = App.state.getAbstinenceChallengeById(challengeId);
         if (!challenge) return;
 
-        const now = new Date();
-        const nextAllowed = new Date(challenge.nextAllowedTime);
-        const isAllowed = now >= nextAllowed;
-
-        if (isAllowed) {
+        // If button is available (green), process consumption directly
+        if (challenge.isAvailableToConsume) {
             App.state.processConsumption(challengeId);
         } else {
+            // If button is in waiting state, show temptation modal
             showTemptationModal(challenge);
         }
     }

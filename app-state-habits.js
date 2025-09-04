@@ -59,9 +59,12 @@
                 lastConsumption: now,
                 nextAllowedTime: new Date(Date.now() + convertToMilliseconds(currentInterval.value, currentInterval.unit)).toISOString(),
                 isActive: true,
+                isAvailableToConsume: false, // Button starts as "Esperando"
                 finalLevel: stats.finalLevel,
                 finalWaitTime: stats.finalWaitTime,
-                secondChanceUsed: false
+                secondChanceUsed: false,
+                automaticLevelUps: 0, // Count automatic level advances
+                temptationFalls: 0 // Count temptation falls
             };
             
             App.state.get().habits.challenges.push(newChallenge);
@@ -70,44 +73,30 @@
             App.events.emit('showDiscreetMessage', `¡Reto de abstinencia "${name}" creado!`);
         },
 
-        // Process consumption (either allowed or early)
+        // Process consumption when button is clicked
         processConsumption: function(challengeId) {
             const state = App.state.get();
             const challenge = state.habits.challenges.find(c => c.id === challengeId);
             if (!challenge || !challenge.isActive) return;
 
             const now = new Date();
-            const nextAllowed = new Date(challenge.nextAllowedTime);
-            const isAllowed = now >= nextAllowed;
 
-            if (isAllowed) {
-                // Level up - consumption allowed
+            if (challenge.isAvailableToConsume) {
+                // Consumption allowed - just record consumption and reset availability
                 challenge.successfulConsumptions++;
-                challenge.currentLevel++;
-                const pointsEarned = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
-                challenge.totalPoints += pointsEarned;
-                
-                // Calculate new wait time
-                const currentWaitMs = convertToMilliseconds(challenge.currentInterval.value, challenge.currentInterval.unit);
-                const newWaitMs = currentWaitMs * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1);
-                
                 challenge.lastConsumption = now.toISOString();
-                challenge.nextAllowedTime = new Date(now.getTime() + newWaitMs).toISOString();
-                challenge.secondChanceUsed = false; // Reset on level up
-
-                // Update global points and history
-                App.state.addPoints(pointsEarned);
-                App.state.addHistoryAction(`${challenge.name} - Nivel ${challenge.currentLevel}`, pointsEarned, 'abstinencia');
+                challenge.isAvailableToConsume = false; // Button goes back to "Esperando"
+                challenge.secondChanceUsed = false;
                 
-                if (App.ui.render.general) {
-                    App.ui.render.general.showDiscreetMessage(`¡Nivel ${challenge.currentLevel}! +${pointsEarned} puntos 🎉`);
+                if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
+                    App.ui.general.showDiscreetMessage('Consumo registrado. Timer continúa...');
                 }
             } else {
-                // Level down - early consumption
+                // Early consumption (temptation) - level down and reset timer
                 if (challenge.currentLevel > 1) {
                     challenge.currentLevel--;
                 }
-                challenge.regressionCount++;
+                challenge.temptationFalls = (challenge.temptationFalls || 0) + 1; // Track temptation falls
                 
                 // Reset timer with current level's wait time
                 const currentWaitMs = convertToMilliseconds(challenge.currentInterval.value, challenge.currentInterval.unit);
@@ -115,15 +104,16 @@
                 
                 challenge.lastConsumption = now.toISOString();
                 challenge.nextAllowedTime = new Date(now.getTime() + newWaitMs).toISOString();
-                challenge.secondChanceUsed = false; // Also reset on level down
+                challenge.isAvailableToConsume = false;
+                challenge.secondChanceUsed = false;
 
-                if (App.ui.render.general) {
-                    App.ui.render.general.showDiscreetMessage(`Nivel ${challenge.currentLevel}. ¡No te rindas! 💪`);
+                if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
+                    App.ui.general.showDiscreetMessage(`Nivel ${challenge.currentLevel}. ¡No te rindas! 💪`);
                 }
             }
             
-                        _saveStateToLocalStorage();
-            App.events.emit('habitsUpdated'); // This will also trigger points and history updates via saveState
+            _saveStateToLocalStorage();
+            App.events.emit('habitsUpdated');
         },
 
         // Delete abstinence challenge
@@ -153,16 +143,44 @@
             
             state.habits.challenges.forEach(challenge => {
                 if (challenge.type === 'abstinence' && challenge.isActive) {
+                    const now = new Date();
+                    const nextAllowed = new Date(challenge.nextAllowedTime);
+                    
+                    // Auto level up when timer reaches 0
+                    if (now >= nextAllowed && !challenge.isAvailableToConsume) {
+                        challenge.currentLevel++;
+                        challenge.isAvailableToConsume = true;
+                        challenge.automaticLevelUps = (challenge.automaticLevelUps || 0) + 1; // Track automatic level ups
+                        
+                        // Award points for level up
+                        const pointsEarned = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
+                        challenge.totalPoints += pointsEarned;
+                        
+                        // Calculate next level's wait time and set new timer
+                        const currentWaitMs = convertToMilliseconds(challenge.currentInterval.value, challenge.currentInterval.unit);
+                        const newWaitMs = currentWaitMs * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1);
+                        challenge.nextAllowedTime = new Date(now.getTime() + newWaitMs).toISOString();
+                        
+                        // Update global points and history
+                        App.state.addPoints(pointsEarned);
+                        App.state.addHistoryAction(`${challenge.name} - Nivel ${challenge.currentLevel}`, pointsEarned, 'abstinencia');
+                        
+                        needsRender = true;
+                        
+                        if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
+                            App.ui.general.showDiscreetMessage(`¡Nivel ${challenge.currentLevel}! +${pointsEarned} puntos 🎉`);
+                        }
+                    }
+                    
                     // Check if challenge duration has expired
                     const createdAt = new Date(challenge.createdAt);
-                    const now = new Date();
                     const durationMs = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
                     
                     if (now.getTime() - createdAt.getTime() >= durationMs) {
                         challenge.isActive = false;
                         needsRender = true;
-                        if (App.ui.render.general) {
-                            App.ui.render.general.showDiscreetMessage(`¡Reto "${challenge.name}" completado! 🏆`);
+                        if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
+                            App.ui.general.showDiscreetMessage(`¡Reto "${challenge.name}" completado! 🏆`);
                         }
                     }
                 }
@@ -175,6 +193,7 @@
             }
             return false;
         },
+        
 
         // Start the abstinence challenge processor
         startAbstinenceProcessor: function() {

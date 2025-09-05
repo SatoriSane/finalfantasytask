@@ -77,56 +77,63 @@
             App.events.emit('showDiscreetMessage', `¡Reto de abstinencia "${name}" creado!`);
         },
 
-        // Process consumption when button is clicked
-        processConsumption: function(challengeId) {
-            const state = App.state.get();
-            const challenge = state.habits.challenges.find(c => c.id === challengeId);
-            if (!challenge || !challenge.isActive) return;
+    // Process consumption when button is clicked
+    processConsumption: function(challengeId) {
+        const state = App.state.get();
+        const challenge = state.habits.challenges.find(c => c.id === challengeId);
+        if (!challenge || !challenge.isActive) return;
 
-            const now = new Date();
+        const now = new Date();
 
-            if (challenge.isAvailableToConsume) {
-                // Consumption allowed - log it, and reset availability for this level.
-                challenge.successfulConsumptions++;
-                challenge.lastConsumption = now.toISOString();
-                challenge.isAvailableToConsume = false; // Button goes back to "Waiting"
-                challenge.secondChanceUsed = false;
+        if (challenge.isAvailableToConsume) {
+            // ✅ Consumo válido: solo se registra, no altera timers ni nivel
+            challenge.successfulConsumptions++;
+            challenge.lastConsumption = now.toISOString();
+            challenge.isAvailableToConsume = false; // solo se puede consumir una vez por nivel
+            challenge.secondChanceUsed = false;
 
-                // Log the consumption event for statistics
-                challenge.consumptionHistory.push({ level: challenge.currentLevel, date: now.toISOString() });
+            // Guardar en historial
+            challenge.consumptionHistory.push({
+                level: challenge.currentLevel,
+                date: now.toISOString()
+            });
 
-                // CRITICAL: Start the timer for the NEXT level from now
-                const currentWaitMs = convertToMilliseconds(challenge.currentInterval.value, challenge.currentInterval.unit);
-                const nextWaitMs = currentWaitMs * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1);
-                challenge.nextAllowedTime = new Date(now.getTime() + nextWaitMs).toISOString();
-
-                if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
-                    App.ui.general.showDiscreetMessage('Consumo registrado. ¡A por el siguiente nivel!');
-                }
-            } else {
-                // Early consumption (temptation) - level down and reset timer
-                if (challenge.currentLevel > 1) {
-                    challenge.currentLevel--;
-                }
-                challenge.temptationFalls = (challenge.temptationFalls || 0) + 1;
-
-                // Reset timer with the new (lower) level's wait time
-                const currentWaitMs = convertToMilliseconds(challenge.currentInterval.value, challenge.currentInterval.unit);
-                const newWaitMs = currentWaitMs * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1);
-
-                challenge.lastConsumption = now.toISOString();
-                challenge.nextAllowedTime = new Date(now.getTime() + newWaitMs).toISOString();
-                challenge.isAvailableToConsume = false; // Button remains in waiting state
-                challenge.secondChanceUsed = false;
-
-                if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
-                    App.ui.general.showDiscreetMessage(`Caíste en la tentación. Nivel ${challenge.currentLevel}. ¡No te rindas!`);
-                }
+            if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
+                App.ui.general.showDiscreetMessage(
+                    `Consumo registrado en nivel ${challenge.currentLevel}.`
+                );
             }
-            
-            _saveStateToLocalStorage();
-            App.events.emit('habitsUpdated');
-        },
+        } else {
+            // 🚨 Consumo antes de tiempo = caída en tentación
+            if (challenge.currentLevel > 1) {
+                challenge.currentLevel--;
+            }
+            challenge.temptationFalls = (challenge.temptationFalls || 0) + 1;
+
+            // Reiniciar timer al nivel reducido
+            const currentWaitMs = convertToMilliseconds(
+                challenge.currentInterval.value,
+                challenge.currentInterval.unit
+            );
+            const newWaitMs = currentWaitMs *
+                Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1);
+
+            challenge.lastConsumption = now.toISOString();
+            challenge.nextAllowedTime = new Date(now.getTime() + newWaitMs).toISOString();
+            challenge.isAvailableToConsume = false; // botón vuelve a waiting
+            challenge.secondChanceUsed = false;
+
+            if (App.ui && App.ui.general && App.ui.general.showDiscreetMessage) {
+                App.ui.general.showDiscreetMessage(
+                    `Caíste en la tentación. Nivel ${challenge.currentLevel}. ¡No te rindas!`
+                );
+            }
+        }
+        
+        _saveStateToLocalStorage();
+        App.events.emit('habitsUpdated');
+    },
+
 
         // Delete abstinence challenge
         deleteAbstinenceChallenge: function(challengeId) {

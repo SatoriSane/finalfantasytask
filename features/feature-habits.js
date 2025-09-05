@@ -37,6 +37,7 @@
         return `${seconds}s`;
     };
 
+    // Update timers for all abstinence challenge cards
 // Update timers for all abstinence challenge cards
 const updateAbstinenceTimers = () => {
     const challengeCards = document.querySelectorAll('.abstinence-card');
@@ -57,13 +58,13 @@ const updateAbstinenceTimers = () => {
         const nextAllowed = new Date(challenge.nextAllowedTime);
         const timeRemaining = nextAllowed.getTime() - now.getTime();
 
-        // Update timer display - always show remaining time
+        // ⏱️ Mostrar tiempo restante
         const timerElement = card.querySelector('.timer-display');
         if (timerElement) {
             timerElement.textContent = formatTimeRemaining(timeRemaining);
         }
 
-        // Update overall challenge progress bar
+        // 📊 Barra de progreso general
         const createdAt = new Date(challenge.createdAt);
         const durationMs = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
         const elapsedMs = now.getTime() - createdAt.getTime();
@@ -71,11 +72,11 @@ const updateAbstinenceTimers = () => {
 
         const progressFill = card.querySelector('.progress-fill');
         if (progressFill) progressFill.style.width = `${progressPercent}%`;
-        
+
         const progressLabel = card.querySelector('.progress-label');
         if (progressLabel) progressLabel.textContent = `Progreso del reto: ${Math.round(progressPercent)}%`;
 
-        // Update consume button based on availability flag
+        // 🎛️ Botón "Consumir" → refleja SOLO el estado actual
         const consumeBtn = card.querySelector('.consume-btn');
         if (consumeBtn) {
             if (challenge.isAvailableToConsume) {
@@ -88,9 +89,9 @@ const updateAbstinenceTimers = () => {
                 consumeBtn.classList.remove('available');
             }
         }
-        
     });
 };
+
 
 
     // Render abstinence challenges
@@ -172,6 +173,54 @@ const updateAbstinenceTimers = () => {
         }).join('');
     };
 
+    function updateChallengePreview() {
+        const getVal = (id, isFloat = false) => isFloat ? parseFloat(document.getElementById(id).value) : parseInt(document.getElementById(id).value);
+        const currentIntervalValue = getVal('currentIntervalValue') || 1;
+        const totalDurationValue = getVal('totalDurationValue') || 1;
+        const incrementPercent = getVal('incrementPercent', true) || 1;
+        const currentIntervalUnit = document.getElementById('currentIntervalUnit').value;
+
+        const currentInterval = { value: currentIntervalValue, unit: currentIntervalUnit };
+        const totalDuration = { value: totalDurationValue, unit: document.getElementById('totalDurationUnit').value };
+
+        const stats = calculatePreviewStats(currentInterval, incrementPercent, totalDuration);
+        document.getElementById('previewLevels').textContent = stats.finalLevel;
+        document.getElementById('previewFinalWait').textContent = formatDuration(stats.finalWaitTime, currentIntervalUnit);
+    }
+
+    function calculatePreviewStats(currentInterval, incrementPercent, totalDuration) {
+        const convertToMs = (value, unit) => {
+            const multipliers = { 'minutes': 60000, 'hours': 3600000, 'days': 86400000, 'weeks': 604800000, 'months': 2592000000 };
+            const unitKey = totalDuration.unit;
+            return value * (multipliers[unit] || multipliers[unitKey]);
+        };
+
+        const totalMs = convertToMs(totalDuration.value, totalDuration.unit);
+        let currentWaitTime = convertToMs(currentInterval.value, currentInterval.unit);
+        let level = 1, elapsedTime = 0;
+
+        while (elapsedTime < totalMs) {
+            elapsedTime += currentWaitTime;
+            if (elapsedTime < totalMs) {
+                level++;
+                currentWaitTime *= (1 + incrementPercent / 100);
+            }
+        }
+        return { finalLevel: level, finalWaitTime: Math.round(currentWaitTime) };
+    }
+
+    function handleAbstinenceConsumption(challengeId) {
+        const challenge = App.state.getAbstinenceChallengeById(challengeId);
+        if (!challenge) return;
+
+        // If button is available (green), process consumption directly
+        if (challenge.isAvailableToConsume) {
+            App.state.processConsumption(challengeId);
+        } else {
+            // If button is in waiting state, show temptation modal
+            showTemptationModal(challenge);
+        }
+    }
     function showTemptationModal(challenge) {
         const modal = document.getElementById('temptationModal');
         if (!modal) return;
@@ -283,20 +332,6 @@ const updateAbstinenceTimers = () => {
         zenModal.classList.add('active');
         startBreathingSequence();
     }
-
-    function handleAbstinenceConsumption(challengeId) {
-        const challenge = App.state.getAbstinenceChallengeById(challengeId);
-        if (!challenge) return;
-
-        // If button is available (green), process consumption directly
-        if (challenge.isAvailableToConsume) {
-            App.state.processConsumption(challengeId);
-        } else {
-            // If button is in waiting state, show temptation modal
-            showTemptationModal(challenge);
-        }
-    }
-
     function showAbstinenceChallengeModal() {
         const existingModal = document.getElementById('abstinenceChallengeModal');
         if (existingModal) existingModal.remove();
@@ -416,41 +451,7 @@ const updateAbstinenceTimers = () => {
         document.getElementById('abstinenceChallengeModal').remove();
     }
 
-    function updateChallengePreview() {
-        const getVal = (id, isFloat = false) => isFloat ? parseFloat(document.getElementById(id).value) : parseInt(document.getElementById(id).value);
-        const currentIntervalValue = getVal('currentIntervalValue') || 1;
-        const totalDurationValue = getVal('totalDurationValue') || 1;
-        const incrementPercent = getVal('incrementPercent', true) || 1;
-        const currentIntervalUnit = document.getElementById('currentIntervalUnit').value;
 
-        const currentInterval = { value: currentIntervalValue, unit: currentIntervalUnit };
-        const totalDuration = { value: totalDurationValue, unit: document.getElementById('totalDurationUnit').value };
-
-        const stats = calculatePreviewStats(currentInterval, incrementPercent, totalDuration);
-        document.getElementById('previewLevels').textContent = stats.finalLevel;
-        document.getElementById('previewFinalWait').textContent = formatDuration(stats.finalWaitTime, currentIntervalUnit);
-    }
-
-    function calculatePreviewStats(currentInterval, incrementPercent, totalDuration) {
-        const convertToMs = (value, unit) => {
-            const multipliers = { 'minutes': 60000, 'hours': 3600000, 'days': 86400000, 'weeks': 604800000, 'months': 2592000000 };
-            const unitKey = totalDuration.unit;
-            return value * (multipliers[unit] || multipliers[unitKey]);
-        };
-
-        const totalMs = convertToMs(totalDuration.value, totalDuration.unit);
-        let currentWaitTime = convertToMs(currentInterval.value, currentInterval.unit);
-        let level = 1, elapsedTime = 0;
-
-        while (elapsedTime < totalMs) {
-            elapsedTime += currentWaitTime;
-            if (elapsedTime < totalMs) {
-                level++;
-                currentWaitTime *= (1 + incrementPercent / 100);
-            }
-        }
-        return { finalLevel: level, finalWaitTime: Math.round(currentWaitTime) };
-    }
 
     function formatDuration(ms) {
         const days = Math.floor(ms / 86400000);

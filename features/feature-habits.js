@@ -39,6 +39,7 @@
 
     // Update timers for all abstinence challenge cards
 // Update timers for all abstinence challenge cards
+// Update timers for all abstinence challenge cards
 const updateAbstinenceTimers = () => {
     const challengeCards = document.querySelectorAll('.abstinence-card');
     if (challengeCards.length === 0) {
@@ -76,21 +77,37 @@ const updateAbstinenceTimers = () => {
         const progressLabel = card.querySelector('.progress-label');
         if (progressLabel) progressLabel.textContent = `Progreso del reto: ${Math.round(progressPercent)}%`;
 
-        // 🎛️ Botón "Consumir" → refleja SOLO el estado actual
+        // 🎛️ Botones "Consumir" y "Ganar x2 puntos"
         const consumeBtn = card.querySelector('.consume-btn');
-        if (consumeBtn) {
-            if (challenge.isAvailableToConsume) {
+        const doubleBtn = card.querySelector('.double-btn');
+
+        if (challenge.isAvailableToConsume) {
+            if (consumeBtn) {
                 consumeBtn.textContent = 'Consumir';
                 consumeBtn.classList.add('available');
                 consumeBtn.classList.remove('waiting');
-            } else {
+                consumeBtn.style.display = 'inline-block';
+            }
+            if (doubleBtn) {
+                doubleBtn.textContent = 'Ganar x2 puntos';
+                doubleBtn.classList.add('available');
+                doubleBtn.classList.remove('waiting');
+                doubleBtn.style.display = 'inline-block';
+            }
+        } else {
+            if (consumeBtn) {
                 consumeBtn.textContent = 'Esperando...';
                 consumeBtn.classList.add('waiting');
                 consumeBtn.classList.remove('available');
+                consumeBtn.style.display = 'inline-block';
+            }
+            if (doubleBtn) {
+                doubleBtn.style.display = 'none'; // ocultamos la opción x2
             }
         }
     });
 };
+
 
 
 

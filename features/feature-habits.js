@@ -172,8 +172,6 @@ const updateAbstinenceTimers = () => {
         }).join('');
     };
 
-    // --- Private Methods from ui-events-habits.js ---
-
     function showTemptationModal(challenge) {
         const modal = document.getElementById('temptationModal');
         if (!modal) return;
@@ -192,7 +190,7 @@ const updateAbstinenceTimers = () => {
         };
 
         const handleGiveIn = () => {
-            App.state.processConsumption(challenge.id);
+            App.state.processConsumption(challenge.id); // This will handle the penalty
             closeModal();
         };
 

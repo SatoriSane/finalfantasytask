@@ -118,7 +118,7 @@
             }
 
             const state = App.state.getState();
-            const todayTasks = App.state.getTodayTasks();
+            let todayTasks = App.state.getTodayTasks();
 
             if (!todayTasks || todayTasks.length === 0) {
                 container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">¡Hoy no tienes misiones programadas! Usa el botón ➕ para añadir una.</p>`;
@@ -141,15 +141,45 @@
 
             _renderGlobalPointsBar(totalPoints, earnedPoints, true);
 
-            todayTasks.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+            // --- INICIO DE CAMBIOS PARA ORDENAR ---
+            const savedOrder = App.state.getTodayTaskOrder() || [];
+            
+            // Separar tareas completadas
+            const completedTasks = todayTasks.filter(t => t.completed);
+            const incompleteTasks = todayTasks.filter(t => !t.completed);
 
-                        const bonusMissionId = App.state.getBonusMissionForToday();
+            // Ordenar las tareas incompletas según la secuencia guardada
+            const orderedIncompleteTasks = [];
+            const remainingIncompleteTasks = new Set(incompleteTasks.map(t => t.id));
+
+            savedOrder.forEach(id => {
+                const task = incompleteTasks.find(t => t.id === id);
+                if (task) {
+                    orderedIncompleteTasks.push(task);
+                    remainingIncompleteTasks.delete(id);
+                }
+            });
+
+            // Añadir tareas que no estaban en la lista guardada al final
+            remainingIncompleteTasks.forEach(id => {
+                const task = incompleteTasks.find(t => t.id === id);
+                if (task) {
+                    orderedIncompleteTasks.push(task);
+                }
+            });
+
+            // Unir la lista ordenada de incompletas con las completadas
+            todayTasks = orderedIncompleteTasks.concat(completedTasks);
+            // --- FIN DE CAMBIOS PARA ORDENAR ---
+
+
+            const bonusMissionId = App.state.getBonusMissionForToday();
 
             todayTasks.forEach(task => {
                 const taskCard = document.createElement("div");
                 taskCard.className = `task-card ${task.completed ? "completed" : ""}`;
                 taskCard.dataset.taskId = task.id;
-                taskCard.draggable = true;
+                taskCard.draggable = !task.completed; // Solo se pueden arrastrar las tareas incompletas
                 taskCard.setAttribute("aria-grabbed", "false");
 
                 taskCard.addEventListener("dragstart", (e) => {
@@ -163,6 +193,51 @@
                     taskCard.classList.remove("is-dragging-task");
                     document.querySelectorAll(".drag-over-task").forEach(el => el.classList.remove("drag-over-task"));
                 });
+
+                // --- INICIO DE NUEVOS LISTENERS DE DRAG & DROP ---
+                taskCard.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!e.target.closest('.task-card')) return;
+                    document.querySelectorAll(".drag-over-task").forEach(el => el.classList.remove("drag-over-task"));
+                    e.target.closest('.task-card').classList.add("drag-over-task");
+                });
+
+                taskCard.addEventListener("dragleave", (e) => {
+                    e.stopPropagation();
+                    e.target.closest('.task-card').classList.remove("drag-over-task");
+                });
+                
+                taskCard.addEventListener("drop", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const draggedTaskId = e.dataTransfer.getData("text/plain");
+                    const droppedOnCard = e.target.closest('.task-card');
+                    if (!draggedTaskId || !droppedOnCard) return;
+
+                    const draggedTaskCard = document.querySelector(`.task-card[data-task-id="${draggedTaskId}"]`);
+                    if (draggedTaskCard === droppedOnCard) {
+                        droppedOnCard.classList.remove("drag-over-task");
+                        return;
+                    }
+
+                    // Reordenar visualmente en el DOM
+                    const allCards = Array.from(container.querySelectorAll('.task-card:not(.completed)'));
+                    const droppedIndex = allCards.indexOf(droppedOnCard);
+                    const draggedIndex = allCards.indexOf(draggedTaskCard);
+
+                    if (draggedIndex < droppedIndex) {
+                        container.insertBefore(draggedTaskCard, droppedOnCard.nextSibling);
+                    } else {
+                        container.insertBefore(draggedTaskCard, droppedOnCard);
+                    }
+                    droppedOnCard.classList.remove("drag-over-task");
+                    
+                    // Guardar el nuevo orden en el estado
+                    const newOrder = Array.from(container.querySelectorAll('.task-card:not(.completed)')).map(card => card.dataset.taskId);
+                    App.state.saveTodayTaskOrder(newOrder); // Llamada a la nueva función en App.state
+                });
+                // --- FIN DE NUEVOS LISTENERS ---
 
                 taskCard.addEventListener("click", (e) => {
                     const missionCard = e.target.closest('.task-card');

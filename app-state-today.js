@@ -120,6 +120,24 @@
         }
     }
 
+    // --- FUNCIONES AÑADIDAS PARA ORDENAR ---
+    function saveTodayTaskOrder(order) {
+        const state = _get();
+        const today = App.utils.getFormattedDate();
+        if (!state.todayOrder) {
+            state.todayOrder = {};
+        }
+        state.todayOrder[today] = order;
+        _save();
+    }
+
+    function getTodayTaskOrder() {
+        const state = _get();
+        const today = App.utils.getFormattedDate();
+        return (state.todayOrder && state.todayOrder[today]) || null;
+    }
+    // --- FIN DE FUNCIONES AÑADIDAS ---
+
     Object.assign(App.state, {
         unscheduleTaskForToday: unscheduleTaskForToday,
         addQuickTask: addQuickTask,
@@ -205,29 +223,9 @@
             }
         },
 
-        reorderTodayTask: function(draggedId, targetId) {
-            const state = _get();
-            const today = App.utils.getFormattedDate(new Date());
-            let tasks = state.tasksByDate[today];
-
-            if (!tasks) return;
-
-            const draggedIndex = App.utils.findTaskIndexById(tasks, draggedId);
-            const targetIndex = App.utils.findTaskIndexById(tasks, targetId);
-
-            if (draggedIndex === -1 || targetIndex === -1) {
-                console.error("Reorder failed: dragged or target task not found.");
-                return;
-            }
-
-            const [draggedTask] = tasks.splice(draggedIndex, 1);
-            tasks.splice(targetIndex, 0, draggedTask);
-
-            state.tasksByDate[today] = tasks;
-            _save();
-            App.events.emit('todayTasksUpdated');
-        },
-
+        // --- FUNCIÓN ANTIGUA ELIMINADA ---
+        // reorderTodayTask: function(draggedId, targetId) { ... }
+        
         getTodayTasks: function() {
             return _get().tasksByDate[App.utils.getFormattedDate()] || [];
         },
@@ -257,7 +255,11 @@
                 _save();
                 console.log(`${tasksToRollover.length} tarea(s) no completada(s) ha(n) sido movida(s) a hoy.`);
             }
-        }
+        },
+        
+        // Añado las nuevas funciones al objeto principal de App.state
+        saveTodayTaskOrder: saveTodayTaskOrder,
+        getTodayTaskOrder: getTodayTaskOrder,
     });
 
 })(window.App = window.App || {});

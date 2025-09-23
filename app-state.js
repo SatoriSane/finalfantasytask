@@ -15,7 +15,8 @@
             challenges: [], // Retos para dejar hábitos
             routines: []    // Rutinas para crear hábitos
         },
-        lastDate: ""
+        lastDate: "",
+        todayOrder: {} // NUEVO: Para guardar el orden de las tareas de hoy.
     };
 
     function _saveStateToLocalStorage() {
@@ -175,7 +176,7 @@
             if (!state.tasksByDate[today]) {
                 state.tasksByDate[today] = [];
             }
-
+            
             // 2. Traspasar tareas no completadas de ayer
             const yesterdayTasks = state.tasksByDate[yesterday] || [];
             const uncompletedTasks = yesterdayTasks.filter(task => !task.completed);
@@ -193,7 +194,6 @@
                 });
                 console.log(`${uncompletedTasks.length} tarea(s) no completada(s) ha(n) sido movida(s) a hoy.`);
             }
-
 
             // 4. Reiniciar el estado de compra de los items de la tienda
             state.shopItems.forEach(item => {
@@ -233,6 +233,10 @@
                     if (typeof state.dailyBonusMission === 'undefined') {
                         state.dailyBonusMission = null;
                     }
+                    // NUEVO: Asegura que todayOrder existe.
+                    if (typeof state.todayOrder === 'undefined') {
+                        state.todayOrder = {};
+                    }
 
                 } catch (e) {
                     console.error("App.state: Error parsing localStorage data:", e);
@@ -266,7 +270,8 @@
                 scheduledMissions: [], shopItems: [], history: [], lastDate: "",
                 missionStats: {}, // Reiniciar también las estadísticas
                 dailyBonusMission: null,
-                habits: { challenges: [], routines: [] }
+                habits: { challenges: [], routines: [] },
+                todayOrder: {} // Reiniciar también el orden
             };
             localStorage.removeItem("pointsAppState");
             _saveStateToLocalStorage();

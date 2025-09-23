@@ -149,77 +149,7 @@
             return arr;
         },
 
-        /**
-         * @description Devuelve un mensaje de motivación basado en la cantidad de puntos.
-         * @param {number} points La cantidad de puntos de la tarea completada.
-         * @returns {string} Un mensaje de motivación aleatorio.
-         */
-        getMotivationMessage: function(points) {
-            const messages = {
-                level1_2: [
-                    "🌱 Cada paso suma, y este cuenta mucho.", "💪 Hoy has demostrado que puedes avanzar.",
-                    "☀️ Un movimiento más hacia tu mejor versión.", "✨ Suma tras suma, estás construyendo un gran cambio.",
-                    "📈 Todo gran logro empieza con pasos como este.", "💖 <3 Tu progreso está en marcha y se nota."
-                ],
-                level3_5: [
-                    "🚀 Sigues creciendo, y se nota en cada acción.", "🌟 Hoy estás más cerca de tu meta que ayer.",
-                    "🔥 Tu esfuerzo está marcando la diferencia.", "💎 Las pequeñas victorias hacen grandes cambios.",
-                    "🏁 Avanzas con firmeza y eso es inspirador.", "💛 <3 Esto es parte del cambio que estás creando."
-                ],
-                level6_10: [
-                    "💪 Estás construyendo un hábito poderoso.", "🎯 Cada reto superado te hace más fuerte.",
-                    "🌈 Hoy diste un paso grande en tu camino.", "🛡️ Estás demostrando una fuerza increíble.",
-                    "📈 Tu constancia es tu mejor herramienta.", "💙 <3 El cambio ya está ocurriendo, y tú lo estás haciendo."
-                ],
-                level11_20: [
-                    "🏆 Este logro te lleva a otro nivel.", "🔥 Estás rompiendo barreras que antes parecían enormes.",
-                    "🌟 Tu esfuerzo está transformando tu vida.", "🗝️ Estás desbloqueando una versión más fuerte de ti.",
-                    "🚀 Hoy has demostrado que puedes con mucho más de lo que creías.", "❤️ Esto es una prueba de tu capacidad y determinación."
-                ],
-                level21_39: [
-                    "⚡ Tu avance es imparable.", "🗻 Has escalado un tramo enorme en tu camino.",
-                    "💫 La disciplina que muestras está dando frutos.", "🧠 Tu fortaleza mental es admirable.",
-                    "🚩 Estás creando un antes y un después en tu vida.", "💖 Esto confirma que nada puede detenerte."
-                ],
-                level40_79: [
-                    "🏔️ Lo que acabas de lograr cambia el rumbo.", "🔥 Estás dominando desafíos que pocos afrontan.",
-                    "🎯 Este avance te acerca a tus sueños de forma real.", "💎 La fuerza que tienes se ve en este logro.",
-                    "🛡️ Este es un hito que demuestra tu resiliencia.", "💜 <3 Estás escribiendo tu propia historia de éxito."
-                ],
-                level80_plus: [
-                    "🌟 Estás alcanzando un nivel que pocos imaginan.", "🐉 Has vencido desafíos que parecían imposibles.",
-                    "🏆 Este logro es un símbolo de tu transformación.", "🚀 Estás en el camino hacia tu mejor versión.",
-                    "💖 Tu constancia está creando un cambio duradero.", "❤️‍🔥 Lo que estás haciendo hoy marcará tu vida para siempre."
-                ]
-            };
 
-            const p = Number(points);
-            if (isNaN(p) || p < 1) {
-                return "¡Tarea completada! 🎉";
-            }
-
-            let chosenLevelMessages;
-            if (p >= 1 && p <= 2) {
-                chosenLevelMessages = messages.level1_2;
-            } else if (p >= 3 && p <= 5) {
-                chosenLevelMessages = messages.level3_5;
-            } else if (p >= 6 && p <= 10) {
-                chosenLevelMessages = messages.level6_10;
-            } else if (p >= 11 && p <= 20) {
-                chosenLevelMessages = messages.level11_20;
-            } else if (p >= 21 && p <= 39) {
-                chosenLevelMessages = messages.level21_39;
-            } else if (p >= 40 && p <= 79) {
-                chosenLevelMessages = messages.level40_79;
-            } else if (p >= 80) {
-                chosenLevelMessages = messages.level80_plus;
-            } else {
-                return "¡Tarea completada! 🎉";
-            }
-
-            const randomIndex = Math.floor(Math.random() * chosenLevelMessages.length);
-            return chosenLevelMessages[randomIndex];
-        },
 
         /**
          * @description Calcula la diferencia en días entre dos fechas.

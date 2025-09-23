@@ -158,7 +158,6 @@
                 if (task.missionId) {
                     App.state.trackMissionCompletion(task.missionId);
                 }
-                App.events.emit('showMotivationMessage', App.utils.getMotivationMessage(task.points));
             } else {
                 App.events.emit('showDiscreetMessage', `¡${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})! +${pointsAwarded}`);
             }

@@ -65,31 +65,44 @@
             }
         },
 
-        updateMission: function(missionId, updatedData) {
-            const state = _get();
-            const mission = state.missions.find(m => m.id === missionId);
-            if (mission) {
-                Object.assign(mission, updatedData);
+// Reemplaza toda tu función updateMission con esta:
 
-                // Sync changes with today's tasks if any
-                const today = App.utils.getFormattedDate();
-                if (state.tasksByDate[today]) {
-                    const taskToUpdate = state.tasksByDate[today].find(t => t.missionId === missionId);
-                    if (taskToUpdate) {
-                        taskToUpdate.name = mission.name;
-                        taskToUpdate.points = mission.points;
-                        taskToUpdate.dailyRepetitions.max = mission.dailyRepetitions.max;
-                    }
-                }
+updateMission: function(missionId, updatedData) {
+    const state = _get();
+    const mission = state.missions.find(m => m.id === missionId);
+    if (mission) {
+        // 1. Actualiza la misión original (plantilla)
+        Object.assign(mission, updatedData);
 
-                _save();
-                App.events.emit('missionsUpdated');
-                App.events.emit('todayTasksUpdated');
-                App.events.emit('showDiscreetMessage', `Misión "${mission.name}" actualizada.`);
-            } else {
-                App.events.emit('showAlert', 'No se pudo encontrar la misión para actualizar.');
+        // 2. Sincroniza los cambios con las tareas de HOY
+        const today = App.utils.getFormattedDate();
+        if (state.tasksByDate[today]) {
+            const taskToUpdate = state.tasksByDate[today].find(t => t.missionId === missionId);
+            if (taskToUpdate) {
+                taskToUpdate.name = mission.name;
+                taskToUpdate.points = mission.points;
+                taskToUpdate.dailyRepetitions.max = mission.dailyRepetitions.max;
             }
-        },
+        }
+
+        // 3. ✨ NUEVO: Sincroniza los cambios con TODAS las misiones programadas (futuras)
+        state.scheduledMissions.forEach(scheduled => {
+            if (scheduled.missionId === missionId) {
+                scheduled.name = mission.name;
+                scheduled.points = mission.points;
+                scheduled.dailyRepetitions = mission.dailyRepetitions;
+            }
+        });
+
+        _save();
+        App.events.emit('missionsUpdated');
+        App.events.emit('todayTasksUpdated');
+        App.events.emit('scheduledMissionsUpdated'); // Notifica a la agenda que actualice
+        App.events.emit('showDiscreetMessage', `Misión "${mission.name}" actualizada.`);
+    } else {
+        App.events.emit('showAlert', 'No se pudo encontrar la misión para actualizar.');
+    }
+},
 
         scheduleMission: function(missionId, initialDateString, isRecurring, recurringType) {
             const state = _get();

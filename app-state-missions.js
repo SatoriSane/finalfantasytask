@@ -1,4 +1,7 @@
+// features/app-state-missions.js
 (function(App) {
+    'use strict';
+
     if (!App.state) {
         console.error("App.state is not initialized. Make sure app-state.js is loaded first.");
         return;
@@ -65,44 +68,53 @@
             }
         },
 
-// Reemplaza toda tu función updateMission con esta:
-
-updateMission: function(missionId, updatedData) {
-    const state = _get();
-    const mission = state.missions.find(m => m.id === missionId);
-    if (mission) {
-        // 1. Actualiza la misión original (plantilla)
-        Object.assign(mission, updatedData);
-
-        // 2. Sincroniza los cambios con las tareas de HOY
-        const today = App.utils.getFormattedDate();
-        if (state.tasksByDate[today]) {
-            const taskToUpdate = state.tasksByDate[today].find(t => t.missionId === missionId);
-            if (taskToUpdate) {
-                taskToUpdate.name = mission.name;
-                taskToUpdate.points = mission.points;
-                taskToUpdate.dailyRepetitions.max = mission.dailyRepetitions.max;
+        updateCategoryName: function(categoryId, newName) {
+            const state = _get();
+            const category = state.categories.find(c => c.id === categoryId);
+            if (category) {
+                category.name = newName;
+                _save();
+                App.events.emit('missionsUpdated');
+                App.events.emit('showDiscreetMessage', `Nombre de categoría actualizado a "${newName}".`);
             }
-        }
+        },
 
-        // 3. ✨ NUEVO: Sincroniza los cambios con TODAS las misiones programadas (futuras)
-        state.scheduledMissions.forEach(scheduled => {
-            if (scheduled.missionId === missionId) {
-                scheduled.name = mission.name;
-                scheduled.points = mission.points;
-                scheduled.dailyRepetitions = mission.dailyRepetitions;
+        updateMission: function(missionId, updatedData) {
+            const state = _get();
+            const mission = state.missions.find(m => m.id === missionId);
+            if (mission) {
+                // 1. Actualiza la misión original (plantilla)
+                Object.assign(mission, updatedData);
+
+                // 2. Sincroniza los cambios con las tareas de HOY
+                const today = App.utils.getFormattedDate();
+                if (state.tasksByDate[today]) {
+                    const taskToUpdate = state.tasksByDate[today].find(t => t.missionId === missionId);
+                    if (taskToUpdate) {
+                        taskToUpdate.name = mission.name;
+                        taskToUpdate.points = mission.points;
+                        taskToUpdate.dailyRepetitions.max = mission.dailyRepetitions.max;
+                    }
+                }
+
+                // 3. Sincroniza los cambios con TODAS las misiones programadas (futuras)
+                state.scheduledMissions.forEach(scheduled => {
+                    if (scheduled.missionId === missionId) {
+                        scheduled.name = mission.name;
+                        scheduled.points = mission.points;
+                        scheduled.dailyRepetitions = mission.dailyRepetitions;
+                    }
+                });
+
+                _save();
+                App.events.emit('missionsUpdated');
+                App.events.emit('todayTasksUpdated');
+                App.events.emit('scheduledMissionsUpdated'); // Notifica a la agenda que actualice
+                App.events.emit('showDiscreetMessage', `Misión "${mission.name}" actualizada.`);
+            } else {
+                App.events.emit('showAlert', 'No se pudo encontrar la misión para actualizar.');
             }
-        });
-
-        _save();
-        App.events.emit('missionsUpdated');
-        App.events.emit('todayTasksUpdated');
-        App.events.emit('scheduledMissionsUpdated'); // Notifica a la agenda que actualice
-        App.events.emit('showDiscreetMessage', `Misión "${mission.name}" actualizada.`);
-    } else {
-        App.events.emit('showAlert', 'No se pudo encontrar la misión para actualizar.');
-    }
-},
+        },
 
         scheduleMission: function(missionId, initialDateString, isRecurring, recurringType) {
             const state = _get();
@@ -111,7 +123,7 @@ updateMission: function(missionId, updatedData) {
                 App.ui.events.showCustomAlert("La misión que intentas programar no fue encontrada.");
                 return;
             }
-            
+
             const scheduledData = {
                 id: `sm-${Date.now()}`,
                 missionId: missionToProgram.id,
@@ -123,7 +135,6 @@ updateMission: function(missionId, updatedData) {
                 lastProcessedDate: null
             };
 
-            // Si es recurrente, agregar propiedades de recurrencia
             if (isRecurring && recurringType) {
                 scheduledData.repeatInterval = parseInt(recurringType.interval, 10) || 1;
                 scheduledData.repeatUnit = recurringType.unit || 'day';
@@ -134,8 +145,7 @@ updateMission: function(missionId, updatedData) {
             }
 
             state.scheduledMissions.push(scheduledData);
-            
-            // Si se programa para hoy, resetear skippedForToday si existe
+
             const todayFormatted = App.utils.getFormattedDate(new Date());
             if (initialDateString === todayFormatted) {
                 const todayTasks = state.tasksByDate[todayFormatted] || [];
@@ -144,12 +154,9 @@ updateMission: function(missionId, updatedData) {
                     existingTask.skippedForToday = false;
                 }
             }
-            
+
             _save();
-
-            // Procesa las misiones programadas para hoy para asegurar que la nueva misión aparezca si es para hoy.
             App.state.processScheduledMissionsForToday();
-
             App.events.emit('scheduledMissionsUpdated');
             App.events.emit('missionsUpdated');
             App.events.emit('todayTasksUpdated');
@@ -162,8 +169,8 @@ updateMission: function(missionId, updatedData) {
                 const missionName = state.scheduledMissions.find(sm => sm.id === scheduledMissionId)?.name || 'Misión programada';
                 state.scheduledMissions = state.scheduledMissions.filter(sm => sm.id !== scheduledMissionId);
                 _save();
-                App.events.emit('scheduledMissionsUpdated'); // Notifica que las misiones programadas han cambiado
-                App.events.emit('missionsUpdated'); // Emitir para actualizar iconos en la UI
+                App.events.emit('scheduledMissionsUpdated');
+                App.events.emit('missionsUpdated');
                 App.events.emit('showDiscreetMessage', `"${missionName}" ha sido desprogramada.`);
             };
 
@@ -239,7 +246,6 @@ updateMission: function(missionId, updatedData) {
         getMissions: () => _get().missions,
         getScheduledMissions: () => _get().scheduledMissions,
         getScheduledMissionByOriginalMissionId: (id) => _get().scheduledMissions.find(sm => sm.missionId === id),
-
     };
 
     Object.assign(App.state, missionState);

@@ -120,7 +120,6 @@
                 container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">No hay propósitos. Agrega una nueva para empezar.</p>`;
                 return;
             }
-
             categories.forEach(cat => {
                 const categoryWrapper = document.createElement("div");
                 categoryWrapper.className = "category-wrapper";
@@ -129,13 +128,13 @@
                 const isExpanded = expandedCategoryIds.has(cat.id);
                 catHeader.className = `cat-header collapsible ${isExpanded ? '' : 'collapsed'}`.trim();
                 catHeader.dataset.categoryId = cat.id;
-                
+
                 // --- INICIO: Lógica de Long Press para Categorías ---
                 let pressTimer = null;
                 let longPressTriggered = false;
-                
+
                 const handlePressStart = (e) => {
-                    if (e.target.closest('button')) return;
+                    if (e.target.closest('input, .edit-category-icon')) return;
                     longPressTriggered = false;
                     pressTimer = window.setTimeout(() => {
                         longPressTriggered = true;
@@ -156,7 +155,6 @@
                 
                 const handlePressMove = (e) => {
                     if (pressTimer) {
-                        // Resetea el timer si hay movimiento
                         clearTimeout(pressTimer);
                         pressTimer = null;
                     }
@@ -164,7 +162,7 @@
 
                 catHeader.addEventListener('mousedown', handlePressStart);
                 catHeader.addEventListener('mouseup', handlePressEnd);
-                catHeader.addEventListener('mouseleave', handlePressEnd); // También si el mouse sale del elemento
+                catHeader.addEventListener('mouseleave', handlePressEnd);
 
                 catHeader.addEventListener('touchstart', handlePressStart, { passive: true });
                 catHeader.addEventListener('touchend', handlePressEnd);
@@ -177,7 +175,7 @@
                         e.stopImmediatePropagation();
                         return;
                     }
-                    if (!e.target.closest('button')) {
+                    if (!e.target.closest('input, .edit-category-icon')) {
                         catHeader.classList.toggle('collapsed');
                     }
                 }, true);
@@ -186,9 +184,56 @@
                 arrowSpan.className = "collapse-arrow";
                 catHeader.appendChild(arrowSpan);
 
-                const catNameSpan = document.createElement("span");
-                catNameSpan.textContent = cat.name;
-                catHeader.appendChild(catNameSpan);
+                const catNameWrapper = document.createElement("span");
+                catNameWrapper.className = "category-name-wrapper";
+                catHeader.appendChild(catNameWrapper);
+
+                const catNameText = document.createElement("span");
+                catNameText.textContent = cat.name;
+                catNameText.className = "category-name-text";
+                catNameWrapper.appendChild(catNameText);
+                
+                // --- INICIO: SVG de edición incrustado en el título ---
+                const editIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                editIcon.setAttribute("viewBox", "0 0 24 24");
+                editIcon.setAttribute("width", "16");
+                editIcon.setAttribute("height", "16");
+                editIcon.innerHTML = `<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+                editIcon.classList.add("edit-category-icon");
+                catNameWrapper.appendChild(editIcon);
+
+                editIcon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const originalName = catNameText.textContent.trim();
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = originalName;
+                    input.className = 'edit-category-input';
+
+                    catNameWrapper.replaceWith(input);
+                    input.focus();
+                    input.select();
+
+                    const saveChanges = () => {
+                        const newName = input.value.trim();
+                        if (newName && newName !== originalName) {
+                            App.state.updateCategoryName(cat.id, newName);
+                        } else {
+                            input.replaceWith(catNameWrapper);
+                            catNameText.textContent = originalName;
+                        }
+                    };
+
+                    input.addEventListener('blur', saveChanges);
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            saveChanges();
+                            input.blur();
+                        }
+                    });
+                });
+                // --- FIN: SVG de edición incrustado en el título ---
 
                 const buttonsWrapper = document.createElement("div");
                 buttonsWrapper.style.marginLeft = 'auto';
@@ -235,14 +280,14 @@
                     const noMissionText = document.createElement("p");
                     noMissionText.style.textAlign = 'center';
                     noMissionText.style.color = 'var(--ff-text-dark)';
-                    noMissionText.textContent = "No hay misiones en esta categoría.";
+                    noMissionText.textContent = "No hay misiones para este propósito.";
                     missionListContainer.appendChild(noMissionText);
                 } else {
                     missionsForCat.forEach(mission => {
                         const missionCard = document.createElement("div");
                         missionCard.className = 'mission-card';
                         missionCard.dataset.missionId = mission.id;
-                        
+
                         const isMissionScheduled = App.state.getScheduledMissionByOriginalMissionId(mission.id);
                         if (isMissionScheduled) {
                             missionCard.classList.add('is-scheduled-in-book');
@@ -260,12 +305,12 @@
 
                         const pointsSpan = document.createElement("span");
                         pointsSpan.className = `mission-points ${mission.points >= 0 ? "positive" : "negative"}`;
-                        
+
                         let displayPoints = mission.points;
                         if (isMissionScheduled && isMissionScheduled.points !== mission.points) {
                             displayPoints = isMissionScheduled.points;
                         }
-                        
+
                         pointsSpan.textContent = `${displayPoints >= 0 ? "＋" : "−"}${Math.abs(displayPoints)}`;
                         pointsAndActionDiv.appendChild(pointsSpan);
 

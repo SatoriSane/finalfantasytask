@@ -182,8 +182,17 @@
 
             _save();
             App.events.emit('pointsUpdated', _get().points);
-            App.events.emit('todayTasksUpdated');
             App.events.emit('historyUpdated');
+            
+            // Primero, emite este evento para iniciar la animación de la barra de progreso.
+            App.events.emit('taskCompleted', taskId);
+            
+            // Luego, espera 0.5 segundos para que la animación termine y luego emite el evento
+            // que hará que se re-renderice la lista y se reordene.
+            setTimeout(() => {
+                App.events.emit('todayTasksUpdated');
+            }, 1000); // Mismo tiempo que la duración de la transición en CSS
+            
             return true;
         },
 

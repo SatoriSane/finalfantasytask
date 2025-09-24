@@ -259,14 +259,8 @@
                 progressBar.className = "repetition-progress-bar";
                 taskCard.appendChild(progressBar);
 
-                const prev = _prevTaskProgress[task.id] ?? progressPercentage;
-                progressBar.style.width = prev + "%";
-                if (progressPercentage !== prev) {
-                    requestAnimationFrame(() => {
-                        progressBar.style.width = `${progressPercentage}%`;
-                    });
-                }
-                _prevTaskProgress[task.id] = progressPercentage;
+                // Configura el ancho inicial sin animación para evitar un destello
+                progressBar.style.width = `${progressPercentage}%`; 
 
                 // Badge de repeticiones (solo si hay múltiples)
                 if (maxReps > 1) {
@@ -336,7 +330,17 @@
             // Listen for state changes
             App.events.on('todayTasksUpdated', () => this.render());
             App.events.on('stateRefreshed', () => this.render());
-
+            App.events.on('taskCompleted', (taskId) => {
+                const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+                if (taskCard) {
+                    const progressBar = taskCard.querySelector('.repetition-progress-bar');
+                    if (progressBar) {
+                        const task = App.state.getTodayTasks().find(t => t.id === taskId);
+                        const newWidth = task.completed ? 100 : ((task.currentRepetitions || 0) / (task.dailyRepetitions.max || 1)) * 100;
+                        progressBar.style.width = `${newWidth}%`;
+                    }
+                }
+            });
             const showQuickAddBtn = document.getElementById('showQuickAddBtn');
             const quickAddForm = document.getElementById('quickAddForm');
             const quickAddNameInput = document.getElementById('quickAddNameInput');

@@ -205,13 +205,14 @@ button.secondary:hover,
 .addMision-btn {
     display: flex;
     align-items: center;
-    padding: 0.45rem 0.45rem;
+    padding: 0.5rem 0.5rem;
+    font-size: 1.2rem;
     background: transparent;
     color: var(--ff-text-light);
     border: 1px solid var(--ff-border);
     border-radius: var(--border-radius-sm);
     transition: all var(--transition-speed);
-    margin-right: 0rem;
+    margin: -0.2rem;
 }
 
 .addMision-btn:hover {

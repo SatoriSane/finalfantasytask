@@ -266,9 +266,8 @@
                 buttonsWrapper.style.gap = '0.5rem';
 
                 const showFormBtn = document.createElement("button");
-                showFormBtn.className = "addMision-btn";
-                showFormBtn.title = "Agregar misión";
-                showFormBtn.innerHTML = `<span class="icon">⚔️</span>`;
+                showFormBtn.className = "discreet-btn";
+                showFormBtn.innerHTML = `<span class="icon">⚔️</span> `;
                 showFormBtn.onclick = (e) => {
                     e.stopPropagation();
                     const header = e.target.closest('.cat-header');

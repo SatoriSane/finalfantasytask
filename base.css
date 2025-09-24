@@ -203,6 +203,11 @@ button.secondary:hover,
 .discreet-btn .icon { font-size: 1.1rem; }
 
 
+.mission-points-actions {
+    display: flex; 
+    align-items: center; 
+    gap: 1.2rem; 
+}
 .icon-btn {
     background: var(--ff-bg-dark);
     color: var(--ff-accent);

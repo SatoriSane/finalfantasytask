@@ -494,7 +494,7 @@ const updateAbstinenceTimers = () => {
                 <h2 id="habitsTitle">Retos de Abstinencia</h2>
                 <div class="actions-header">
                     <button id="createAbstinenceChallengeBtn" class="discreet-btn">
-                        <span class="icon">🎯</span> Nuevo Reto de Abstinencia
+                        <span class="icon">⚡</span> Nuevo Reto de Abstinencia
                     </button>
                 </div>
                 <div id="challengesList" class="abstinence-challenges-list"></div>`;

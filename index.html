@@ -71,16 +71,17 @@
             <h2 id="missionsTitle">Libro de Misiones</h2>
             <div class="actions-header">
                 <button id="showAddCategoryBtn" class="discreet-btn" aria-expanded="false"
-                    aria-controls="addCategoryFormContainer">
-                    <span class="icon">⭐</span> Nueva Categoría
-                </button>
+                aria-controls="addCategoryFormContainer">
+                <span class="icon">🧭</span> Nuevo Propósito
+            </button>
+            
                 <button id="toggleAgendaBtn" class="discreet-btn" aria-expanded="false" aria-controls="scheduledMissionsContainer">
                     <span class="icon">🗓️</span> Agenda
                 </button>
             </div>
             <div id="addCategoryFormContainer" class="form-container">
                 <form id="addCategoryForm" aria-label="Formulario para agregar categoría">
-                    <input id="categoryInput" type="text" placeholder="Nombre de nueva categoría" autocomplete="off"
+                    <input id="categoryInput" type="text" placeholder="Nombre del propósito" autocomplete="off"
                         required />
                     <button type="submit" class="primary">➕</button>
                 </form>
@@ -399,7 +400,7 @@
             <span class="icon">📜</span> Hoy
         </button>
         <button id="navMissions" role="tab" aria-selected="false" aria-controls="tab-missions" tabindex="-1">
-            <span class="icon">🗺️</span> Misiones
+            <span class="icon">🧭</span> Propósitos
         </button>
         <button id="navShop" role="tab" aria-selected="false" aria-controls="tab-shop" tabindex="-1">
             <span class="icon">🛒</span> Tienda
@@ -408,7 +409,7 @@
             <span class="icon">📈</span> Historial
         </button>
         <button id="navHabits" role="tab" aria-selected="false" aria-controls="tab-habits" tabindex="-1">
-            <span class="icon">🎯</span> Hábitos
+            <span class="icon">⚡</span> Hábitos
         </button>
     </nav>
     <script src="app-init.js"></script>

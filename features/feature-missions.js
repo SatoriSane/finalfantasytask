@@ -129,81 +129,14 @@
                 const isExpanded = expandedCategoryIds.has(cat.id);
                 catHeader.className = `cat-header collapsible ${isExpanded ? '' : 'collapsed'}`.trim();
                 catHeader.dataset.categoryId = cat.id;
-                catHeader.draggable = true;
-                catHeader.setAttribute('aria-grabbed', 'false');
-
-                // Eventos de Drag and Drop para categorías
-                catHeader.addEventListener('dragstart', (e) => {
-                    e.stopPropagation();
-                    catHeader.setAttribute('aria-grabbed', 'true');
-                    catHeader.classList.add('is-dragging');
-                    e.dataTransfer.setData('text/plain', cat.id);
-                    e.dataTransfer.effectAllowed = 'move';
-                });
-                catHeader.addEventListener('dragenter', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!catHeader.classList.contains('is-dragging')) {
-                        catHeader.classList.add('drag-over');
-                    }
-                });
-                catHeader.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.dataTransfer.dropEffect = 'move';
-                });
-                catHeader.addEventListener('dragleave', (e) => {
-                    e.stopPropagation();
-                    catHeader.classList.remove('drag-over');
-                });
-                catHeader.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    catHeader.classList.remove('drag-over');
-                    const draggedId = e.dataTransfer.getData('text/plain');
-                    const targetId = cat.id;
-
-                    if (App.state.getCategories().some(c => c.id === draggedId)) {
-                        if (draggedId !== targetId) {
-                            App.state.reorderCategory(draggedId, targetId);
-                        }
-                    } else { 
-                        try {
-                            const draggedData = JSON.parse(draggedId);
-                            if (draggedData.missionId && draggedData.categoryId) {
-                                App.state.reorderMission(draggedData.missionId, targetId, draggedData.categoryId, targetId);
-                            }
-                        } catch (error) {
-                            console.error("Error al parsear datos de arrastre para misión a categoría:", error);
-                        }
-                    }
-                });
-                catHeader.addEventListener('dragend', (e) => {
-                    e.stopPropagation();
-                    catHeader.classList.remove('is-dragging');
-                    catHeader.setAttribute('aria-grabbed', 'false');
-                    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-                });
-
+                
+                // --- INICIO: Lógica de Long Press para Categorías ---
                 let pressTimer = null;
                 let longPressTriggered = false;
-                let startX, startY;
-                const moveThreshold = 10; // pixels
-
-                const cancelLongPress = () => {
-                    clearTimeout(pressTimer);
-                    pressTimer = null;
-                };
-
+                
                 const handlePressStart = (e) => {
                     if (e.target.closest('button')) return;
-
                     longPressTriggered = false;
-                    if (e.type === 'touchstart') {
-                        startX = e.touches[0].clientX;
-                        startY = e.touches[0].clientY;
-                    }
-
                     pressTimer = window.setTimeout(() => {
                         longPressTriggered = true;
                         if (navigator.vibrate) navigator.vibrate(50);
@@ -212,34 +145,32 @@
                     }, 800);
                 };
 
-                const handlePressMove = (e) => {
-                    if (!pressTimer) return;
-
-                    if (e.type === 'touchmove') {
-                        const moveX = Math.abs(e.touches[0].clientX - startX);
-                        const moveY = Math.abs(e.touches[0].clientY - startY);
-                        if (moveX > moveThreshold || moveY > moveThreshold) {
-                            cancelLongPress();
-                        }
-                    }
-                };
-
                 const handlePressEnd = (e) => {
-                    cancelLongPress();
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
                     if (longPressTriggered) {
                         e.preventDefault();
                         e.stopPropagation();
                     }
                 };
+                
+                const handlePressMove = (e) => {
+                    if (pressTimer) {
+                        // Resetea el timer si hay movimiento
+                        clearTimeout(pressTimer);
+                        pressTimer = null;
+                    }
+                };
 
                 catHeader.addEventListener('mousedown', handlePressStart);
                 catHeader.addEventListener('mouseup', handlePressEnd);
-                catHeader.addEventListener('mouseleave', cancelLongPress);
+                catHeader.addEventListener('mouseleave', handlePressEnd); // También si el mouse sale del elemento
 
                 catHeader.addEventListener('touchstart', handlePressStart, { passive: true });
                 catHeader.addEventListener('touchend', handlePressEnd);
-                catHeader.addEventListener('touchcancel', cancelLongPress);
+                catHeader.addEventListener('touchcancel', handlePressEnd);
                 catHeader.addEventListener('touchmove', handlePressMove, { passive: true });
+                // --- FIN: Lógica de Long Press para Categorías ---
 
                 catHeader.addEventListener('click', (e) => {
                     if (longPressTriggered) {
@@ -299,24 +230,6 @@
                 missionListContainer.id = `missions-for-cat-${cat.id}`;
                 categoryWrapper.appendChild(missionListContainer);
 
-                missionListContainer.addEventListener('dragover', (e) => e.preventDefault());
-                missionListContainer.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    try {
-                        const draggedData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                        const draggedMissionId = draggedData.missionId;
-                        const draggedFromCategoryId = draggedData.categoryId;
-                        const targetCategoryId = cat.id;
-
-                        if (draggedMissionId && draggedFromCategoryId) {
-                            App.state.reorderMission(draggedMissionId, targetCategoryId, draggedFromCategoryId, targetCategoryId);
-                        }
-                    } catch (error) {
-                        console.error("Error al parsear datos de arrastre para drop en misiónListContainer:", error);
-                    }
-                });
-
                 const missionsForCat = missions.filter(m => m.categoryId === cat.id);
                 if (missionsForCat.length === 0) {
                     const noMissionText = document.createElement("p");
@@ -329,65 +242,12 @@
                         const missionCard = document.createElement("div");
                         missionCard.className = 'mission-card';
                         missionCard.dataset.missionId = mission.id;
-                        missionCard.draggable = true;
-                        missionCard.setAttribute('aria-grabbed', 'false');
-
+                        
                         const isMissionScheduled = App.state.getScheduledMissionByOriginalMissionId(mission.id);
                         if (isMissionScheduled) {
                             missionCard.classList.add('is-scheduled-in-book');
                             missionCard.dataset.scheduledMissionProgramId = isMissionScheduled.id;
                         }
-
-                        missionCard.addEventListener('dragstart', (e) => {
-                            e.stopPropagation();
-                            missionCard.setAttribute('aria-grabbed', 'true');
-                            missionCard.classList.add('is-dragging-mission');
-                            e.dataTransfer.setData('text/plain', JSON.stringify({
-                                missionId: mission.id,
-                                categoryId: cat.id
-                            }));
-                            e.dataTransfer.effectAllowed = 'move';
-                        });
-                        missionCard.addEventListener('dragenter', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (!missionCard.classList.contains('is-dragging-mission')) {
-                                missionCard.classList.add('drag-over-mission');
-                            }
-                        });
-                        missionCard.addEventListener('dragover', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.dataTransfer.dropEffect = 'move';
-                        });
-                        missionCard.addEventListener('dragleave', (e) => {
-                            e.stopPropagation();
-                            missionCard.classList.remove('drag-over-mission');
-                        });
-                        missionCard.addEventListener('drop', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            missionCard.classList.remove('drag-over-mission');
-                            try {
-                                const draggedData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                                const draggedMissionId = draggedData.missionId;
-                                const draggedFromCategoryId = draggedData.categoryId;
-                                const targetMissionId = mission.id;
-                                const targetCategoryId = cat.id;
-
-                                if (draggedMissionId !== targetMissionId) {
-                                    App.state.reorderMission(draggedMissionId, targetMissionId, draggedFromCategoryId, targetCategoryId);
-                                }
-                            } catch (error) {
-                                console.error("Error al parsear datos de arrastre para misión a misión:", error);
-                            }
-                        });
-                        missionCard.addEventListener('dragend', (e) => {
-                            e.stopPropagation();
-                            missionCard.classList.remove('is-dragging-mission');
-                            missionCard.setAttribute('aria-grabbed', 'false');
-                            document.querySelectorAll('.drag-over-mission').forEach(el => el.classList.remove('drag-over-mission'));
-                        });
 
                         const missionName = document.createElement('span');
                         missionName.className = 'mission-name';

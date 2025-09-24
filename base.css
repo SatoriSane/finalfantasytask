@@ -202,6 +202,26 @@ button.secondary:hover,
 
 .discreet-btn .icon { font-size: 1.1rem; }
 
+.addMision-btn {
+    display: flex;
+    align-items: center;
+    padding: 0.45rem 0.45rem;
+    background: transparent;
+    color: var(--ff-text-light);
+    border: 1px solid var(--ff-border);
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-speed);
+    margin-right: 0rem;
+}
+
+.addMision-btn:hover {
+    background: var(--ff-bg-dark);
+    border-color: var(--ff-accent);
+    color: var(--ff-accent);
+}
+
+.addMision-btn .icon { font-size: 1.1rem; }
+
 .icon-btn {
     background: var(--ff-bg-dark);
     color: var(--ff-accent);

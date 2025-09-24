@@ -117,7 +117,7 @@
             const missions = App.state.getMissions();
 
             if (categories.length === 0 && missions.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">No hay categorías. Agrega una nueva para empezar.</p>`;
+                container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">No hay propósitos. Agrega una nueva para empezar.</p>`;
                 return;
             }
 
@@ -266,8 +266,9 @@
                 buttonsWrapper.style.gap = '0.5rem';
 
                 const showFormBtn = document.createElement("button");
-                showFormBtn.className = "discreet-btn";
-                showFormBtn.innerHTML = `<span class="icon">⚔️</span> Nueva Misión`;
+                showFormBtn.className = "addMision-btn";
+                showFormBtn.title = "Agregar misión";
+                showFormBtn.innerHTML = `<span class="icon">⚔️</span>`;
                 showFormBtn.onclick = (e) => {
                     e.stopPropagation();
                     const header = e.target.closest('.cat-header');

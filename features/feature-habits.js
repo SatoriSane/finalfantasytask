@@ -20,15 +20,16 @@
     };
 
     const formatTimeRemaining = (ms) => {
-        if (ms <= 0) return 'Disponible';
+        if (ms <= 0) return '¡Listo para el próximo nivel!';
         const totalSeconds = Math.floor(ms / 1000);
         const days = Math.floor(totalSeconds / (24 * 60 * 60));
         const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
         const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
         const seconds = totalSeconds % 60;
         
+        // --- NUEVO: Lógica para reducir la ansiedad ---
         if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-        if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+        if (hours > 0) return `${hours}h ${minutes}m`;
         if (minutes > 0) return `${minutes}m ${seconds}s`;
         return `${seconds}s`;
     };
@@ -58,7 +59,7 @@
             nextAllowedTime = new Date(nextAllowedTime.getTime() + newIntervalMs);
             challenge.nextAllowedTime = nextAllowedTime.toISOString();
             
-            App.state.addAvailableConsumption(challenge.id);
+            App.state.addAvailableConsumption(challenge.id, challenge.currentLevel);
             
             timeRemaining = nextAllowedTime.getTime() - now.getTime();
             didUpdate = true;
@@ -79,6 +80,8 @@
             return;
         }
 
+        const now = new Date();
+
         challengeCards.forEach(card => {
             const challengeId = card.dataset.id;
             const challenge = App.state.getAbstinenceChallengeById(challengeId);
@@ -86,7 +89,6 @@
             
             updateChallengeState(challenge);
             
-            const now = new Date();
             const nextAllowed = new Date(challenge.nextAllowedTime);
             const timeRemaining = nextAllowed.getTime() - now.getTime();
 
@@ -108,14 +110,17 @@
 
             const consumeBtn = card.querySelector('.consume-btn');
             const sellBtn = card.querySelector('.sell-btn');
+            const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
 
             if (challenge.availableConsumptions > 0) {
                 if (consumeBtn) {
-                    consumeBtn.textContent = `Consumir (${challenge.availableConsumptions})`;
+                    consumeBtn.textContent = `Gastar ticket (${challenge.availableConsumptions})`;
                     consumeBtn.classList.add('available');
                     consumeBtn.classList.remove('waiting');
                 }
                 if (sellBtn) {
+                    // Actualizado: Texto del botón de venta para ser más atractivo
+                    sellBtn.textContent = `Vender ticket por ${pointsForCurrentLevel} pts`;
                     sellBtn.style.display = 'inline-block';
                 }
             } else {
@@ -146,14 +151,15 @@
             return;
         }
 
+        const now = new Date();
+
         challengesList.innerHTML = abstinenceChallenges.map(challenge => {
             const {
-                id, name, currentLevel, totalPoints,
+                id, name, currentLevel, totalPoints, bestStreak,
                 nextAllowedTime, isActive, finalLevel,
-                createdAt, totalDuration
+                createdAt, totalDuration, lastConsumptionTime
             } = challenge;
             
-            const now = new Date();
             const nextAllowed = new Date(nextAllowedTime);
             let timeRemaining = nextAllowed.getTime() - now.getTime();
             
@@ -176,21 +182,29 @@
             else if (successRate >= 50) complianceClass = 'compliance-medium';
             else complianceClass = 'compliance-low';
 
+            // --- CAMBIO CLAVE: Calculamos la Racha en tiempo real desde lastConsumptionTime ---
+            const lastConsumptionDate = new Date(lastConsumptionTime);
+            const currentStreakMs = now.getTime() - lastConsumptionDate.getTime();
+            const formattedCurrentStreak = formatDuration(currentStreakMs);
+            const formattedBestStreak = formatDuration(bestStreak);
+
             return `
                 <div class="abstinence-card ${statusClass}" data-id="${id}">
                     <div class="abstinence-card-header">
                         <h3 class="challenge-name">${name}</h3>
-                        <div class="challenge-points">+${pointsForCurrentLevel} pts</div>
+                        <!-- CAMBIO: Ahora mostramos el nivel en el header para ahorrar espacio vertical -->
+                        <div class="challenge-level-status">Nivel ${currentLevel}/${finalLevel}</div>
                     </div>
                     <div class="abstinence-card-body">
+                        <!-- CAMBIO: Eliminamos el Nivel de aquí para hacer espacio para 3 stats por fila -->
                         <div class="challenge-stats">
-                            <div class="stat-item"><span class="stat-label">Nivel</span><span class="stat-value">${currentLevel}/${finalLevel}</span></div>
-                            <div class="stat-item"><span class="stat-label">Éxito</span><span class="stat-value ${complianceClass}">${Math.round(successRate)}%</span></div>
-                            <div class="stat-item"><span class="stat-label">Puntos</span><span class="stat-value">${totalPoints}</span></div>
+                            <div class="stat-item"><span class="stat-label">Éxito reto</span><span class="stat-value ${complianceClass}">${Math.round(successRate)}%</span></div>
+                            <div class="stat-item"><span class="stat-label">Racha actual</span><span class="stat-value">🔥${formattedCurrentStreak}</span></div>
+                            <div class="stat-item"><span class="stat-label">Mejor Racha</span><span class="stat-value">🏆${formattedBestStreak}</span></div>
                         </div>
                         ${isActive ? `
                         <div class="timer-container">
-                            <div class="timer-label">Tiempo restante:</div>
+                            <div class="timer-label">Ticket de consumición en:</div>
                             <div class="timer-display">${formatTimeRemaining(timeRemaining)}</div>
                         </div>` : `<div class="completed-message">¡Reto completado! 🏆</div>`}
                         <div class="progress-container">
@@ -201,7 +215,8 @@
                     <div class="abstinence-card-footer">
                         ${isActive ? `
                             <button class="consume-btn ${buttonClass}" data-challenge-id="${id}">${buttonText}</button>
-                            <button class="sell-btn" style="display: ${challenge.availableConsumptions > 0 ? 'inline-block' : 'none'};" data-challenge-id="${id}">Vender consumición por ${pointsForCurrentLevel} pts</button>
+                            <!-- Actualizado: Mensaje del botón para destacar la recompensa y el logro -->
+                            <button class="sell-btn" style="display: ${challenge.availableConsumptions > 0 ? 'inline-block' : 'none'};" data-challenge-id="${id}">Vender ticket por ${pointsForCurrentLevel} pts</button>
                         ` : ''}
                         <div class="action-buttons">
                             <button class="action-btn delete-btn" data-challenge-id="${id}" title="Eliminar reto">🗑️</button>
@@ -263,8 +278,8 @@
     function handleSellConsumption(challengeId) {
         const challenge = App.state.getAbstinenceChallengeById(challengeId);
         if (!challenge || challenge.availableConsumptions === 0) return;
-
         App.state.sellConsumption(challengeId); // Llama a la nueva función de estado
+        App.events.emit('showDiscreetMessage', `¡Felicidades! 🎉 Vendiste un ticket y fortaleciste tu autocontrol.`);
     }
 
     function showTemptationModal(challenge) {
@@ -399,7 +414,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="firstLevelPoints">Puntos Nivel 1:</label>
-                                <input id="firstLevelPoints" type="number" min="1" value="1" required />
+                                <input id="firstLevelPoints" type="number" min="1" value="100" required />
                             </div>
                             <div class="form-group">
                                 <label for="incrementPercent">Incremento por Nivel:</label>
@@ -486,13 +501,20 @@
     }
 
     function formatDuration(ms) {
-        const days = Math.floor(ms / 86400000);
-        const hours = Math.floor((ms % 86400000) / 3600000);
-        const minutes = Math.floor((ms % 3600000) / 60000);
+        if (ms <= 0) return '0d 0h 0m';
+        const totalSeconds = Math.floor(ms / 1000);
+        const days = Math.floor(totalSeconds / (24 * 60 * 60));
+        const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+        const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+        const seconds = totalSeconds % 60;
+        
+        let parts = [];
+        if (days > 0) parts.push(`${days}d`);
+        if (hours > 0) parts.push(`${hours}h`);
+        if (minutes > 0) parts.push(`${minutes}m`);
+        if (parts.length === 0) parts.push(`${seconds}s`);
 
-        if (days > 0) return `${days}d ${hours}h`;
-        if (hours > 0) return `${hours}h ${minutes}m`;
-        return `${minutes}m`;
+        return parts.join(' ');
     }
 
     // --- Public API ---

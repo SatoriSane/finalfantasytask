@@ -1,26 +1,73 @@
-/* habits.css - Abstinence Challenge System Styles */
+/* habits.css - Estilos específicos para la sección de hábitos y retos de abstinencia */
 
-/* Challenge List */
+/* Contenedor principal de los retos con un enfoque mobile-first */
 .abstinence-challenges-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
+    display: flex;
+    flex-direction: column; /* Por defecto, una sola columna para móviles */
+    gap: 1.5rem; /* Espacio vertical entre tarjetas */
+    padding: 0; /* SIN PADDING LATERAL */
+    width: 100%;
+    margin: 0 auto;
 }
 
-/* Empty State */
+/* Media query para activar el diseño de columnas en pantallas más anchas */
+@media (min-width: 640px) {
+    .abstinence-challenges-list {
+        display: grid;
+        /* Utiliza una cuadrícula que se adapta para mostrar más columnas */
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem; /* Se mantiene un padding en pantallas grandes para estética */
+    }
+}
+
 .empty-list-message {
     text-align: center;
     padding: 3rem 2rem;
     color: var(--ff-text-dark);
     font-size: 1.1rem;
     line-height: 1.6;
+    background-color: var(--ff-bg-medium);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--ff-border);
+    box-shadow: var(--shadow-sm);
 }
 
 .empty-list-message p {
     margin: 0.5rem 0;
 }
 
-/* Posicionamiento del botón de eliminar en la tarjeta */
+/* Estilos de la tarjeta de reto */
+.abstinence-card {
+    background: var(--ff-bg-light);
+    border: 2px solid var(--ff-border);
+    border-radius: var(--border-radius-md);
+    padding: 0.75rem; /* Padding más compacto */
+    transition: all var(--transition-speed);
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    height: fit-content; /* Asegura que la tarjeta no crezca innecesariamente */
+}
+
+/* Efectos de hover para una experiencia más interactiva */
+.abstinence-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--ff-accent);
+}
+
+/* Diferenciación visual por estado del reto */
+.abstinence-card.completed {
+    border-color: var(--positive-color);
+    opacity: 0.9;
+}
+
+.abstinence-card.waiting {
+    border-color: var(--ff-orange);
+}
+
+/* Botón de eliminar con posición absoluta para mayor limpieza visual */
 .abstinence-card .delete-btn {
     position: absolute;
     top: 10px;
@@ -31,271 +78,233 @@
     font-size: 1.5rem;
     padding: 5px;
     cursor: pointer;
-    transition: color var(--transition-speed);
+    transition: all var(--transition-speed);
     z-index: 10;
 }
 
 .abstinence-card .delete-btn:hover {
     color: var(--negative-color);
+    transform: scale(1.1);
 }
 
-/* Abstinence Challenge Cards */
-.abstinence-card {
-    background: var(--ff-bg-light);
-    border: 2px solid var(--ff-border);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-md);
-    overflow: hidden;
-    transition: all var(--transition-speed);
-    position: relative;
-}
-
-.abstinence-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--ff-accent);
-}
-
-.abstinence-card.waiting {
-    border-color: #ff9500;
-}
-
-.abstinence-card.available {
-    border-color: var(--positive-color);
-}
-
-.abstinence-card.completed {
-    border-color: var(--ff-accent);
-    opacity: 0.8;
-}
-
-/* Card Header */
 .abstinence-card-header {
-    background: var(--ff-bg-medium);
-    padding: 1.2rem;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     border-bottom: 1px solid var(--ff-border);
+    padding-bottom: 0.6rem;
+    margin-bottom: 0.6rem;
 }
 
 .challenge-name {
-    font-size: 1.4rem;
+    margin: 0;
+    font-size: 1.2rem;
+    text-align: left;
+    border-bottom: none;
+    padding-bottom: 0;
     font-weight: 700;
     color: var(--ff-text-light);
-    margin: 0;
     line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.challenge-points {
+/* CAMBIO CLAVE: Eliminar esta regla, ya no existe el elemento */
+/* .challenge-points {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 700;
     color: var(--positive-color);
+    font-weight: 700;
+    font-size: 1.2rem;
     white-space: nowrap;
     margin-left: 1rem;
+} */
+.challenge-level-status {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--ff-accent);
+    font-weight: 700;
+    font-size: 1rem;
+    white-space: nowrap;
 }
 
-/* Card Body */
 .abstinence-card-body {
-    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
 }
 
+/* Estadísticas clave */
 .challenge-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    /* --- CAMBIOS APLICADOS AQUÍ --- */
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    /* --- FIN DE CAMBIOS --- */
+    background-color: var(--ff-bg-dark);
+    padding: 0.8rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--ff-border);
 }
 
 .stat-item {
     text-align: center;
-    padding: 0.8rem;
-    background: var(--ff-bg-dark);
+    background: var(--ff-bg-medium);
+    padding: 0.6rem;
     border-radius: var(--border-radius-sm);
+    flex: 1; /* Esto asegura que los 3 elementos ocupen el mismo espacio */
 }
 
 .stat-label {
     display: block;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: var(--ff-text-dark);
-    margin-bottom: 0.3rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .stat-value {
     display: block;
-    font-size: 1.4rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
     font-weight: 700;
     color: var(--ff-text-light);
-    font-family: 'Orbitron', sans-serif;
 }
 
-.stat-value.compliance-high {
-    color: var(--ff-green);
-}
+.stat-value.compliance-high { color: var(--ff-green); }
+.stat-value.compliance-medium { color: var(--ff-orange); }
+.stat-value.compliance-low { color: var(--ff-red); }
 
-.stat-value.compliance-medium {
-    color: var(--ff-orange);
-}
-
-.stat-value.compliance-low {
-    color: var(--ff-red);
-}
-
-/* Timer Container */
+/* Contenedor del temporizador */
 .timer-container {
-    background: var(--ff-bg-dark);
-    padding: 1rem;
-    border-radius: var(--border-radius-sm);
     text-align: center;
-    margin-bottom: 1rem;
+    padding: 0.8rem 0;
+    background: var(--ff-bg-dark);
+    border-radius: var(--border-radius-sm);
 }
 
 .timer-label {
-    font-size: 0.9rem;
+    /* --- CAMBIOS APLICADOS AQUÍ --- */
+    font-size: 0.7rem; /* Reducido para ser más sutil */
     color: var(--ff-text-dark);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.1rem; /* Margen muy reducido */
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    /* --- FIN DE CAMBIOS --- */
 }
 
 .timer-display {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--ff-accent);
+    text-shadow: 0 0 8px rgba(var(--ff-accent-rgb), 0.6);
 }
 
-/* Progress Container */
+/* Barra de progreso del reto */
 .progress-container {
-    margin-bottom: 1rem;
-}
-
-.progress-label {
-    font-size: 0.9rem;
-    color: var(--ff-text-dark);
-    margin-bottom: 0.5rem;
+    margin-top: 0.6rem;
     text-align: center;
 }
 
+.progress-label {
+    font-size: 0.75rem;
+    color: var(--ff-text-dark);
+    margin-bottom: 0.3rem;
+}
+
 .progress-bar {
-    height: 8px;
-    background: var(--ff-bg-dark);
-    border-radius: var(--border-radius-sm);
+    width: 100%;
+    height: 8px; /* Altura de la barra reducida */
+    background-color: var(--ff-bg-medium);
+    border-radius: 5px;
     overflow: hidden;
+    border: 1px solid var(--ff-border);
 }
 
 .progress-fill {
     height: 100%;
     background: linear-gradient(90deg, var(--ff-accent), var(--positive-color));
-    border-radius: var(--border-radius-sm);
-    transition: width 0.5s ease;
+    border-radius: 5px;
+    transition: width 1s ease-in-out;
 }
 
-/* Completed Message */
-.completed-message {
-    text-align: center;
-    padding: 1rem;
-    background: var(--ff-bg-dark);
-    border-radius: var(--border-radius-sm);
-    color: var(--positive-color);
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-}
-
-/* Card Footer */
+/* Pie de la tarjeta */
 .abstinence-card-footer {
-    padding: 1.2rem;
-    border-top: 1px solid var(--ff-border);
-    background: var(--ff-bg-medium);
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Permite que los botones se envuelvan si es necesario */
+    gap: 0.5rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--ff-border);
+    margin-top: 0.8rem;
 }
 
-/* Consume Button */
+.abstinence-card-footer .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* Botones de acción */
 .consume-btn {
-    width: 100%;
-    padding: 1rem;
-    border: none;
-    border-radius: var(--border-radius-md);
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-speed);
+    flex-grow: 1;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+    padding: 0.8rem;
+    border-radius: var(--border-radius-sm);
+    font-weight: 700;
+    transition: all var(--transition-speed);
 }
 
+/* ESTILOS REVISADOS PARA LOS BOTONES */
 .consume-btn.available {
-    background: var(--positive-color);
-    color: var(--ff-bg-dark);
+    background-color: var(--ff-bg-dark); /* Color neutro */
+    color: var(--ff-text-light);
+    border: 1px solid var(--ff-border);
+    box-shadow: none;
 }
 
 .consume-btn.available:hover {
-    background: #28a745;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: none; /* Sin efecto de escala */
+    box-shadow: 0 0 10px rgba(var(--ff-accent-rgb), 0.4);
+    background-color: var(--ff-bg-medium);
 }
 
 .consume-btn.waiting {
-    background: #ff9500; /* Naranja para indicar precaución */
-    color: var(--ff-bg-dark);
-    cursor: pointer; /* Cambiado para permitir click */
-}
-
-.consume-btn.waiting:hover {
-    background: #e68600;
-}
-
-.consume-btn.completed {
-    background: var(--ff-accent);
-    color: var(--ff-bg-dark);
-    cursor: not-allowed;
-}
-
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-}
-
-.action-btn {
-    background: var(--ff-bg-dark);
-    border: 1px solid var(--ff-border);
+    background-color: var(--ff-bg-dark);
     color: var(--ff-text-dark);
-    padding: 0.8rem;
+    border: 1px solid var(--ff-border);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.sell-btn {
+    /* --- CAMBIO APLICADO AQUÍ --- */
+    flex-grow: 1; /* Permite que el botón ocupe todo el espacio disponible */
+    /* --- FIN DE CAMBIO --- */
+    background-color: var(--positive-color); /* Color de éxito */
+    border: 1px solid var(--positive-color);
+    color: var(--ff-bg-dark);
+    padding: 0.6rem 0.8rem;
     border-radius: var(--border-radius-sm);
-    cursor: pointer;
-    font-size: 1.2rem;
+    font-weight: 700;
     transition: all var(--transition-speed);
-    min-width: 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    box-shadow: 0 0 10px rgba(88, 228, 120, 0.4);
 }
 
-.action-btn:hover {
-    background: var(--ff-bg-light);
-    color: var(--ff-text-light);
-    transform: translateY(-1px);
+.sell-btn:hover {
+    background-color: var(--ff-bg-dark);
+    color: var(--positive-color);
+    box-shadow: 0 0 15px rgba(88, 228, 120, 0.6);
 }
 
-.action-btn.reset-btn:hover {
-    color: var(--ff-accent);
-    border-color: var(--ff-accent);
-}
-
-.action-btn.delete-btn:hover {
-    color: var(--negative-color);
-    border-color: var(--negative-color);
-}
-
-/* Modal Styles */
+/*---*/
+/* Modal de Creación de Reto (Estilos Corregidos) */
+/*---*/
 #abstinenceChallengeModal .modal-content {
     max-width: 500px;
     width: 90%;

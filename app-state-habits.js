@@ -60,7 +60,10 @@
                 availableConsumptions: 0,
                 automaticLevelUps: 0,
                 temptationFalls: 0,
-                consumptionHistory: []
+                consumptionHistory: [],
+                // --- CAMBIO: Inicializamos lastConsumptionTime y bestStreak con valores basados en tiempo ---
+                lastConsumptionTime: now, // La racha empieza en el momento de creación
+                bestStreak: 0 // La mejor racha se mide en milisegundos
             };
             
             App.state.get().habits.challenges.push(newChallenge);
@@ -74,77 +77,79 @@
             const challenge = state.habits.challenges.find(c => c.id === challengeId);
             if (!challenge || !challenge.isActive) return;
 
+            const now = new Date();
+            const lastConsumptionDate = new Date(challenge.lastConsumptionTime);
+            const currentStreakMs = now.getTime() - lastConsumptionDate.getTime();
+            
+            // --- CAMBIO CLAVE: Actualizamos la mejor racha antes de que la actual se reinicie ---
+            challenge.bestStreak = Math.max(challenge.bestStreak, currentStreakMs);
+            // Reiniciamos el tiempo de la última consumición para la nueva racha
+            challenge.lastConsumptionTime = now.toISOString();
+
             if (challenge.availableConsumptions > 0) {
                 challenge.availableConsumptions--;
                 challenge.consumptionHistory.push({
                     level: challenge.currentLevel,
-                    date: new Date().toISOString()
+                    date: now.toISOString()
                 });
                 App.events.emit('showDiscreetMessage', `Consumo registrado. Te quedan ${challenge.availableConsumptions} disponibles.`);
             } else {
                 challenge.temptationFalls++;
-                const now = new Date();
+                // Lógica original para el cálculo del próximo tiempo de espera
                 const currentWaitMs = convertToMilliseconds(
                     challenge.currentInterval.value,
                     challenge.currentInterval.unit
                 );
                 const newWaitMs = currentWaitMs * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1);
                 challenge.nextAllowedTime = new Date(now.getTime() + newWaitMs).toISOString();
-                App.events.emit('showDiscreetMessage', `Caíste en la tentación. El tiempo se ha reiniciado. ¡No te rindas!`);
+                App.events.emit('showDiscreetMessage', `No te rindas. ¡Puedes empezar de nuevo!`);
             }
             
             _saveStateToLocalStorage();
             App.events.emit('habitsUpdated');
         },
 
-        // --- NUEVA FUNCIÓN PARA VENDER UN CONSUMO ---
         sellConsumption: function(challengeId) {
             const state = App.state.get();
             const challenge = state.habits.challenges.find(c => c.id === challengeId);
             if (!challenge || !challenge.isActive || challenge.availableConsumptions === 0) return;
 
             const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
-
-            // Restar una consumición disponible
-            challenge.availableConsumptions--;
             
-            // Añadir los puntos al total del usuario
+            // --- CAMBIO: El cálculo de la mejor racha ya estaba aquí, se mantiene ---
+            const now = new Date();
+            const currentStreakMs = now.getTime() - new Date(challenge.lastConsumptionTime).getTime();
+            challenge.bestStreak = Math.max(challenge.bestStreak || 0, currentStreakMs);
+            
+            challenge.availableConsumptions--;
             App.state.addPoints(pointsForCurrentLevel);
             
-            // Añadir la acción al historial
             App.state.addHistoryAction(`Venta de consumo en "${challenge.name}" (Nivel ${challenge.currentLevel})`, pointsForCurrentLevel, 'venta');
             
-            App.events.emit('showDiscreetMessage', `¡Vendiste un consumo por ${pointsForCurrentLevel} puntos! Te quedan ${challenge.availableConsumptions} disponibles.`);
+            App.events.emit('showDiscreetMessage', `¡Vendiste un consumo por ${pointsForCurrentLevel} puntos! ¡Buen trabajo!`);
             
             _saveStateToLocalStorage();
             App.events.emit('habitsUpdated');
         },
 
 
-        addAvailableConsumption: function(challengeId) {
+        addAvailableConsumption: function(challengeId, completedLevel) {
             const state = App.state.get();
             const challenge = state.habits.challenges.find(c => c.id === challengeId);
             if (!challenge || !challenge.isActive) return;
 
+            const pointsEarned = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, completedLevel - 1));
+            
+            // --- CAMBIO: Se elimina la lógica de racha aquí, ya no es un contador ---
+            // La racha se mide por el tiempo desde la última consumición, no por niveles superados.
+
             challenge.availableConsumptions++;
             challenge.automaticLevelUps++;
-            
-            const pointsEarned = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
             challenge.totalPoints += pointsEarned;
             App.state.addPoints(pointsEarned);
-            App.state.addHistoryAction(`${challenge.name} - Nivel ${challenge.currentLevel}`, pointsEarned, 'abstinencia');
+            App.state.addHistoryAction(`${challenge.name} - Nivel ${completedLevel}`, pointsEarned, 'abstinencia');
 
-            _saveStateToLocalStorage();
-            App.events.emit('habitsUpdated');
-            App.events.emit('showDiscreetMessage', `¡Nivel ${challenge.currentLevel}! +${pointsEarned} puntos 🎉`);
-        },
-
-        recordResistance: function(challengeId, challengeName) {
-            App.state.addPoints(10);
-            App.state.addHistoryAction(`Resistencia a la tentación (${challengeName})`, 10, 'resistencia');
-            App.events.emit('showDiscreetMessage', '¡+10 puntos por resistir! 💪');
-            _saveStateToLocalStorage();
-            App.events.emit('habitsUpdated');
+            App.events.emit('showDiscreetMessage', `¡Nivel ${completedLevel} completado! ¡+${pointsEarned} puntos! 🎉`);
         },
         
         updateAbstinenceChallenge: function(updatedChallenge) {
@@ -157,7 +162,7 @@
         },
 
         deleteAbstinenceChallenge: function(challengeId) {
-            App.ui.general.showCustomConfirm('¿Seguro que quieres eliminar este reto de abstinencia?', (confirmed) => {
+            App.ui.general.showCustomConfirm('¿Seguro que quieres eliminar este reto de abstinencia? Perderás todo tu progreso.', (confirmed) => {
                 if (confirmed) {
                     const state = App.state.get();
                     const challengeName = state.habits.challenges.find(c => c.id === challengeId)?.name || 'Reto';
@@ -171,10 +176,6 @@
 
         getAbstinenceChallengeById: function(challengeId) {
             return App.state.get().habits.challenges.find(c => c.id === challengeId);
-        },
-
-        startAbstinenceProcessor: function() {
-            // No es necesaria
         }
     });
 

@@ -13,7 +13,7 @@
         dailyBonusMission: null, // { date: "YYYY-MM-DD", missionId: "..." }
         habits: { // NUEVO: Sección de hábitos
             challenges: [], // Retos para dejar hábitos
-            routines: []    // Rutinas para crear hábitos
+            routines: [] // Rutinas para crear hábitos
         },
         lastDate: "",
         todayOrder: {} // NUEVO: Para guardar el orden de las tareas de hoy.
@@ -94,7 +94,18 @@
 
         loadState: function(importedState) {
             state = importedState;
-            
+
+            // --- ESTE ES EL BLOQUE QUE DEBEMOS TENER ASÍ PARA EVITAR EL BUG CON DATOS ANTIGUOS ---
+            if (state.habits && Array.isArray(state.habits.challenges)) {
+                state.habits.challenges.forEach(challenge => {
+                    // Validar y sanear el nextAllowedTime si es una fecha inválida
+                    if (challenge.isActive && (!challenge.nextAllowedTime || isNaN(new Date(challenge.nextAllowedTime)))) {
+                        challenge.nextAllowedTime = new Date().toISOString();
+                        challenge.availableConsumptions = 0; // Se reinicia en este caso para evitar el bug
+                    }
+                });
+            }
+            // --- FIN DEL BLOQUE ---
 
             _saveStateToLocalStorage();
             App.events.emit('stateRefreshed');
@@ -178,7 +189,7 @@
             if (!state.tasksByDate[today]) {
                 state.tasksByDate[today] = [];
             }
-            
+
             // 2. Traspasar tareas no completadas de ayer
             const yesterdayTasks = state.tasksByDate[yesterday] || [];
             const uncompletedTasks = yesterdayTasks.filter(task => !task.completed);
@@ -256,23 +267,29 @@
                 console.log(`App.state: New day detected. Processing daily tasks for ${today}.`);
                 this.processDailyTasks();
             }
-            
+
             // Siempre procesar misiones programadas para hoy, incluso si no es un día nuevo
             this.processScheduledMissionsForToday();
 
             return dataLoadedSuccessfully;
         },
 
-
-
-
         resetAllData: function() {
             state = {
-                points: 0, categories: [], missions: [], tasksByDate: {},
-                scheduledMissions: [], shopItems: [], history: [], lastDate: "",
+                points: 0,
+                categories: [],
+                missions: [],
+                tasksByDate: {},
+                scheduledMissions: [],
+                shopItems: [],
+                history: [],
+                lastDate: "",
                 missionStats: {}, // Reiniciar también las estadísticas
                 dailyBonusMission: null,
-                habits: { challenges: [], routines: [] },
+                habits: {
+                    challenges: [],
+                    routines: []
+                },
                 todayOrder: {} // Reiniciar también el orden
             };
             localStorage.removeItem("pointsAppState");
@@ -295,7 +312,10 @@
         trackMissionAppearance: function(missionId) {
             const todayStr = App.utils.getFormattedDate();
             if (!state.missionStats[missionId]) {
-                state.missionStats[missionId] = { appearances: [], completions: [] };
+                state.missionStats[missionId] = {
+                    appearances: [],
+                    completions: []
+                };
             }
             if (!state.missionStats[missionId].appearances.includes(todayStr)) {
                 state.missionStats[missionId].appearances.push(todayStr);
@@ -355,7 +375,10 @@
         trackMissionCompletion: function(missionId) {
             const todayStr = App.utils.getFormattedDate();
             if (!state.missionStats[missionId]) {
-                state.missionStats[missionId] = { appearances: [], completions: [] };
+                state.missionStats[missionId] = {
+                    appearances: [],
+                    completions: []
+                };
             }
             if (!state.missionStats[missionId].completions.includes(todayStr)) {
                 state.missionStats[missionId].completions.push(todayStr);

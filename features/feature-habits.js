@@ -8,8 +8,6 @@
     let timerUpdateInterval = null;
 
     // --- Private Methods from ui-render-habits.js ---
-
-    // Helper function to convert time units to milliseconds
     const convertToMilliseconds = (value, unit) => {
         const multipliers = {
             'minutes': 60 * 1000,
@@ -21,10 +19,8 @@
         return value * (multipliers[unit] || 1);
     };
 
-    // Format time remaining in a human-readable way
     const formatTimeRemaining = (ms) => {
         if (ms <= 0) return 'Disponible';
-        
         const totalSeconds = Math.floor(ms / 1000);
         const days = Math.floor(totalSeconds / (24 * 60 * 60));
         const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
@@ -37,81 +33,104 @@
         return `${seconds}s`;
     };
 
-    // Update timers for all abstinence challenge cards
-// Update timers for all abstinence challenge cards
-// Update timers for all abstinence challenge cards
-const updateAbstinenceTimers = () => {
-    const challengeCards = document.querySelectorAll('.abstinence-card');
-    if (challengeCards.length === 0) {
-        if (timerUpdateInterval) {
-            clearInterval(timerUpdateInterval);
-            timerUpdateInterval = null;
-        }
-        return;
-    }
-
-    challengeCards.forEach(card => {
-        const challengeId = card.dataset.id;
-        const challenge = App.state.getAbstinenceChallengeById(challengeId);
+    const updateChallengeState = (challenge) => {
         if (!challenge || !challenge.isActive) return;
 
         const now = new Date();
-        const nextAllowed = new Date(challenge.nextAllowedTime);
-        const timeRemaining = nextAllowed.getTime() - now.getTime();
+        let nextAllowedTime = new Date(challenge.nextAllowedTime);
+        let timeRemaining = nextAllowedTime.getTime() - now.getTime();
 
-        // ⏱️ Mostrar tiempo restante
-        const timerElement = card.querySelector('.timer-display');
-        if (timerElement) {
-            timerElement.textContent = formatTimeRemaining(timeRemaining);
+        let didUpdate = false;
+
+        while (timeRemaining <= 0) {
+            const createdAt = new Date(challenge.createdAt);
+            const durationMs = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
+            if (now.getTime() - createdAt.getTime() >= durationMs) {
+                challenge.isActive = false;
+                App.state.updateAbstinenceChallenge(challenge);
+                App.events.emit('showDiscreetMessage', `¡Reto "${challenge.name}" completado! 🏆`);
+                return;
+            }
+
+            challenge.currentLevel++;
+            const newIntervalMs = convertToMilliseconds(challenge.currentInterval.value, challenge.currentInterval.unit) * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1);
+            
+            nextAllowedTime = new Date(nextAllowedTime.getTime() + newIntervalMs);
+            challenge.nextAllowedTime = nextAllowedTime.toISOString();
+            
+            App.state.addAvailableConsumption(challenge.id);
+            
+            timeRemaining = nextAllowedTime.getTime() - now.getTime();
+            didUpdate = true;
         }
 
-        // 📊 Barra de progreso general
-        const createdAt = new Date(challenge.createdAt);
-        const durationMs = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
-        const elapsedMs = now.getTime() - createdAt.getTime();
-        const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
-
-        const progressFill = card.querySelector('.progress-fill');
-        if (progressFill) progressFill.style.width = `${progressPercent}%`;
-
-        const progressLabel = card.querySelector('.progress-label');
-        if (progressLabel) progressLabel.textContent = `Progreso del reto: ${Math.round(progressPercent)}%`;
-
-        // 🎛️ Botones "Consumir" y "Ganar x2 puntos"
-        const consumeBtn = card.querySelector('.consume-btn');
-        const doubleBtn = card.querySelector('.double-btn');
-
-        if (challenge.isAvailableToConsume) {
-            if (consumeBtn) {
-                consumeBtn.textContent = 'Consumir';
-                consumeBtn.classList.add('available');
-                consumeBtn.classList.remove('waiting');
-                consumeBtn.style.display = 'inline-block';
-            }
-            if (doubleBtn) {
-                doubleBtn.textContent = 'Ganar x2 puntos';
-                doubleBtn.classList.add('available');
-                doubleBtn.classList.remove('waiting');
-                doubleBtn.style.display = 'inline-block';
-            }
-        } else {
-            if (consumeBtn) {
-                consumeBtn.textContent = 'Esperando...';
-                consumeBtn.classList.add('waiting');
-                consumeBtn.classList.remove('available');
-                consumeBtn.style.display = 'inline-block';
-            }
-            if (doubleBtn) {
-                doubleBtn.style.display = 'none'; // ocultamos la opción x2
-            }
+        if (didUpdate) {
+            App.state.updateAbstinenceChallenge(challenge);
         }
-    });
-};
+    };
 
+    const updateAbstinenceTimers = () => {
+        const challengeCards = document.querySelectorAll('.abstinence-card');
+        if (challengeCards.length === 0) {
+            if (timerUpdateInterval) {
+                clearInterval(timerUpdateInterval);
+                timerUpdateInterval = null;
+            }
+            return;
+        }
 
+        challengeCards.forEach(card => {
+            const challengeId = card.dataset.id;
+            const challenge = App.state.getAbstinenceChallengeById(challengeId);
+            if (!challenge || !challenge.isActive) return;
+            
+            updateChallengeState(challenge);
+            
+            const now = new Date();
+            const nextAllowed = new Date(challenge.nextAllowedTime);
+            const timeRemaining = nextAllowed.getTime() - now.getTime();
 
+            const timerElement = card.querySelector('.timer-display');
+            if (timerElement) {
+                timerElement.textContent = formatTimeRemaining(timeRemaining);
+            }
 
-    // Render abstinence challenges
+            const createdAt = new Date(challenge.createdAt);
+            const durationMs = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
+            const elapsedMs = now.getTime() - createdAt.getTime();
+            const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
+
+            const progressFill = card.querySelector('.progress-fill');
+            if (progressFill) progressFill.style.width = `${progressPercent}%`;
+
+            const progressLabel = card.querySelector('.progress-label');
+            if (progressLabel) progressLabel.textContent = `Progreso del reto: ${Math.round(progressPercent)}%`;
+
+            const consumeBtn = card.querySelector('.consume-btn');
+            const sellBtn = card.querySelector('.sell-btn');
+
+            if (challenge.availableConsumptions > 0) {
+                if (consumeBtn) {
+                    consumeBtn.textContent = `Consumir (${challenge.availableConsumptions})`;
+                    consumeBtn.classList.add('available');
+                    consumeBtn.classList.remove('waiting');
+                }
+                if (sellBtn) {
+                    sellBtn.style.display = 'inline-block';
+                }
+            } else {
+                if (consumeBtn) {
+                    consumeBtn.textContent = 'Esperando...';
+                    consumeBtn.classList.add('waiting');
+                    consumeBtn.classList.remove('available');
+                }
+                if (sellBtn) {
+                    sellBtn.style.display = 'none';
+                }
+            }
+        });
+    };
+
     const renderAbstinenceChallenges = (challenges) => {
         const challengesList = document.getElementById('challengesList');
         if (!challengesList) return;
@@ -128,20 +147,19 @@ const updateAbstinenceTimers = () => {
         }
 
         challengesList.innerHTML = abstinenceChallenges.map(challenge => {
-            const { 
-                id, name, currentLevel, totalPoints, regressionCount, 
+            const {
+                id, name, currentLevel, totalPoints,
                 nextAllowedTime, isActive, finalLevel,
                 createdAt, totalDuration
             } = challenge;
-
+            
             const now = new Date();
             const nextAllowed = new Date(nextAllowedTime);
-            const timeRemaining = nextAllowed.getTime() - now.getTime();
-            const isAllowed = timeRemaining <= 0;
-
-            const statusClass = isActive ? (challenge.isAvailableToConsume ? 'available' : 'waiting') : 'completed';
-            const buttonText = isActive ? (challenge.isAvailableToConsume ? 'Consumir' : 'Esperando...') : 'Completado';
-            const buttonClass = isActive ? (challenge.isAvailableToConsume ? 'available' : 'waiting') : 'completed';
+            let timeRemaining = nextAllowed.getTime() - now.getTime();
+            
+            const statusClass = isActive ? (challenge.availableConsumptions > 0 ? 'available' : 'waiting') : 'completed';
+            const buttonText = isActive ? (challenge.availableConsumptions > 0 ? `Consumir (${challenge.availableConsumptions})` : 'Esperando...') : 'Completado';
+            const buttonClass = isActive ? (challenge.availableConsumptions > 0 ? 'available' : 'waiting') : 'completed';
             const createdAtDate = new Date(createdAt);
             const durationMs = convertToMilliseconds(totalDuration.value, totalDuration.unit);
             const elapsedMs = now.getTime() - createdAtDate.getTime();
@@ -181,7 +199,10 @@ const updateAbstinenceTimers = () => {
                         </div>
                     </div>
                     <div class="abstinence-card-footer">
-                        ${isActive ? `<button class="consume-btn ${buttonClass}" data-challenge-id="${id}">${buttonText}</button>` : ''}
+                        ${isActive ? `
+                            <button class="consume-btn ${buttonClass}" data-challenge-id="${id}">${buttonText}</button>
+                            <button class="sell-btn" style="display: ${challenge.availableConsumptions > 0 ? 'inline-block' : 'none'};" data-challenge-id="${id}">Vender consumición por ${pointsForCurrentLevel} pts</button>
+                        ` : ''}
                         <div class="action-buttons">
                             <button class="action-btn delete-btn" data-challenge-id="${id}" title="Eliminar reto">🗑️</button>
                         </div>
@@ -226,18 +247,26 @@ const updateAbstinenceTimers = () => {
         return { finalLevel: level, finalWaitTime: Math.round(currentWaitTime) };
     }
 
+    // --- LÓGICA DE CONSUMO REVISADA ---
     function handleAbstinenceConsumption(challengeId) {
         const challenge = App.state.getAbstinenceChallengeById(challengeId);
         if (!challenge) return;
 
-        // If button is available (green), process consumption directly
-        if (challenge.isAvailableToConsume) {
+        if (challenge.availableConsumptions > 0) {
             App.state.processConsumption(challengeId);
         } else {
-            // If button is in waiting state, show temptation modal
             showTemptationModal(challenge);
         }
     }
+
+    // --- NUEVA FUNCIÓN PARA VENDER UN CONSUMO ---
+    function handleSellConsumption(challengeId) {
+        const challenge = App.state.getAbstinenceChallengeById(challengeId);
+        if (!challenge || challenge.availableConsumptions === 0) return;
+
+        App.state.sellConsumption(challengeId); // Llama a la nueva función de estado
+    }
+
     function showTemptationModal(challenge) {
         const modal = document.getElementById('temptationModal');
         if (!modal) return;
@@ -251,16 +280,15 @@ const updateAbstinenceTimers = () => {
         };
 
         const startBreathingExercise = () => {
-            closeModal(); // Cerrar el modal de tentación
-            showZenBreathingModal(challenge); // Mostrar la experiencia zen
+            closeModal();
+            showZenBreathingModal(challenge);
         };
 
         const handleGiveIn = () => {
-            App.state.processConsumption(challenge.id); // This will handle the penalty
+            App.state.processConsumption(challenge.id);
             closeModal();
         };
 
-        // Asignar eventos una sola vez
         closeBtn.onclick = closeModal;
         breatheBtn.onclick = startBreathingExercise;
         giveInBtn.onclick = handleGiveIn;
@@ -287,7 +315,6 @@ const updateAbstinenceTimers = () => {
         const closeZenModal = () => {
             zenModal.classList.remove('active');
             if (breathingInterval) clearInterval(breathingInterval);
-            // Reset state
             zenContent.style.display = 'block';
             zenCompletion.style.display = 'none';
             breathingCircle.classList.remove('inhale', 'exhale');
@@ -298,8 +325,6 @@ const updateAbstinenceTimers = () => {
         const completeExercise = () => {
             if (breathingInterval) clearInterval(breathingInterval);
             App.state.recordResistance(challenge.id, challenge.name);
-            
-            // Mostrar pantalla de completado
             zenContent.style.display = 'none';
             zenCompletion.style.display = 'block';
         };
@@ -311,44 +336,36 @@ const updateAbstinenceTimers = () => {
                 breathingCircle.classList.add('inhale');
             } else {
                 breathingPhase.textContent = 'Exhala lentamente...';
-                breathingCircle.classList.remove('inhale');
+                breathingCircle.classList.remove('inhalé');
                 breathingCircle.classList.add('exhale');
-                
-                // Completar una respiración (inhalar + exhalar)
                 currentBreath++;
                 breathingCount.textContent = 10 - currentBreath;
-                
-                // Actualizar progreso
                 const progress = (currentBreath / 10) * 100;
                 progressFill.style.width = `${progress}%`;
-                
                 if (currentBreath >= 10) {
                     completeExercise();
                     return;
                 }
             }
-            
             isInhaling = !isInhaling;
         };
 
         const startBreathingSequence = () => {
             breathingPhase.textContent = 'Prepárate para comenzar...';
-            
             setTimeout(() => {
                 updateBreathing();
-                breathingInterval = setInterval(updateBreathing, 4000); // 4 segundos por fase
-            }, 2000); // Pausa inicial de 2 segundos
+                breathingInterval = setInterval(updateBreathing, 4000);
+            }, 2000);
         };
 
-        // Event listeners
         zenCloseBtn.onclick = closeZenModal;
         zenCompleteBtn.onclick = closeZenModal;
         zenModal.onclick = (e) => { if (e.target === zenModal) closeZenModal(); };
 
-        // Mostrar modal y comenzar
         zenModal.classList.add('active');
         startBreathingSequence();
     }
+
     function showAbstinenceChallengeModal() {
         const existingModal = document.getElementById('abstinenceChallengeModal');
         if (existingModal) existingModal.remove();
@@ -464,11 +481,9 @@ const updateAbstinenceTimers = () => {
         const currentInterval = { value: currentIntervalValue, unit: document.getElementById('currentIntervalUnit').value };
         const totalDuration = { value: totalDurationValue, unit: document.getElementById('totalDurationUnit').value };
 
-        App.state.createAbstinenceChallenge(name, currentInterval, totalDuration, incrementPercent, firstLevelPoints); // This will emit 'habitsUpdated'
+        App.state.createAbstinenceChallenge(name, currentInterval, totalDuration, incrementPercent, firstLevelPoints);
         document.getElementById('abstinenceChallengeModal').remove();
     }
-
-
 
     function formatDuration(ms) {
         const days = Math.floor(ms / 86400000);
@@ -481,7 +496,7 @@ const updateAbstinenceTimers = () => {
     }
 
     // --- Public API ---
-        App.ui.habits = {
+    App.ui.habits = {
         init: function() {
             this.render();
             this.initListeners();
@@ -513,7 +528,7 @@ const updateAbstinenceTimers = () => {
             const habitsContainer = document.getElementById('tab-habits');
             if (!habitsContainer) return;
 
-                        App.events.on('habitsUpdated', () => this.render());
+            App.events.on('habitsUpdated', () => this.render());
             App.events.on('stateRefreshed', () => this.render());
 
             habitsContainer.addEventListener('click', (e) => {
@@ -530,11 +545,19 @@ const updateAbstinenceTimers = () => {
                     if (challengeId) handleAbstinenceConsumption(challengeId);
                     return;
                 }
+                
+                // NUEVO: Manejar el clic en el botón de vender
+                const sellBtn = target.closest('.sell-btn');
+                if (sellBtn) {
+                    const challengeId = sellBtn.dataset.challengeId;
+                    if (challengeId) handleSellConsumption(challengeId);
+                    return;
+                }
 
                 const deleteBtn = target.closest('.delete-btn');
                 if (deleteBtn) {
                     const challengeId = deleteBtn.dataset.challengeId;
-                    if (challengeId) App.state.deleteAbstinenceChallenge(challengeId); // This will emit 'habitsUpdated'
+                    if (challengeId) App.state.deleteAbstinenceChallenge(challengeId);
                     return;
                 }
             });

@@ -137,7 +137,7 @@
 
         // 📜 Sistema de historial animado con control de timing
         const messageHistory = [];
-        const MAX_MESSAGES = 5;
+        const MAX_MESSAGES = 7; // Aumentado para aprovechar el espacio extra
         let lastMessageTime = 0;
         const MIN_MESSAGE_DELAY = 3500; // Mínimo 2 segundos entre mensajes
         

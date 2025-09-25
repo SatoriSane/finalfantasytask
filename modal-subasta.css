@@ -239,7 +239,7 @@
     50% { transform: scale(1.05); }
 }
 
-/* -------------------- Display de Precio Épico -------------------- */
+/* -------------------- Display de Precio Épico - COMPACTO -------------------- */
 .auction-price-container {
     position: relative;
     background: linear-gradient(135deg, 
@@ -248,35 +248,35 @@
         rgba(255, 215, 0, 0.12)
     );
     border: 2px solid var(--auction-gold);
-    border-radius: 18px;
-    padding: 2rem 1.5rem;
+    border-radius: 15px;
+    padding: 1rem 1.2rem;
     box-shadow: 
-        0 0 25px rgba(255, 215, 0, 0.25),
-        inset 0 0 15px rgba(255, 215, 0, 0.08);
+        0 0 20px rgba(255, 215, 0, 0.25),
+        inset 0 0 12px rgba(255, 215, 0, 0.08);
     animation: priceGlow 2s ease-in-out infinite;
-    min-width: 280px;
+    min-width: 200px;
     text-align: center;
 }
 
 .price-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--auction-gold-light);
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.5rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
+    letter-spacing: 1px;
     opacity: 0.8;
 }
 
 .current-price {
     font-family: 'Orbitron', sans-serif;
-    font-size: 2.4rem;
+    font-size: 1.8rem;
     font-weight: 900;
     background: linear-gradient(45deg, var(--auction-gold), var(--auction-gold-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
     margin: 0;
     line-height: 1;
     transition: all 0.3s ease;
@@ -394,14 +394,14 @@
     color: var(--auction-gold-light);
 }
 
-/* -------------------- Historial Animado de Subasta -------------------- */
+/* -------------------- Historial Animado de Subasta - EXPANDIDO -------------------- */
 .auction-history-container {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
     padding: 1rem;
     border: 1px solid rgba(255, 215, 0, 0.1);
-    min-height: 160px;
-    max-height: 160px;
+    min-height: 200px;
+    max-height: 200px;
     overflow: hidden;
     position: relative;
 }
@@ -755,17 +755,22 @@
     }
 
     .auction-price-container {
-        min-width: 240px;
-        padding: 1.5rem 1rem;
+        min-width: 180px;
+        padding: 0.8rem 1rem;
     }
 
     .current-price {
-        font-size: 2rem;
+        font-size: 1.5rem;
+    }
+
+    .price-label {
+        font-size: 0.7rem;
+        margin-bottom: 0.4rem;
     }
 
     .auction-history-container {
-        min-height: 120px;
-        max-height: 120px;
+        min-height: 160px;
+        max-height: 160px;
         padding: 0.8rem;
     }
     

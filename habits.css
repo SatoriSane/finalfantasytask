@@ -118,8 +118,8 @@
 
 /* Estilos para el círculo de progreso (SVG) */
 .progress-circle-container {
-    width: 25px;
-    height: 25px;
+    width: 32px;
+    height: 32px;
     position: relative;
     display: flex;
     align-items: center;

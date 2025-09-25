@@ -5,63 +5,35 @@
     global.SubastaConstantes = {
         TIMING_CONFIG: {
         // --- Mensajes y Animaciones ---
-        MESSAGE_MIN_DELAY: 1500,           // Delay mínimo entre mensajes del historial
-        PRICE_ANIMATION_DURATION: 1000,     // Duración de la animación del precio
-        FORCE_DELAY_AMOUNT: 4500,          // Delay forzado para mensajes importantes
+        MESSAGE_MIN_DELAY: 10,           // Delay mínimo entre mensajes del historial
+        PRICE_ANIMATION_DURATION: 10,     // Duración de la animación del precio
+        FORCE_DELAY_AMOUNT: 45,          // Delay forzado para mensajes importantes
         
         // --- Momentos de Incertidumbre ---
-        UNCERTAINTY_PAUSE_MIN: 6000,       // Pausa mínima durante incertidumbre
-        UNCERTAINTY_PAUSE_MAX: 12000,      // Pausa máxima durante incertidumbre
-        POST_UNCERTAINTY_BID_DELAY: 5000,  // Delay antes de pujar tras incertidumbre
+        UNCERTAINTY_PAUSE_MIN: 60,       // Pausa mínima durante incertidumbre
+        UNCERTAINTY_PAUSE_MAX: 100,      // Pausa máxima durante incertidumbre
+        POST_UNCERTAINTY_BID_DELAY: 50,  // Delay antes de pujar tras incertidumbre
         
         // --- Secuencia de Finalización ---
-        FINISH_AUCTION_DELAY: 2500,        // Delay antes de mostrar ganador
-        VICTORY_MESSAGE_DELAY: 2500,       // Delay forzado para mensaje de victoria
-        ACCEPT_BUTTON_DELAY: 2000,         // Delay para mostrar botón de aceptar
-        MOTIVATIONAL_MESSAGE_DELAY: 3500,  // Delay para mensaje motivacional final
+        FINISH_AUCTION_DELAY: 25,        // Delay antes de mostrar ganador
+        VICTORY_MESSAGE_DELAY: 25,       // Delay forzado para mensaje de victoria
+        ACCEPT_BUTTON_DELAY: 20,         // Delay para mostrar botón de aceptar
+        MOTIVATIONAL_MESSAGE_DELAY: 35,  // Delay para mensaje motivacional final
         
         // --- Intervalos de Tick por Tipo de Subasta ---
         AUCTION_INTERVALS: {
-            'rápida':  { min: 3000, max: 4500 },   // Subastas rápidas
-            'épica':   { min: 4000, max: 8000 },   // Subastas largas y dramáticas
-            'volátil': { min: 2500, max: 6000 },   // Intervalos muy variables
-            'normal':  { min: 4000, max: 7500 }    // Intervalo equilibrado
+            'rápida':  { min: 500, max: 3500 },   // Subastas rápidas
+            'épica':   { min: 800, max: 400 },   // Subastas largas y dramáticas
+            'volátil': { min: 500, max: 7500 },   // Intervalos muy variables
+            'normal':  { min: 200, max: 4000 }    // Intervalo equilibrado
         },
         
         // --- Mensajes de Inicio por Tipo ---
-        RECORD_MESSAGE_DELAY: 1000         // Delay para mensaje después de récord
+        RECORD_MESSAGE_DELAY: 10         // Delay para mensaje después de récord
     },
-    // 🎭 SISTEMA DE MENSAJES COHERENTES - Categorizados por contexto narrativo
+    // 🎭 SISTEMA DE MENSAJES COHERENTES - Solo mensajes específicos por personaje
     narrativeMessages: {
-        // 🔥 ALTA ENERGÍA - Después de pujas exitosas o momentos intensos
-        highEnergy: [
-            '🔥 ¡Alguien no se rinde!',
-            '⚡ ¡La competencia continúa!',
-            '🚀 ¡Esto se está calentando!',
-            '🏆 ¡Nadie quiere quedarse atrás!',
-            '🤯 ¡La puja sube y sube!',
-            '🔥 ¡El ambiente está al rojo vivo!',
-            '😮 ¡Sorpresa! Otro ofertante entra en juego!',
-            '👊 ¡Esto se pone intenso!',
-            '📈 ¡El precio sigue escalando!',
-            '💥 ¡Puja explosiva!',
-            '🤩 ¡El público enloquece con esta subasta!',
-            '✨ ¡Cada vez más emocionante!'
-        ],
-        
-        // 💪 PERSISTENCIA - Cuando la subasta continúa con determinación
-        persistence: [
-            '💪 ¡Hay más interés!',
-            '😏 ¡Nadie da su brazo a torcer!',
-            '🤑 ¡La codicia mueve montañas!',
-            '🥵 ¡Nadie quiere soltarlo todavía!',
-            '🦾 ¡La fuerza de los pujadores no tiene límites!',
-            '😎 ¡Parece que la cosa va para largo!',
-            '🔥 ¡La batalla continúa!',
-            '⚡ ¡Nadie se rinde!',
-            '💯 ¡La competencia sigue feroz!'
-        ],
-        
+                
         // 🤔 INCERTIDUMBRE - Momentos de duda y reflexión
         uncertainty: [
             '🤔 Los pujadores están dudando...',
@@ -85,13 +57,6 @@
             '🙄 El público comienza a impacientarse...'
         ],
         
-        // 🏁 FINALIZACIÓN - Mensajes específicos para el final de la subasta
-        finalization: [
-            '🏁 ¡Se acerca el final!',
-            '⏰ ¡Últimos momentos!',
-            '🎊 ¡Alguien va a ganar pronto!',
-            '🔥 ¡El momento decisivo ha llegado!'
-        ],
 
         // 🔨 CUENTA ATRÁS DEL MARTILLO - Para la secuencia final
         hammer: [
@@ -111,39 +76,6 @@
                 '✨ Los coleccionistas se reúnen en las sombras...',
                 '🎯 La arena de la subasta aguarda...'
             ],
-            entries: {
-                // Entradas genéricas por personalidad
-                'strategic': [
-                    'analiza la situación desde las sombras',
-                    'estudia a sus rivales con mirada calculadora',
-                    'entra con un plan maestro en mente',
-                    'observa cada detalle antes de actuar'
-                ],
-                'aggressive': [
-                    'irrumpe con una presencia intimidante',
-                    'entra dispuesto a arrasar con todo',
-                    'llega con sed de victoria',
-                    'se presenta como una fuerza imparable'
-                ],
-                'impulsive': [
-                    'aparece de repente, lleno de energía',
-                    'entra sin pensarlo dos veces',
-                    'llega siguiendo su instinto',
-                    'se lanza de cabeza a la batalla'
-                ],
-                'calculated': [
-                    'entra tras calcular todas las probabilidades',
-                    'aparece con precisión matemática',
-                    'llega después de analizar cada variable',
-                    'se presenta con lógica implacable'
-                ],
-                'passionate': [
-                    'entra con el corazón ardiendo',
-                    'llega movido por una pasión inquebrantable',
-                    'aparece con determinación absoluta',
-                    'se presenta con sueños por cumplir'
-                ]
-            },
             // Entradas específicas por personaje
             characterEntries: {
                 'Cloud': [
@@ -340,59 +272,22 @@
         };
         return messages[characterName] || null;
     },
-    // Función para generar mensajes extremos genéricos por personalidad
-    getExtremePersonalityMessage: function(personality, activeBidder, increaseAmount) {
-        const messages = {
-            'aggressive': [
-                `${activeBidder.emoji} ${activeBidder.name} ¡EXPLOTA! ¡PUJA BRUTAL DE ${increaseAmount} pts!`,
-                `${activeBidder.emoji} ${activeBidder.name} ¡ATAQUE DEVASTADOR! +${increaseAmount} pts`
-            ],
-            'impulsive': [
-                `${activeBidder.emoji} ${activeBidder.name} ¡SE VUELVE LOCO! ¡${increaseAmount} pts por impulso!`,
-                `${activeBidder.emoji} ${activeBidder.name} ¡IMPULSO DESCONTROLADO! +${increaseAmount} pts`
-            ],
-            'passionate': [
-                `${activeBidder.emoji} ${activeBidder.name} ¡ARREBATO PASIONAL! ¡${increaseAmount} pts!`,
-                `${activeBidder.emoji} ${activeBidder.name} ¡PASIÓN DESATADA! ¡${increaseAmount} pts!`
-            ]
-        };
-        const personalityMessages = messages[personality];
-        return personalityMessages ? personalityMessages[Math.floor(Math.random() * personalityMessages.length)] : null;
-    },
     
-    // 🎭 SISTEMA DE COHERENCIA NARRATIVA MEJORADO
+    // 🎭 SISTEMA DE COHERENCIA NARRATIVA MEJORADO - Solo para personajes específicos
     getCoherentMessage: function(currentContext, lastMessageType) {
         const messages = this.narrativeMessages;
         let availableCategories = [];
         
         // 🎯 REGLAS DE COHERENCIA NARRATIVA MEJORADAS
         if (currentContext === 'afterBid') {
-            // Después de una puja exitosa -> Alta energía o persistencia
-            availableCategories = ['highEnergy', 'persistence'];
+            // Después de una puja exitosa -> Persistencia
+            availableCategories = ['persistence'];
         } else if (currentContext === 'uncertainty') {
             // Durante incertidumbre -> Solo incertidumbre o tensión baja
-            if (lastMessageType === 'highEnergy' || lastMessageType === 'persistence') {
-                // Si venimos de alta energía, empezar con incertidumbre suave
-                availableCategories = ['uncertainty'];
-            } else {
-                // Si ya estamos en baja energía, puede empeorar
-                availableCategories = ['uncertainty', 'lowTension'];
-            }
+            availableCategories = ['uncertainty', 'lowTension'];
         } else if (currentContext === 'continuation') {
             // Continuación después de incertidumbre -> Volver a la acción
-            if (lastMessageType === 'lowTension') {
-                // Desde tensión baja, recuperar energía gradualmente
-                availableCategories = ['persistence', 'highEnergy'];
-            } else if (lastMessageType === 'uncertainty') {
-                // Desde incertidumbre, puede ir a cualquier lado
-                availableCategories = ['highEnergy', 'persistence'];
-            } else {
-                // Por defecto, mantener energía
-                availableCategories = ['highEnergy', 'persistence'];
-            }
-        } else if (currentContext === 'preFinalization') {
-            // 🏁 NUEVO CONTEXTO - Momentos previos al final
-            availableCategories = ['finalization'];
+            availableCategories = ['persistence'];
         }
         
         // Seleccionar categoría aleatoria de las disponibles
@@ -400,10 +295,10 @@
         const categoryMessages = messages[selectedCategory];
         
         if (!categoryMessages || categoryMessages.length === 0) {
-            // Fallback a alta energía
+            // Fallback a persistencia
             return {
-                message: messages.highEnergy[Math.floor(Math.random() * messages.highEnergy.length)],
-                type: 'highEnergy'
+                message: messages.persistence[Math.floor(Math.random() * messages.persistence.length)],
+                type: 'persistence'
             };
         }
         
@@ -573,55 +468,31 @@
         ]
     },
 
-    // Mensajes genéricos por personalidad (fallback)
- BIDDER_MESSAGES: {
-        aggressive: [
-            'ataca sin piedad',
-            'desata su poder',
-            'no conoce límites',
-            'lucha hasta el final'
-        ],
-        strategic: [
-            'analiza la situación',
-            'ejecuta su estrategia',
-            'calcula cada movimiento',
-            'espera el momento exacto'
-        ],
-        impulsive: [
-            'actúa por instinto',
-            'se lanza sin pensar',
-            'sigue su corazón',
-            'no puede contenerse'
-        ],
-        calculated: [
-            'hace cálculos precisos',
-            'analiza cada detalle',
-            'busca la lógica perfecta',
-            'estudia las probabilidades'
-        ],
-        passionate: [
-            'lucha por sus sueños',
-            'puja con el corazón',
-            'muestra gran determinación',
-            'sigue su pasión'
-        ]
+    // 🎭 FUNCIÓN PARA OBTENER MENSAJE ESPECÍFICO DE PERSONAJE DURANTE LA PUJA
+    getCharacterBidMessage: function(participant) {
+        const characterMessages = this.CHARACTER_SPECIFIC_MESSAGES[participant.name];
+        
+        if (characterMessages && characterMessages.length > 0) {
+            const randomMessage = characterMessages[Math.floor(Math.random() * characterMessages.length)];
+            return `${participant.emoji} ${participant.name} ${randomMessage}`;
+        }
+        
+        // Fallback genérico si no hay mensaje específico
+        return `${participant.emoji} ${participant.name} actúa con determinación`;
     },
     
-    // 🎭 FUNCIÓN PARA GENERAR MENSAJE DE ENTRADA DE PARTICIPANTE
+    // 🎭 FUNCIÓN PARA GENERAR MENSAJE DE ENTRADA DE PARTICIPANTE - Solo personajes específicos
     getParticipantEntryMessage: function(participant) {
         const characterEntries = this.narrativeMessages.participantEntry.characterEntries[participant.name];
-        const personalityEntries = this.narrativeMessages.participantEntry.entries[participant.personality];
         
         let entryAction;
         
-        // Priorizar mensajes específicos del personaje
+        // Solo usar mensajes específicos del personaje
         if (characterEntries && characterEntries.length > 0) {
             entryAction = characterEntries[Math.floor(Math.random() * characterEntries.length)];
-        } else if (personalityEntries && personalityEntries.length > 0) {
-            entryAction = personalityEntries[Math.floor(Math.random() * personalityEntries.length)];
         } else {
-            // Fallback genérico
-            entryAction = 'entra a la subasta con determinación';
+            // Fallback genérico solo si no hay mensaje específico
+            entryAction = 'entra a la subasta con su estilo único';
         }
         
         return `${participant.emoji} ${participant.name} ${entryAction}`;

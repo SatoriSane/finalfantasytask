@@ -7,7 +7,6 @@ const TIMING_CONFIG = SubastaConstantes?.TIMING_CONFIG || {};
 const VIRTUAL_BIDDERS = SubastaConstantes?.VIRTUAL_BIDDERS || [];
 const MOTIVATIONAL_MESSAGES = SubastaConstantes?.MOTIVATIONAL_MESSAGES || [];
 const CHARACTER_SPECIFIC_MESSAGES = SubastaConstantes?.CHARACTER_SPECIFIC_MESSAGES || {};
-const BIDDER_MESSAGES = SubastaConstantes?.BIDDER_MESSAGES || {};
 
 // 🎭 SISTEMA DE COHERENCIA NARRATIVA Y CONTROL DE ESTADOS
 let lastNarrativeMessageType = 'system'; // Tracking del último tipo de mensaje narrativo
@@ -59,7 +58,9 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
         // 🎭 Función para cerrar modal con limpieza épica
         const closeModal = () => {
             clearInterval(auctionInterval);
+            clearTimeout(auctionInterval); // También limpiar si es setTimeout
             clearTimeout(queueTimeout);
+            clearTimeout(finalizationTimeout);
             messageQueue = [];
             isProcessingQueue = false;
             modal.classList.remove('visible');
@@ -248,18 +249,17 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
         };
 
         let bidCount = 0;
-        let auctionEnergy = 100;
+        let auctionEnergy = 75;
+        const firstHammerThreshold = 3; // tras 3 pujas ya puede caer el martillo
         let lastBidTime = Date.now();
-        let isInDecisionPause = false;
-        let uncertaintyMoments = 0;
+        let isInHammerSequence = false;
         let lastBidder = null;
-        let ticksSinceLastBid = 0; // 🎯 NUEVO: Controla la coherencia y el fin de la subasta
 
         // 🎲 Variables para hacer cada subasta única
         let auctionType = '';
         let auctionIntensity = 0;
         let maxBidLimit = 0;
-        let uncertaintyFrequency = 0;
+        let hammerContinueProbability = 0;
 
         // 🎲 Determina el tipo de subasta aleatoriamente
         const determineAuctionType = () => {
@@ -269,7 +269,7 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
                 auctionType = 'rápida';
                 auctionIntensity = 0.3 + Math.random() * 0.4; // 30-70%
                 maxBidLimit = basePrice * (1.5 + Math.random() * 2); // 1.5x-3.5x
-                uncertaintyFrequency = 0.6; // Más incertidumbre = termina antes
+                hammerContinueProbability = 0.3; // Baja probabilidad de continuar = termina antes
                 auctionEnergy = 30 + Math.random() * 40; // Energía baja
                 addHistoryMessage('⚡ Subasta EXPRESS detectada - ¡Pocos pujadores!', 'system');
             } else if (rand < 0.4) {
@@ -277,7 +277,7 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
                 auctionType = 'épica';
                 auctionIntensity = 0.8 + Math.random() * 0.2; // 80-100%
                 maxBidLimit = basePrice * (8 + Math.random() * 12); // 8x-20x
-                uncertaintyFrequency = 0.2; // Poca incertidumbre = dura más
+                hammerContinueProbability = 0.7; // Alta probabilidad de continuar = dura más
                 auctionEnergy = 120 + Math.random() * 80; // Energía alta
                 addHistoryMessage('🔥 ¡SUBASTA ÉPICA! Grandes coleccionistas detectados', 'victory');
             } else if (rand < 0.6) {
@@ -285,15 +285,15 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
                 auctionType = 'volátil';
                 auctionIntensity = 0.4 + Math.random() * 0.5; // 40-90%
                 maxBidLimit = basePrice * (3 + Math.random() * 8); // 3x-11x
-                uncertaintyFrequency = 0.4;
+                hammerContinueProbability = 0.5; // Probabilidad media
                 auctionEnergy = 60 + Math.random() * 80;
-                addHistoryMessage('🎢 Subasta VOLÁTIL - ¡Prepárate para sorpresas!', 'uncertainty');
+                addHistoryMessage('🎢 Subasta VOLÁTIL - ¡Prepárate para sorpresas!', 'system');
             } else {
                 // 40% - Subasta NORMAL (equilibrada)
                 auctionType = 'normal';
                 auctionIntensity = 0.5 + Math.random() * 0.3; // 50-80%
                 maxBidLimit = basePrice * (2 + Math.random() * 4); // 2x-6x
-                uncertaintyFrequency = 0.35;
+                hammerContinueProbability = 0.6; // Probabilidad equilibrada
                 auctionEnergy = 70 + Math.random() * 60;
                 addHistoryMessage('🎯 Subasta equilibrada - ¡Que comience la batalla!', 'system');
             }
@@ -383,45 +383,32 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
                                 const intervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
                                 const intervalDuration = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
                                 
-                                // Crear el tick que usa las funciones ya definidas en startAuction
+                                // Crear el tick simplificado - solo procesa pujas
                                 const auctionTick = () => {
-                                    if (!isAuctionInProgress || isInDecisionPause || isFinalizingAuction) {
+                                    if (!isAuctionInProgress || isInHammerSequence || isFinalizingAuction) {
                                         if (!isAuctionInProgress) clearInterval(auctionInterval);
                                         return;
                                     }
                                 
-                                    ticksSinceLastBid++; // Incrementar el contador en cada tick
-                                
-                                    // Solo puede haber incertidumbre si ha pasado al menos un turno desde la última puja
-                                    if (ticksSinceLastBid > 1) {
-                                        let uncertaintyProbability = uncertaintyFrequency;
-                                        if (bidCount >= 5) uncertaintyProbability += 0.1;
-                                        if (bidCount >= 8) uncertaintyProbability += 0.2;
-                                        if (auctionEnergy < 40) uncertaintyProbability += 0.15;
-                                
-                                        if (auctionType === 'rápida' && bidCount >= 3) uncertaintyProbability += 0.3;
-                                        if (auctionType === 'épica' && bidCount < 10) uncertaintyProbability -= 0.2;
-                                
-                                        const shouldForceUncertainty = bidCount >= 4 && uncertaintyMoments === 0;
-                                
-                                        if ((bidCount >= 2 && Math.random() < uncertaintyProbability) || shouldForceUncertainty) {
-                                            startUncertaintyMoment();
-                                            return; // Salir después de iniciar la incertidumbre
-                                        }
-                                    }
-                                
-                                    // Si no hay incertidumbre, procesar una puja
+                                    // Procesar una puja directamente
                                     processBid();
+                                    
+                                    // Programar el siguiente tick con intervalo aleatorio
+                                    clearInterval(auctionInterval);
+                                    const nextIntervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
+                                    const nextInterval = nextIntervalConfig.min + Math.random() * (nextIntervalConfig.max - nextIntervalConfig.min);
+                                    auctionInterval = setTimeout(auctionTick, nextInterval);
                                 };
                                 
-                                auctionInterval = setInterval(auctionTick, intervalDuration);
-                            }, 1500);
-                        }, 800);
+                                // Iniciar el primer tick
+                                auctionInterval = setTimeout(auctionTick, intervalDuration);
+                            }, 500);
+                        }, 400);
                     }
                 };
                 
                 // Iniciar la secuencia después de un breve delay
-                setTimeout(showNextParticipant, 1000);
+                setTimeout(showNextParticipant, 500);
             };
             
             // 🚀 INICIAR SECUENCIA
@@ -430,9 +417,12 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
             // 🔥 Las demás funciones están más abajo
             
             const processBid = () => {
-                if (isFinalizingAuction) {
+                if (isFinalizingAuction || isInHammerSequence) {
+                    // Si está en secuencia de martillo o finalizando, interrumpir
                     clearTimeout(finalizationTimeout);
+                    clearTimeout(auctionInterval); // Limpiar cualquier timeout pendiente
                     isFinalizingAuction = false;
+                    isInHammerSequence = false;
                     addHistoryMessage('💥 ¡PUJA DE ÚLTIMO SEGUNDO! ¡La subasta continúa!', 'victory', true, false, true);
                 }
             
@@ -483,21 +473,25 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
                     }
                 }
             
+                console.log(`📊 Puja procesada: Energía=${Math.round(auctionEnergy)}, Increase=${Math.round(increase)}, Precio=${Math.round(currentPrice)}`);
+                
                 if (increase > 0) {
                     currentPrice += increase;
                     lastBidder = activeBidder;
-                    ticksSinceLastBid = 0; // 🎯 RESETEAR: Acaba de haber una puja
                     
                     const increaseAmount = Math.round(increase);
-                    const coherentMessage = SubastaConstantes.getCoherentMessage('afterBid', lastNarrativeMessageType);
-                    const bidMessage = `${coherentMessage.message} ${activeBidder.emoji} ${activeBidder.name} puja ${increaseAmount} pts!`;
-                    lastNarrativeMessageType = coherentMessage.type;
+                    
+                    // Usar mensaje específico del personaje
+                    const characterMessage = SubastaConstantes.getCharacterBidMessage(activeBidder);
+                    const bidMessage = `${characterMessage} y puja ${increaseAmount} pts!`;
                     
                     addHistoryMessage(bidMessage, 'bid', false, true);
                     updateUI(true);
                 } else {
-                    if (!isFinalizingAuction) {
-                        startFinalizationSequence();
+                    // No hay más pujas, iniciar secuencia de martillo
+                    console.log('🔨 No hay más pujas, iniciando martillo...');
+                    if (!isInHammerSequence && !isFinalizingAuction) {
+                        startHammerSequence();
                     }
                 }
             };
@@ -516,51 +510,78 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
             // 🚫 FUNCIÓN DUPLICADA ELIMINADA - Ya está declarada arriba
         };
         
-        // 🎭 FUNCIONES DE SUBASTA - Movidas fuera para accesibilidad global
-        const startUncertaintyMoment = () => {
-            isInDecisionPause = true;
-            uncertaintyMoments++;
-
-            // 🎭 USAR SISTEMA COHERENTE - Mensaje de incertidumbre contextual
-            if (SubastaConstantes?.getCoherentMessage) {
-                const coherentMessage = SubastaConstantes.getCoherentMessage('uncertainty', lastNarrativeMessageType);
-                addHistoryMessage(coherentMessage.message, 'uncertainty');
-                lastNarrativeMessageType = coherentMessage.type;
-            } else {
-                // Fallback si no hay sistema coherente
-                addHistoryMessage('🤔 Los pujadores están dudando...', 'uncertainty');
+        const startHammerSequence = () => {
+            if (isInHammerSequence || isFinalizingAuction) return;
+        
+            isInHammerSequence = true;
+            console.log('🔨 Iniciando secuencia de martillo...');
+        
+            // Mensajes de martillo
+            const hammerMessages = SubastaConstantes.narrativeMessages.hammer || ['A la una...', 'A las dos...'];
+            const randomHammerMessage = hammerMessages[Math.floor(Math.random() * hammerMessages.length)];
+        
+            // Mostrar mensaje de martillo
+            addHistoryMessage(randomHammerMessage, 'hammer', true, false, true);
+        
+            // Vibración
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
             }
-            
-            // Usar configuración de timing para la pausa de incertidumbre
-            const uncertaintyDuration = TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN + 
-                Math.random() * (TIMING_CONFIG.UNCERTAINTY_PAUSE_MAX - TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN);
-            setTimeout(resolveUncertainty, uncertaintyDuration);
+        
+            // Después de un delay, resolver martillo
+            setTimeout(resolveHammer, TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN + Math.random() * (TIMING_CONFIG.UNCERTAINTY_PAUSE_MAX - TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN));
         };
         
-        const resolveUncertainty = () => {
-            isInDecisionPause = false;
-            let continueProbability = 0.75;
-            if (auctionEnergy < 30) continueProbability -= 0.2;
-            if (bidCount >= 6) continueProbability -= 0.1;
-            if (currentPrice > basePrice * 3) continueProbability -= 0.1;
-            continueProbability = Math.max(0.3, continueProbability);
-            
+        const resolveHammer = () => {
+            // Ajustar probabilidad según contexto
+            let continueProbability = hammerContinueProbability;
+        
+            if (auctionEnergy < 30) continueProbability -= 0.15;
+            if (bidCount >= 5) continueProbability -= 0.1;
+            if (currentPrice > basePrice * 4) continueProbability -= 0.05;
+        
+            // Mantener probabilidad mínima
+            continueProbability = Math.max(0.25, Math.min(0.95, continueProbability));
+        
             if (Math.random() < continueProbability) {
-                // 🎭 CONTINUACIÓN COHERENTE - Solo si la subasta sigue activa
-                if (auctionState === 'running' && !isFinalizingAuction) {
-                    if (SubastaConstantes?.getCoherentMessage) {
-                        const coherentMessage = SubastaConstantes.getCoherentMessage('continuation', lastNarrativeMessageType);
-                        addHistoryMessage(coherentMessage.message, 'system');
-                        lastNarrativeMessageType = coherentMessage.type;
-                    } else {
-                        // Fallback
-                        startFinalizationSequence();
-                    }
-                    setTimeout(processBid, TIMING_CONFIG.POST_UNCERTAINTY_BID_DELAY);
-                }
+                // 💥 Subasta continúa
+                isInHammerSequence = false;
+        
+                // Mensaje de continuación
+                const continuationMessages = [
+                    '💥 ¡PUJA DE ÚLTIMO MOMENTO!',
+                    '⚡ ¡Alguien no se rinde!',
+                    '🚀 ¡La batalla continúa!',
+                    '🔥 ¡Sorpresa! ¡Hay más competencia!'
+                ];
+                const randomContinuation = continuationMessages[Math.floor(Math.random() * continuationMessages.length)];
+                addHistoryMessage(randomContinuation, 'system', true, false, true);
+        
+                // Restaurar energía al 40-70%
+                const oldEnergy = auctionEnergy;
+                auctionEnergy = 40 + Math.random() * 30;
+                console.log(`🔋 Energía restaurada: ${Math.round(oldEnergy)} → ${Math.round(auctionEnergy)}`);
+        
+                // Reiniciar bucle de pujas de manera segura
+                const scheduleNextBid = () => {
+                    if (auctionState !== 'running' || isFinalizingAuction) return;
+        
+                    // Ejecutar la puja
+                    processBid();
+        
+                    // Programar siguiente puja
+                    const intervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
+                    const nextInterval = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
+                    auctionInterval = setTimeout(scheduleNextBid, nextInterval);
+                };
+        
+                // Primer tick tras breve delay
+                auctionInterval = setTimeout(scheduleNextBid, TIMING_CONFIG.POST_UNCERTAINTY_BID_DELAY);
+        
             } else {
-                // La subasta no continúa, iniciar secuencia de finalización del martillo
-                addHistoryMessage('🔥 ¡Alguien no se rinde!', 'system');
+                // 🔨 Subasta termina
+                isInHammerSequence = false;
+                startFinalizationSequence();
             }
         };
         
@@ -578,9 +599,9 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
             const shuffledMessages = [...hammerMessages].sort(() => 0.5 - Math.random());
 
             const finalizationSteps = [
-                { message: shuffledMessages[0], delay: 3000, type: 'finalization' },
-                { message: shuffledMessages[1], delay: 3000, type: 'finalization' },
-                { message: `¡Adjudicado a...`, delay: 2000, type: 'victory' }
+                { message: shuffledMessages[0], delay: TIMING_CONFIG.FINISH_AUCTION_DELAY * 2, type: 'finalization' },
+                { message: shuffledMessages[1], delay: TIMING_CONFIG.FINISH_AUCTION_DELAY * 2, type: 'finalization' },
+                { message: `¡Adjudicado a...`, delay: TIMING_CONFIG.FINISH_AUCTION_DELAY, type: 'victory' }
             ];
 
             let cumulativeDelay = 0;

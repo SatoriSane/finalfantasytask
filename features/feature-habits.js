@@ -105,6 +105,11 @@
             if (timerElement) {
                 timerElement.textContent = formatTimeRemaining(timeRemaining);
             }
+            
+            const ticketsInlineMetric = card.querySelector('.inline-metric .metric-value');
+            if (ticketsInlineMetric) {
+                ticketsInlineMetric.textContent = challenge.availableConsumptions;
+            }
 
             const createdAt = new Date(challenge.createdAt);
             const durationMs = convertToMilliseconds(challenge.totalDuration.value, challenge.totalDuration.unit);
@@ -127,11 +132,13 @@
             
             const sellPoints = (currentStreakMs > bestStreak) ? pointsForCurrentLevel * 2 : pointsForCurrentLevel;
 
-            const sellBtnContent = `Vender por ${sellPoints} <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>`;
+            // CAMBIO: Contenido del botón de Vender ahora usa el ícono de la estrella
+            const sellBtnContent = `Vender ticket por <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>${sellPoints}`;
 
             if (challenge.availableConsumptions > 0) {
                 if (consumeBtn) {
-                    consumeBtn.textContent = `Consumir ticket (${challenge.availableConsumptions})`;
+                    // CAMBIO: Se actualiza el texto del botón
+                    consumeBtn.textContent = 'Gastar ticket';
                     consumeBtn.classList.add('available');
                     consumeBtn.classList.remove('waiting');
                 }
@@ -139,7 +146,6 @@
                     sellBtn.innerHTML = sellBtnContent;
                     sellBtn.style.display = 'flex';
                     
-                    // Lógica para mostrar el bonus
                     if (currentStreakMs > bestStreak) {
                          sellBtn.innerHTML += `<span class="bonus-multiplier">x2</span>`;
                     }
@@ -185,7 +191,7 @@
             let timeRemaining = nextAllowed.getTime() - now.getTime();
             
             const statusClass = isActive ? (challenge.availableConsumptions > 0 ? 'available' : 'waiting') : 'completed';
-            const buttonText = isActive ? (challenge.availableConsumptions > 0 ? `Consumir (${challenge.availableConsumptions})` : 'Esperando...') : 'Completado';
+            const buttonText = isActive ? (challenge.availableConsumptions > 0 ? `Gastar ticket` : 'Esperando...') : 'Completado';
             const buttonClass = isActive ? (challenge.availableConsumptions > 0 ? 'available' : 'waiting') : 'completed';
             const createdAtDate = new Date(createdAt);
             const durationMs = convertToMilliseconds(totalDuration.value, totalDuration.unit);
@@ -216,11 +222,10 @@
             
             const cardClasses = `abstinence-card ${statusClass} ${currentStreakMs > bestStreak ? 'record-breaking' : ''}`;
             const sellPoints = (currentStreakMs > bestStreak) ? pointsForCurrentLevel * 2 : pointsForCurrentLevel;
-            const bonusHtml = (currentStreakMs > bestStreak) ? `
-                <span class="bonus-multiplier">x2</span>
-            ` : '';
+            const bonusHtml = (currentStreakMs > bestStreak) ? `<span class="bonus-multiplier">x2</span>` : '';
 
-            const sellBtnContent = `Vender por ${sellPoints} <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>`;
+            // CAMBIO: Contenido del botón de Vender ahora usa el ícono de la estrella
+            const sellBtnContent = `Vender ticket por <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>${sellPoints}`;
 
             return `
                 <div class="${cardClasses}" data-id="${id}">
@@ -259,8 +264,12 @@
                         </div>
                         ${isActive ? `
                         <div class="timer-section">
-                            <div class="timer-label">Ticket de consumición en:</div>
+                            <div class="timer-label">Nuevo ticket en:</div>
                             <div class="timer-display">${formatTimeRemaining(timeRemaining)}</div>
+                            <div class="inline-metric">
+                                <span class="metric-label">Tickets</span>
+                                <span class="metric-value">${challenge.availableConsumptions}</span>
+                            </div>
                         </div>` : `<div class="completed-message">¡Reto completado! 🏆</div>`}
                     </div>
                     <div class="card-footer-dashboard">

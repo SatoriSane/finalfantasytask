@@ -159,17 +159,56 @@
     <div id="auctionModal" class="modal-overlay">
         <div class="modal-content auction-content">
             <button class="modal-close-btn">&times;</button>
-            <h2 class="auction-title">Subastando tu Ticket</h2>
-            <div class="auction-animation-container">
-                <div class="auction-hammer">🔨</div>
-                <div class="auction-price-display">
-                    <span class="initial-price-label">Precio inicial:</span>
-                    <span id="auctionCurrentPrice" class="current-price"></span>
-                </div>
-                <p id="auctionStatus" class="auction-status"></p>
+            
+            <!-- Partículas de fondo -->
+            <div class="auction-particles"></div>
+            
+            <!-- Título épico -->
+            <div class="auction-header">
+                <h2 class="auction-title">🏆 SUBASTA ÉPICA 🏆</h2>
+                <div class="auction-subtitle">¡Tu ticket está en juego!</div>
             </div>
-            <button id="startAuctionBtn" class="primary">Iniciar Subasta</button>
-            <button id="takePriceBtn" class="secondary" style="display: none;">Aceptar Precio</button>
+            
+            <!-- Display del precio con efectos -->
+            <div class="auction-price-container">
+                <div class="price-label">Precio Actual</div>
+                <div id="auctionCurrentPrice" class="current-price">⚡0 pts</div>
+                <div class="price-change-indicator" id="priceChangeIndicator">+0</div>
+            </div>
+            
+            <!-- Historial animado de subasta -->
+            <div class="auction-history-container">
+                <div id="auctionHistory" class="auction-history">
+                    <!-- Los mensajes aparecerán aquí dinámicamente -->
+                </div>
+                <div id="auctionProgress" class="auction-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="bidCounter">Puja 1</span> de <span id="maxBidsDisplay">10</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="auction-actions">
+                <button id="startAuctionBtn" class="auction-btn start-btn">
+                    <span class="btn-icon">🚀</span>
+                    <span class="btn-text">¡INICIAR SUBASTA!</span>
+                </button>
+                <button id="takePriceBtn" class="auction-btn take-btn" style="display: none;">
+                    <span class="btn-icon">💰</span>
+                    <span class="btn-text">¡ACEPTAR OFERTA!</span>
+                </button>
+            </div>
+            
+            <!-- Efectos de celebración -->
+            <div id="celebrationEffects" class="celebration-effects" style="display: none;">
+                <div class="fireworks"></div>
+                <div class="confetti"></div>
+                <div class="victory-message">¡SUBASTA GANADA! 🎉</div>
+            </div>
         </div>
     </div>
     <div id="resetConfirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="resetConfirmTitle" aria-hidden="true">
@@ -435,7 +474,7 @@
     <script src="app-state-missions.js"></script>
     <script src="app-state-today.js"></script>
     <script src="app-state-shop.js"></script>
-    <script src="subasta.js"></script>
+    <script src="features/modal-subasta.js"></script>
     <script src="features/feature-ui.js"></script>
     <script src="features/feature-data.js"></script>
     <script src="features/feature-today.js"></script>

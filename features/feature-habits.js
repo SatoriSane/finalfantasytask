@@ -29,90 +29,31 @@
         return `${seconds}s`;
     };
     /**
-     * Muestra y gestiona el modal de subasta para un ticket.
-     * @param {object} challenge El objeto del reto de abstinencia.
+     * 🏆 REDIRIGE A LA SUBASTA ÉPICA 🏆
+     * Esta función ahora simplemente llama a la subasta épica en modal-subasta.js
      */
     function showAuctionModal(challenge) {
-        const modal = document.getElementById('auctionModal');
-        const startBtn = document.getElementById('startAuctionBtn');
-        const takeBtn = document.getElementById('takePriceBtn');
-        const currentPriceDisplay = document.getElementById('auctionCurrentPrice');
-        const statusDisplay = document.getElementById('auctionStatus');
-        const closeBtn = modal.querySelector('.modal-close-btn');
-
-        // Limpia cualquier manejador de eventos anterior para evitar conflictos.
-        closeBtn.onclick = null;
-        startBtn.onclick = null;
-        takeBtn.onclick = null;
-        
-        // Lógica de cálculo de precios inicial.
-        const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
-        const currentStreakMs = new Date().getTime() - new Date(challenge.lastConsumptionTime).getTime();
-        const sellPoints = (currentStreakMs > (challenge.bestStreak || 0)) ? pointsForCurrentLevel * 2 : pointsForCurrentLevel;
-        let currentPrice = sellPoints;
-        let auctionInterval;
-        let isAuctionInProgress = false;
-
-        // Función para cerrar el modal y limpiar el temporizador.
-        const closeModal = () => {
-            clearInterval(auctionInterval);
-            modal.classList.remove('visible');
-        };
-    
-        const updateUI = () => {
-            currentPriceDisplay.textContent = `⚡${Math.round(currentPrice)} pts`;
-        };
-    
-        const startAuction = () => {
-            if (isAuctionInProgress) return;
-            isAuctionInProgress = true;
+        // Intenta usar la función épica con múltiples verificaciones
+        if (window.App && window.App.ui && window.App.ui.habits && window.App.ui.habits.showEpicAuction) {
+            console.log('✅ Usando subasta épica');
+            window.App.ui.habits.showEpicAuction(challenge);
+        } else {
+            console.error('❌ La función de subasta épica no está disponible.');
+            console.log('🔍 Debug info:');
+            console.log('- window.App:', !!window.App);
+            console.log('- window.App.ui:', !!(window.App && window.App.ui));
+            console.log('- window.App.ui.habits:', !!(window.App && window.App.ui && window.App.ui.habits));
+            console.log('- showEpicAuction:', !!(window.App && window.App.ui && window.App.ui.habits && window.App.ui.habits.showEpicAuction));
             
-            startBtn.style.display = 'none';
-            takeBtn.style.display = 'none';
-            statusDisplay.textContent = 'Pujando...';
-            
-            auctionInterval = setInterval(() => {
-                const random = Math.random();
-                let increase = 0;
+            // Fallback: usar subasta básica temporal
+            console.log('🔄 Usando subasta básica como fallback');
+            showBasicAuctionFallback(challenge);
+        }
+    }
     
-                if (currentPrice < sellPoints * 10) {
-                     increase = Math.max(1, currentPrice * 0.10);
-                }
-    
-                currentPrice += increase;
-                updateUI();
-                
-                const finishChance = Math.min(0.05 + (currentPrice / (sellPoints * 10)) * 0.2, 1);
-                if (random < finishChance || currentPrice >= sellPoints * 10) {
-                    clearInterval(auctionInterval);
-                    isAuctionInProgress = false;
-                    statusDisplay.textContent = '¡Subasta terminada!';
-                    takeBtn.style.display = 'block';
-                    takeBtn.textContent = `Aceptar ${Math.round(currentPrice)} pts`;
-                }
-    
-            }, 200);
-        };
-    
-        const takePrice = () => {
-            App.state.sellConsumption(challenge.id, Math.round(currentPrice));
-            closeModal();
-            App.events.emit('showDiscreetMessage', `¡Ticket subastado por ${Math.round(currentPrice)} puntos!`);
-        };
-    
-        // Asigna los nuevos manejadores de eventos.
-        closeBtn.onclick = closeModal;
-        startBtn.onclick = startAuction;
-        takeBtn.onclick = takePrice;
-    
-        // Resetea el estado del modal antes de mostrarlo.
-        isAuctionInProgress = false;
-        startBtn.style.display = 'block';
-        takeBtn.style.display = 'none';
-        statusDisplay.textContent = '';
-        
-        updateUI();
-        modal.classList.add('visible');
+    // Función de fallback básica
+    function showBasicAuctionFallback(challenge) {
+        alert(`Subasta para ${challenge.name} - Precio: ${challenge.firstLevelPoints} pts. (Función épica no disponible)`);
     }
     const updateChallengeState = (challenge) => {
         if (!challenge || !challenge.isActive) return;

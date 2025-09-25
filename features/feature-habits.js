@@ -212,11 +212,11 @@
                     <div class="card-body-dashboard">
                         <div class="main-metrics-grid">
                             <div class="metric-item">
-                                <span class="metric-label">Tasa de Cumplimiento</span>
+                                <span class="metric-label">Cumplimiento</span>
                                 <span class="metric-value ${complianceClass}">${Math.round(successRate)}%</span>
                             </div>
                             <div class="metric-item">
-                                <span class="metric-label">Nivel</span>
+                                <span class="metric-label">Nivel(tickets)</span>
                                 <span class="metric-value">${currentLevel}/${finalLevel}</span>
                             </div>
                             <div class="metric-item">

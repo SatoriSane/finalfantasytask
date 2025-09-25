@@ -156,7 +156,22 @@
             <button id="openResetOptionsBtn" class="icon-btn settings-icon" aria-label="Opciones de reinicio" title="Opciones de reinicio">⚙️</button>
         </div>
     </div>
-
+    <div id="auctionModal" class="modal-overlay">
+        <div class="modal-content auction-content">
+            <button class="modal-close-btn">&times;</button>
+            <h2 class="auction-title">Subastando tu Ticket</h2>
+            <div class="auction-animation-container">
+                <div class="auction-hammer">🔨</div>
+                <div class="auction-price-display">
+                    <span class="initial-price-label">Precio inicial:</span>
+                    <span id="auctionCurrentPrice" class="current-price"></span>
+                </div>
+                <p id="auctionStatus" class="auction-status"></p>
+            </div>
+            <button id="startAuctionBtn" class="primary">Iniciar Subasta</button>
+            <button id="takePriceBtn" class="secondary" style="display: none;">Aceptar Precio</button>
+        </div>
+    </div>
     <div id="resetConfirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="resetConfirmTitle" aria-hidden="true">
         <div class="modal-content">
             <button class="modal-close-btn" id="closeResetConfirmModal" aria-label="Cerrar opciones de reinicio">&times;</button>
@@ -420,6 +435,7 @@
     <script src="app-state-missions.js"></script>
     <script src="app-state-today.js"></script>
     <script src="app-state-shop.js"></script>
+    <script src="subasta.js"></script>
     <script src="features/feature-ui.js"></script>
     <script src="features/feature-data.js"></script>
     <script src="features/feature-today.js"></script>
@@ -429,6 +445,7 @@
     <script src="features/feature-history.js"></script>
     <script src="features/feature-habits.js"></script>
     <script src="script.js"></script>
+    
 
     <!-- Registro del Service Worker     -->
     <script>

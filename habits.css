@@ -15,7 +15,7 @@
     .abstinence-challenges-list {
         display: grid;
         /* Utiliza una cuadrícula que se adapta para mostrar más columnas */
-        grid-template-columns: repeat(auto-fit, minmin(320px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 1.5rem;
         padding: 1.5rem; /* Se mantiene un padding en pantallas grandes para estética */
     }
@@ -65,7 +65,7 @@
 }
 
 .abstinence-card.waiting {
-    border-color: var(--ff-orange);
+    border-color: #bdc3c7; /* gris calmado en vez de naranja fuerte */
 }
 
 .abstinence-card .delete-btn {
@@ -347,24 +347,6 @@
     fill: none;
     margin-right: -4px;
 }
-
-/* --- NUEVO ESTILO: RECORD PERSONAL SUPERADO --- */
-.abstinence-card.record-breaking {
-    border: 2px solid var(--ff-gold);
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-    transform: scale(1.02);
-    animation: pulse-record 2s infinite ease-in-out;
-}
-
-@keyframes pulse-record {
-    0%, 100% {
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-    }
-    50% {
-        box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
-    }
-}
-
 /* Modal de Creación de Reto y otros estilos de UI */
 /* ... (Se mantiene igual, sin cambios) ... */
 #abstinenceChallengeModal .modal-content {
@@ -550,30 +532,111 @@
     }
 }
 
-/* --- ESTILOS PARA EL BONO X2 --- */
-.bonus-multiplier {
-    font-size: 0.8em;
-    font-weight: 700;
-    color: var(--ff-gold);
-    /* Nuevo estilo más discreto */
-    border: 1px solid currentColor;
-    padding: 2px 4px;
-    border-radius: var(--border-radius-sm);
-    margin-left: 4px; /* Espacio para separar */
-    animation: pulse-bonus 1.5s infinite;
+.sell-btn {
+    position: relative; /* Esencial para posicionar el bono de forma absoluta */
 }
 
-@keyframes pulse-bonus {
-    0% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
-    50% {
-        transform: scale(1.1);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
+.sell-btn .bonus-multiplier {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    /* Los demás estilos de fuente, color y animación ya están definidos */
+}
+.streak {
+    font-size: 0.9em;
+    margin: 2px 0;
+    font-weight: bold;
+}
+
+.streak-current {
+    color: #2ecc71; /* verde motivador */
+}
+
+.streak-best {
+    color: #f1c40f; /* dorado para récord */
+}
+
+/* habits.css */
+
+/* --- Modal de Subasta --- */
+#auctionModal {
+    /* Estilos base del modal para cubrir toda la pantalla */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#auctionModal.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.auction-content {
+    background-color: var(--ff-bg-card);
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+#auctionModal.visible .auction-content {
+    transform: translateY(0);
+}
+
+.auction-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ff-primary);
+    margin-bottom: 1.5rem;
+}
+
+.auction-animation-container {
+    margin: 2rem 0;
+}
+
+.auction-hammer {
+    font-size: 3rem;
+    animation: hammer-swing 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes hammer-swing {
+    from { transform: rotate(-15deg); }
+    to { transform: rotate(15deg); }
+}
+
+.auction-price-display {
+    margin-top: 1rem;
+}
+
+.initial-price-label {
+    color: var(--ff-text-light);
+    font-size: 0.9rem;
+}
+
+.current-price {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--ff-tertiary); /* Puedes usar un color que destaque, como el dorado */
+    margin-top: 0.5rem;
+}
+
+.auction-status {
+    color: var(--ff-text-light);
+    font-style: italic;
+    min-height: 1.5rem;
 }

@@ -2,11 +2,8 @@
 
 (function() {
     'use strict';
-
     // --- Private State ---
     let timerUpdateInterval = null;
-
-    // --- Private Methods from ui-render-habits.js ---
     const convertToMilliseconds = (value, unit) => {
         const multipliers = {
             'minutes': 60 * 1000,
@@ -17,7 +14,6 @@
         };
         return value * (multipliers[unit] || 1);
     };
-
     const formatTimeRemaining = (ms) => {
         if (ms <= 0) return '¡Listo para el próximo nivel!';
         const totalSeconds = Math.floor(ms / 1000);
@@ -32,7 +28,92 @@
         if (minutes > 0) return `${minutes}m ${seconds}s`;
         return `${seconds}s`;
     };
+    /**
+     * Muestra y gestiona el modal de subasta para un ticket.
+     * @param {object} challenge El objeto del reto de abstinencia.
+     */
+    function showAuctionModal(challenge) {
+        const modal = document.getElementById('auctionModal');
+        const startBtn = document.getElementById('startAuctionBtn');
+        const takeBtn = document.getElementById('takePriceBtn');
+        const currentPriceDisplay = document.getElementById('auctionCurrentPrice');
+        const statusDisplay = document.getElementById('auctionStatus');
+        const closeBtn = modal.querySelector('.modal-close-btn');
 
+        // Limpia cualquier manejador de eventos anterior para evitar conflictos.
+        closeBtn.onclick = null;
+        startBtn.onclick = null;
+        takeBtn.onclick = null;
+        
+        // Lógica de cálculo de precios inicial.
+        const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
+        const currentStreakMs = new Date().getTime() - new Date(challenge.lastConsumptionTime).getTime();
+        const sellPoints = (currentStreakMs > (challenge.bestStreak || 0)) ? pointsForCurrentLevel * 2 : pointsForCurrentLevel;
+        let currentPrice = sellPoints;
+        let auctionInterval;
+        let isAuctionInProgress = false;
+
+        // Función para cerrar el modal y limpiar el temporizador.
+        const closeModal = () => {
+            clearInterval(auctionInterval);
+            modal.classList.remove('visible');
+        };
+    
+        const updateUI = () => {
+            currentPriceDisplay.textContent = `⚡${Math.round(currentPrice)} pts`;
+        };
+    
+        const startAuction = () => {
+            if (isAuctionInProgress) return;
+            isAuctionInProgress = true;
+            
+            startBtn.style.display = 'none';
+            takeBtn.style.display = 'none';
+            statusDisplay.textContent = 'Pujando...';
+            
+            auctionInterval = setInterval(() => {
+                const random = Math.random();
+                let increase = 0;
+    
+                if (currentPrice < sellPoints * 10) {
+                     increase = Math.max(1, currentPrice * 0.10);
+                }
+    
+                currentPrice += increase;
+                updateUI();
+                
+                const finishChance = Math.min(0.05 + (currentPrice / (sellPoints * 10)) * 0.2, 1);
+                if (random < finishChance || currentPrice >= sellPoints * 10) {
+                    clearInterval(auctionInterval);
+                    isAuctionInProgress = false;
+                    statusDisplay.textContent = '¡Subasta terminada!';
+                    takeBtn.style.display = 'block';
+                    takeBtn.textContent = `Aceptar ${Math.round(currentPrice)} pts`;
+                }
+    
+            }, 200);
+        };
+    
+        const takePrice = () => {
+            App.state.sellConsumption(challenge.id, Math.round(currentPrice));
+            closeModal();
+            App.events.emit('showDiscreetMessage', `¡Ticket subastado por ${Math.round(currentPrice)} puntos!`);
+        };
+    
+        // Asigna los nuevos manejadores de eventos.
+        closeBtn.onclick = closeModal;
+        startBtn.onclick = startAuction;
+        takeBtn.onclick = takePrice;
+    
+        // Resetea el estado del modal antes de mostrarlo.
+        isAuctionInProgress = false;
+        startBtn.style.display = 'block';
+        takeBtn.style.display = 'none';
+        statusDisplay.textContent = '';
+        
+        updateUI();
+        modal.classList.add('visible');
+    }
     const updateChallengeState = (challenge) => {
         if (!challenge || !challenge.isActive) return;
 
@@ -90,7 +171,11 @@
 
             const lastConsumptionDate = new Date(challenge.lastConsumptionTime);
             const currentStreakMs = now.getTime() - lastConsumptionDate.getTime();
-            
+            const formattedCurrentStreak = formatSimplifiedDuration(currentStreakMs);
+            const currentStreakElement = card.querySelector('.metric-item .current-streak-value'); // O la clase/ID que uses
+            if (currentStreakElement) {
+                currentStreakElement.textContent = `🔥${formattedCurrentStreak}`;
+            }
             const bestStreak = challenge.bestStreak || 0;
             if (currentStreakMs > bestStreak) {
                 card.classList.add('record-breaking');
@@ -131,24 +216,19 @@
             const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
             
             const sellPoints = (currentStreakMs > bestStreak) ? pointsForCurrentLevel * 2 : pointsForCurrentLevel;
+            const bonusHtml = (currentStreakMs > bestStreak) ? `<span class="bonus-multiplier">x2</span>` : '';
+            const sellBtnContent = `Vender ticket <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>${sellPoints}`;
 
-            // CAMBIO: Contenido del botón de Vender ahora usa el ícono de la estrella
-            const sellBtnContent = `Vender ticket por <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>${sellPoints}`;
 
             if (challenge.availableConsumptions > 0) {
                 if (consumeBtn) {
-                    // CAMBIO: Se actualiza el texto del botón
                     consumeBtn.textContent = 'Gastar ticket';
                     consumeBtn.classList.add('available');
                     consumeBtn.classList.remove('waiting');
                 }
                 if (sellBtn) {
-                    sellBtn.innerHTML = sellBtnContent;
+                    sellBtn.innerHTML = sellBtnContent + bonusHtml;
                     sellBtn.style.display = 'flex';
-                    
-                    if (currentStreakMs > bestStreak) {
-                         sellBtn.innerHTML += `<span class="bonus-multiplier">x2</span>`;
-                    }
                 }
             } else {
                 if (consumeBtn) {
@@ -166,9 +246,8 @@
     const renderAbstinenceChallenges = (challenges) => {
         const challengesList = document.getElementById('challengesList');
         if (!challengesList) return;
-
         const abstinenceChallenges = challenges.filter(c => c.type === 'abstinence');
-
+    
         if (abstinenceChallenges.length === 0) {
             challengesList.innerHTML = `
                 <div class="empty-list-message">
@@ -177,9 +256,7 @@
                 </div>`;
             return;
         }
-
         const now = new Date();
-
         challengesList.innerHTML = abstinenceChallenges.map(challenge => {
             const {
                 id, name, currentLevel, totalPoints, bestStreak,
@@ -198,35 +275,37 @@
             const elapsedMs = now.getTime() - createdAtDate.getTime();
             const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
             const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, currentLevel - 1));
-
+    
             const automaticLevelUps = challenge.automaticLevelUps || 0;
             const temptationFalls = challenge.temptationFalls || 0;
             const totalEvents = automaticLevelUps + temptationFalls;
             const successRate = totalEvents > 0 ? (automaticLevelUps / totalEvents) * 100 : 100;
-
+    
             let complianceClass = '';
             if (successRate >= 80) complianceClass = 'compliance-high';
             else if (successRate >= 50) complianceClass = 'compliance-medium';
             else complianceClass = 'compliance-low';
-
-            // CAMBIO CLAVE: Calculamos la Racha en tiempo real desde lastConsumptionTime y usamos el nuevo formato
             const lastConsumptionDate = new Date(lastConsumptionTime);
             const currentStreakMs = now.getTime() - lastConsumptionDate.getTime();
             const formattedCurrentStreak = formatSimplifiedDuration(currentStreakMs);
             const formattedBestStreak = formatSimplifiedDuration(bestStreak);
-
-            // CAMBIO: Nuevo radio y viewBox para el SVG
             const radius = 15;
             const circumference = 2 * Math.PI * radius;
             const progressOffset = circumference - (progressPercent / 100) * circumference;
             
             const cardClasses = `abstinence-card ${statusClass} ${currentStreakMs > bestStreak ? 'record-breaking' : ''}`;
             const sellPoints = (currentStreakMs > bestStreak) ? pointsForCurrentLevel * 2 : pointsForCurrentLevel;
-            const bonusHtml = (currentStreakMs > bestStreak) ? `<span class="bonus-multiplier">x2</span>` : '';
-
-            // CAMBIO: Contenido del botón de Vender ahora usa el ícono de la estrella
-            const sellBtnContent = `Vender ticket por <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>${sellPoints}`;
-
+    
+            // --- Código MODIFICADO ---
+            // Cambiamos el contenido del botón para reflejar la "Subasta"
+            const sellBtnContent = `
+                Subastar ticket 
+                <small class="auction-initial-price">
+                    Precio inicial: ${sellPoints} <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>
+                </small>
+            `;
+            // --- Fin del código MODIFICADO ---
+    
             return `
                 <div class="${cardClasses}" data-id="${id}">
                     <button class="delete-btn" data-challenge-id="${id}" title="Eliminar reto">🗑️</button>
@@ -255,11 +334,11 @@
                             </div>
                             <div class="metric-item">
                                 <span class="metric-label">Racha actual</span>
-                                <span class="metric-value">🔥${formattedCurrentStreak}</span>
+                                <span class="metric-value current-streak-value">🔥${formattedCurrentStreak}</span>
                             </div>
                             <div class="metric-item">
                                 <span class="metric-label">Mejor Racha</span>
-                                <span class="metric-value">🏆${formattedBestStreak}</span>
+                                <span class="metric-value best-streak-value">🏆${formattedBestStreak}</span>
                             </div>
                         </div>
                         ${isActive ? `
@@ -275,7 +354,7 @@
                     <div class="card-footer-dashboard">
                         ${isActive ? `
                             <button class="consume-btn ${buttonClass}" data-challenge-id="${id}">${buttonText}</button>
-                            <button class="sell-btn" style="display: ${challenge.availableConsumptions > 0 ? 'flex' : 'none'};" data-challenge-id="${id}">${sellBtnContent}${bonusHtml}</button>
+                            <button class="sell-btn" style="display: ${challenge.availableConsumptions > 0 ? 'flex' : 'none'};" data-challenge-id="${id}">${sellBtnContent}</button>
                         ` : ''}
                     </div>
                 </div>`;
@@ -317,8 +396,6 @@
         }
         return { finalLevel: level, finalWaitTime: Math.round(currentWaitTime) };
     }
-
-    // --- LÓGICA DE CONSUMO REVISADA ---
     function handleAbstinenceConsumption(challengeId) {
         const challenge = App.state.getAbstinenceChallengeById(challengeId);
         if (!challenge) return;
@@ -328,31 +405,6 @@
         } else {
             showTemptationModal(challenge);
         }
-    }
-
-    // --- NUEVA FUNCIÓN PARA VENDER UN CONSUMO ---
-    function handleSellConsumption(challengeId) {
-        const challenge = App.state.getAbstinenceChallengeById(challengeId);
-        if (!challenge || challenge.availableConsumptions === 0) return;
-        
-        const now = new Date();
-        const lastConsumptionDate = new Date(challenge.lastConsumptionTime);
-        const currentStreakMs = now.getTime() - lastConsumptionDate.getTime();
-        const bestStreak = challenge.bestStreak || 0;
-        
-        const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
-        
-        let pointsToAward = pointsForCurrentLevel;
-        let message = `¡Felicidades! 🎉 Vendiste un ticket y fortaleciste tu autocontrol.`;
-        
-        // --- Lógica para el doble de puntos si es un récord ---
-        if (currentStreakMs > bestStreak) {
-            pointsToAward *= 2;
-            message = `¡Récord personal! 🏆 Vendiste tu ticket por el doble de puntos (${pointsToAward} pts).`;
-        }
-
-        App.state.sellConsumption(challengeId, pointsToAward); // Llama a la nueva función de estado
-        App.events.emit('showDiscreetMessage', message);
     }
 
     function showTemptationModal(challenge) {
@@ -453,7 +505,6 @@
         zenModal.classList.add('active');
         startBreathingSequence();
     }
-
     function showAbstinenceChallengeModal() {
         const existingModal = document.getElementById('abstinenceChallengeModal');
         if (existingModal) existingModal.remove();
@@ -517,7 +568,6 @@
         initModalEventListeners();
         updateChallengePreview();
     }
-
     function initModalEventListeners() {
         const modal = document.getElementById('abstinenceChallengeModal');
         const form = document.getElementById('abstinenceChallengeForm');
@@ -543,7 +593,6 @@
             handleChallengeFormSubmit();
         });
     }
-
     function handleChallengeFormSubmit() {
         const errorContainer = document.getElementById('challengeFormError');
         const showError = (message) => {
@@ -589,8 +638,6 @@
 
         return parts.join(' ');
     }
-    
-    // Nueva función para un formato de duración más simple
     function formatSimplifiedDuration(ms) {
         if (ms <= 0) return '0s';
         const totalSeconds = Math.floor(ms / 1000);
@@ -635,7 +682,7 @@
                 timerUpdateInterval = setInterval(updateAbstinenceTimers, 1000);
             }
         },
-
+        showAuctionModal: showAuctionModal,
         initListeners: function() {
             const habitsContainer = document.getElementById('tab-habits');
             if (!habitsContainer) return;
@@ -662,14 +709,22 @@
                 const sellBtn = target.closest('.sell-btn');
                 if (sellBtn) {
                     const challengeId = sellBtn.dataset.challengeId;
-                    if (challengeId) handleSellConsumption(challengeId);
+                    const challenge = App.state.getAbstinenceChallengeById(challengeId);
+                    if (challenge && challenge.availableConsumptions > 0) {
+                        App.ui.habits.showAuctionModal(challenge);
+                    }
                     return;
                 }
 
                 const deleteBtn = target.closest('.delete-btn');
                 if (deleteBtn) {
                     const challengeId = deleteBtn.dataset.challengeId;
-                    if (challengeId) App.state.deleteAbstinenceChallenge(challengeId);
+                    if (challengeId) {
+                        // En lugar de `confirm`, debes usar un modal personalizado
+                        App.ui.showConfirmModal("¿Estás seguro de que quieres eliminar este reto?", () => {
+                            App.state.deleteAbstinenceChallenge(challengeId);
+                        });
+                    }
                     return;
                 }
             });
@@ -683,4 +738,4 @@
         }
     };
 
-})(App);
+})();

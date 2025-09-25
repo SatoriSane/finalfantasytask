@@ -87,7 +87,17 @@
             if (!challenge || !challenge.isActive) return;
             
             updateChallengeState(challenge);
+
+            const lastConsumptionDate = new Date(challenge.lastConsumptionTime);
+            const currentStreakMs = now.getTime() - lastConsumptionDate.getTime();
             
+            const bestStreak = challenge.bestStreak || 0;
+            if (currentStreakMs > bestStreak) {
+                card.classList.add('record-breaking');
+            } else {
+                card.classList.remove('record-breaking');
+            }
+
             const nextAllowed = new Date(challenge.nextAllowedTime);
             const timeRemaining = nextAllowed.getTime() - now.getTime();
 
@@ -103,7 +113,7 @@
 
             // Actualizar el círculo de progreso
             const circle = card.querySelector('.progress-circle-fill');
-            const radius = 25; // Radio 25
+            const radius = 15;
             const circumference = 2 * Math.PI * radius;
             const offset = circumference - (progressPercent / 100) * circumference;
             circle.style.strokeDashoffset = offset;
@@ -114,6 +124,10 @@
             const consumeBtn = card.querySelector('.consume-btn');
             const sellBtn = card.querySelector('.sell-btn');
             const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
+            
+            const sellPoints = (currentStreakMs > bestStreak) ? pointsForCurrentLevel * 2 : pointsForCurrentLevel;
+
+            const sellBtnContent = `Vender por ${sellPoints} <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>`;
 
             if (challenge.availableConsumptions > 0) {
                 if (consumeBtn) {
@@ -122,9 +136,13 @@
                     consumeBtn.classList.remove('waiting');
                 }
                 if (sellBtn) {
-                    // Actualizado: Texto del botón de venta para ser más atractivo
-                    sellBtn.textContent = `Vender ticket por ${pointsForCurrentLevel} pts`;
-                    sellBtn.style.display = 'block';
+                    sellBtn.innerHTML = sellBtnContent;
+                    sellBtn.style.display = 'flex';
+                    
+                    // Lógica para mostrar el bonus
+                    if (currentStreakMs > bestStreak) {
+                         sellBtn.innerHTML += `<span class="bonus-multiplier">x2</span>`;
+                    }
                 }
             } else {
                 if (consumeBtn) {
@@ -191,21 +209,32 @@
             const formattedCurrentStreak = formatSimplifiedDuration(currentStreakMs);
             const formattedBestStreak = formatSimplifiedDuration(bestStreak);
 
-            const circumference = 2 * Math.PI * 25; // Radio 25
+            // CAMBIO: Nuevo radio y viewBox para el SVG
+            const radius = 15;
+            const circumference = 2 * Math.PI * radius;
             const progressOffset = circumference - (progressPercent / 100) * circumference;
+            
+            const cardClasses = `abstinence-card ${statusClass} ${currentStreakMs > bestStreak ? 'record-breaking' : ''}`;
+            const sellPoints = (currentStreakMs > bestStreak) ? pointsForCurrentLevel * 2 : pointsForCurrentLevel;
+            const bonusHtml = (currentStreakMs > bestStreak) ? `
+                <span class="bonus-multiplier">x2</span>
+            ` : '';
+
+            const sellBtnContent = `Vender por ${sellPoints} <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path></svg>`;
 
             return `
-                <div class="abstinence-card ${statusClass}" data-id="${id}">
+                <div class="${cardClasses}" data-id="${id}">
+                    <button class="delete-btn" data-challenge-id="${id}" title="Eliminar reto">🗑️</button>
                     <div class="card-header-dashboard">
                         <h3 class="challenge-name-dashboard">${name}</h3>
                         <div class="progress-circle-container">
-                            <svg width="50" height="50" viewBox="0 0 50 50">
-                                <circle class="progress-circle-bg" cx="25" cy="25" r="22.5"></circle>
-                                <circle class="progress-circle-fill" cx="25" cy="25" r="22.5"
+                            <svg width="35" height="35" viewBox="0 0 35 35">
+                                <circle class="progress-circle-bg" cx="17.5" cy="17.5" r="15"></circle>
+                                <circle class="progress-circle-fill" cx="17.5" cy="17.5" r="15"
                                     stroke-dasharray="${circumference}"
                                     stroke-dashoffset="${progressOffset}">
                                 </circle>
-                                <text class="progress-percent-text" x="25" y="25">${Math.round(progressPercent)}%</text>
+                                <text class="progress-percent-text" x="17.5" y="17.5">${Math.round(progressPercent)}%</text>
                             </svg>
                         </div>
                     </div>
@@ -216,7 +245,7 @@
                                 <span class="metric-value ${complianceClass}">${Math.round(successRate)}%</span>
                             </div>
                             <div class="metric-item">
-                                <span class="metric-label">Nivel(tickets)</span>
+                                <span class="metric-label">Nivel</span>
                                 <span class="metric-value">${currentLevel}/${finalLevel}</span>
                             </div>
                             <div class="metric-item">
@@ -237,9 +266,8 @@
                     <div class="card-footer-dashboard">
                         ${isActive ? `
                             <button class="consume-btn ${buttonClass}" data-challenge-id="${id}">${buttonText}</button>
-                            <button class="sell-btn" style="display: ${challenge.availableConsumptions > 0 ? 'block' : 'none'};" data-challenge-id="${id}">Vender ticket por ${pointsForCurrentLevel} pts</button>
+                            <button class="sell-btn" style="display: ${challenge.availableConsumptions > 0 ? 'flex' : 'none'};" data-challenge-id="${id}">${sellBtnContent}${bonusHtml}</button>
                         ` : ''}
-                        <button class="action-btn delete-btn" data-challenge-id="${id}" title="Eliminar reto">🗑️</button>
                     </div>
                 </div>`;
         }).join('');
@@ -297,8 +325,25 @@
     function handleSellConsumption(challengeId) {
         const challenge = App.state.getAbstinenceChallengeById(challengeId);
         if (!challenge || challenge.availableConsumptions === 0) return;
-        App.state.sellConsumption(challengeId); // Llama a la nueva función de estado
-        App.events.emit('showDiscreetMessage', `¡Felicidades! 🎉 Vendiste un ticket y fortaleciste tu autocontrol.`);
+        
+        const now = new Date();
+        const lastConsumptionDate = new Date(challenge.lastConsumptionTime);
+        const currentStreakMs = now.getTime() - lastConsumptionDate.getTime();
+        const bestStreak = challenge.bestStreak || 0;
+        
+        const pointsForCurrentLevel = Math.floor(challenge.firstLevelPoints * Math.pow(1 + challenge.incrementPercent / 100, challenge.currentLevel - 1));
+        
+        let pointsToAward = pointsForCurrentLevel;
+        let message = `¡Felicidades! 🎉 Vendiste un ticket y fortaleciste tu autocontrol.`;
+        
+        // --- Lógica para el doble de puntos si es un récord ---
+        if (currentStreakMs > bestStreak) {
+            pointsToAward *= 2;
+            message = `¡Récord personal! 🏆 Vendiste tu ticket por el doble de puntos (${pointsToAward} pts).`;
+        }
+
+        App.state.sellConsumption(challengeId, pointsToAward); // Llama a la nueva función de estado
+        App.events.emit('showDiscreetMessage', message);
     }
 
     function showTemptationModal(challenge) {

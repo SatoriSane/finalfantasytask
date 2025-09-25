@@ -384,7 +384,7 @@
     color: var(--auction-gold-light);
 }
 
-/* -------------------- Historial Animado de Subasta - MÁXIMO ESPACIO -------------------- */
+/* -------------------- Historial Animado de Subasta - ESPACIO DINÁMICO Y SCROLLEABLE -------------------- */
 .auction-history-container {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
@@ -392,16 +392,68 @@
     border: 1px solid rgba(255, 215, 0, 0.1);
     min-height: 240px;
     max-height: 240px;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     position: relative;
+    transition: all 0.4s ease;
+    
+    /* 📱 SCROLLBAR PERSONALIZADO PARA MÓVIL */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 215, 0, 0.3) rgba(255, 255, 255, 0.05);
+    
+    /* 📱 MEJORAS PARA SCROLL TÁCTIL EN MÓVIL */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+}
+
+/* Scrollbar personalizado para WebKit (Chrome, Safari, Edge) */
+.auction-history-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.auction-history-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.auction-history-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, 
+        rgba(255, 215, 0, 0.4), 
+        rgba(255, 215, 0, 0.2)
+    );
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+
+.auction-history-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, 
+        rgba(255, 215, 0, 0.6), 
+        rgba(255, 215, 0, 0.4)
+    );
+}
+
+/* 🎯 EXPANSIÓN DINÁMICA - Cuando los botones están ocultos */
+.auction-history-container.expanded {
+    min-height: 320px;
+    max-height: 320px;
+    margin-bottom: 1rem;
+    /* Mantener scroll en modo expandido */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* 📱 MEJORAS PARA SCROLL TÁCTIL EN MODO EXPANDIDO */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
 
 .auction-history {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-    height: 100%;
+    min-height: 100%;
     justify-content: flex-start;
+    /* 📱 PERMITIR QUE EL CONTENIDO CREZCA MÁS ALLÁ DEL CONTENEDOR */
+    padding-bottom: 0.5rem;
 }
 
 .auction-message {
@@ -453,6 +505,28 @@
     font-weight: 600;
 }
 
+.auction-message.participant-entry {
+    border-left-color: var(--auction-purple);
+    background: rgba(165, 94, 234, 0.1);
+    font-style: italic;
+    animation: participantEntryGlow 2s ease-in-out;
+}
+
+@keyframes participantEntryGlow {
+    0% {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-left-color: var(--auction-purple);
+    }
+    50% {
+        box-shadow: 0 4px 12px rgba(165, 94, 234, 0.3);
+        border-left-color: rgba(165, 94, 234, 0.8);
+    }
+    100% {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-left-color: var(--auction-purple);
+    }
+}
+
 @keyframes messageSlideIn {
     0% {
         opacity: 0;
@@ -498,6 +572,17 @@
     gap: 1rem;
     width: 100%;
     margin-top: 1rem;
+    transition: all 0.4s ease;
+}
+
+/* 🎯 OCULTAR BOTONES - Libera espacio para el historial */
+.auction-actions.hidden {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    margin-top: 0;
+    height: 0;
+    overflow: hidden;
 }
 
 .auction-btn {
@@ -696,4 +781,9 @@
 .auction-history-container {
     min-height: 240px;
     max-height: 240px;
+    /* 📱 ASEGURAR SCROLL EN DISEÑO MÓVIL */
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }

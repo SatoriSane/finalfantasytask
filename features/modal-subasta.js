@@ -1,358 +1,25 @@
+// Verificar que SubastaConstantes esté disponible
+if (typeof SubastaConstantes === 'undefined') {
+    console.error('❌ SubastaConstantes no está disponible. Asegúrate de incluir subasta-constantes.js antes de este archivo.');
+}
+
+const TIMING_CONFIG = SubastaConstantes?.TIMING_CONFIG || {};
+const VIRTUAL_BIDDERS = SubastaConstantes?.VIRTUAL_BIDDERS || [];
+const MOTIVATIONAL_MESSAGES = SubastaConstantes?.MOTIVATIONAL_MESSAGES || [];
+const CHARACTER_SPECIFIC_MESSAGES = SubastaConstantes?.CHARACTER_SPECIFIC_MESSAGES || {};
+const BIDDER_MESSAGES = SubastaConstantes?.BIDDER_MESSAGES || {};
+
+// 🎭 SISTEMA DE COHERENCIA NARRATIVA Y CONTROL DE ESTADOS
+let lastNarrativeMessageType = 'system'; // Tracking del último tipo de mensaje narrativo
+let auctionState = 'idle'; // Estados: 'idle', 'running', 'finishing', 'finished'
+let isFinalizingAuction = false; // Flag para evitar mensajes durante finalización
+
 (function(App) {
     'use strict';
     
     // Asegura que App.ui.habits existe
     if (!App.ui) App.ui = {};
     if (!App.ui.habits) App.ui.habits = {};
-
-    // ⚙️ CONFIGURACIÓN DE TIMING CENTRALIZADA ⚙️
-    // Modifica estos valores para ajustar el ritmo y duración de la subasta
-    const TIMING_CONFIG = {
-        // --- Mensajes y Animaciones ---
-        MESSAGE_MIN_DELAY: 1500,           // Delay mínimo entre mensajes del historial
-        PRICE_ANIMATION_DURATION: 1000,     // Duración de la animación del precio
-        FORCE_DELAY_AMOUNT: 4500,          // Delay forzado para mensajes importantes
-        
-        // --- Momentos de Incertidumbre ---
-        UNCERTAINTY_PAUSE_MIN: 6000,       // Pausa mínima durante incertidumbre
-        UNCERTAINTY_PAUSE_MAX: 12000,      // Pausa máxima durante incertidumbre
-        POST_UNCERTAINTY_BID_DELAY: 5000,  // Delay antes de pujar tras incertidumbre
-        
-        // --- Secuencia de Finalización ---
-        FINISH_AUCTION_DELAY: 2500,        // Delay antes de mostrar ganador
-        VICTORY_MESSAGE_DELAY: 2500,       // Delay forzado para mensaje de victoria
-        ACCEPT_BUTTON_DELAY: 2000,         // Delay para mostrar botón de aceptar
-        MOTIVATIONAL_MESSAGE_DELAY: 3500,  // Delay para mensaje motivacional final
-        
-        // --- Intervalos de Tick por Tipo de Subasta ---
-        AUCTION_INTERVALS: {
-            'rápida':  { min: 3000, max: 4500 },   // Subastas rápidas
-            'épica':   { min: 4000, max: 8000 },   // Subastas largas y dramáticas
-            'volátil': { min: 2500, max: 6000 },   // Intervalos muy variables
-            'normal':  { min: 4000, max: 7500 }    // Intervalo equilibrado
-        },
-        
-        // --- Mensajes de Inicio por Tipo ---
-        RECORD_MESSAGE_DELAY: 1000         // Delay para mensaje después de récord
-    };
-
-    // 🏆 SISTEMA DE SUBASTA ÉPICA - FINAL FANTASY & ANIME 🏆
-    // Pujadores legendarios de FF y anime con personalidades únicas
-    const VIRTUAL_BIDDERS = [
-        // Final Fantasy VII
-        { name: 'Cloud', personality: 'strategic', emoji: '⚔️' },
-        { name: 'Sephiroth', personality: 'aggressive', emoji: '🗡️' },
-        { name: 'Aerith', personality: 'passionate', emoji: '🌸' },
-        { name: 'Tifa', personality: 'aggressive', emoji: '👊' },
-        { name: 'Barret', personality: 'impulsive', emoji: '💥' },
-        { name: 'Yuffie', personality: 'impulsive', emoji: '🥷' },
-        { name: 'Vincent', personality: 'strategic', emoji: '🦇' },
-        { name: 'Cid', personality: 'impulsive', emoji: '🚁' },
-        { name: 'RedXIII', personality: 'calculated', emoji: '🦁' },
-        
-        // Final Fantasy VIII
-        { name: 'Squall', personality: 'calculated', emoji: '🦁' },
-        { name: 'Seifer', personality: 'aggressive', emoji: '🔥' },
-        { name: 'Rinoa', personality: 'passionate', emoji: '💫' },
-        { name: 'Quistis', personality: 'strategic', emoji: '👩‍🏫' },
-        { name: 'Zell', personality: 'impulsive', emoji: '👊' },
-        { name: 'Selphie', personality: 'passionate', emoji: '🎀' },
-        { name: 'Irvine', personality: 'strategic', emoji: '🎯' },
-        { name: 'Artemisa', personality: 'aggressive', emoji: '⏰' },
-        
-        // Final Fantasy IX
-        { name: 'Zidane', personality: 'impulsive', emoji: '🐒' },
-        { name: 'Garnet', personality: 'passionate', emoji: '👑' },
-        { name: 'Vivi', personality: 'calculated', emoji: '🔮' },
-        { name: 'Steiner', personality: 'strategic', emoji: '🛡️' },
-        
-        // Final Fantasy X
-        { name: 'Tidus', personality: 'passionate', emoji: '🌊' },
-        { name: 'Yuna', personality: 'calculated', emoji: '🙏' },
-        { name: 'Wakka', personality: 'impulsive', emoji: '🏐' },
-        { name: 'Lulu', personality: 'strategic', emoji: '🔮' },
-        { name: 'Kimahri', personality: 'strategic', emoji: '🦏' },
-        { name: 'Rikku', personality: 'impulsive', emoji: '⚡' },
-        { name: 'Auron', personality: 'calculated', emoji: '🗡️' },
-        { name: 'Jecht', personality: 'aggressive', emoji: '⚔️' },
-        
-        // Dragon Ball
-        { name: 'Goku', personality: 'passionate', emoji: '🥋' },
-        { name: 'Vegeta', personality: 'aggressive', emoji: '👑' },
-        { name: 'Gohan', personality: 'calculated', emoji: '📚' },
-        { name: 'Piccolo', personality: 'strategic', emoji: '👹' },
-        { name: 'Krillin', personality: 'impulsive', emoji: '⚪' },
-        { name: 'Bulma', personality: 'strategic', emoji: '🔬' },
-        { name: 'Frieza', personality: 'aggressive', emoji: '👑' },
-        { name: 'Cell', personality: 'calculated', emoji: '🦗' },
-        { name: 'Trunks', personality: 'strategic', emoji: '⚔️' },
-        
-        // Death Note
-        { name: 'Light', personality: 'strategic', emoji: '📓' },
-        { name: 'L', personality: 'calculated', emoji: '🍰' },
-        { name: 'Misa', personality: 'passionate', emoji: '💀' },
-        { name: 'Near', personality: 'calculated', emoji: '🎲' },
-        { name: 'Mello', personality: 'impulsive', emoji: '🍫' },
-        
-        // Naruto
-        { name: 'Naruto', personality: 'impulsive', emoji: '🍜' },
-        { name: 'Sasuke', personality: 'aggressive', emoji: '⚡' },
-        { name: 'Sakura', personality: 'passionate', emoji: '🌸' },
-        { name: 'Kakashi', personality: 'strategic', emoji: '👁️' },
-        { name: 'Gaara', personality: 'aggressive', emoji: '🏜️' },
-        { name: 'Rock Lee', personality: 'passionate', emoji: '🥋' },
-        { name: 'Neji', personality: 'calculated', emoji: '👁️' },
-        { name: 'Shikamaru', personality: 'strategic', emoji: '🦌' },
-        { name: 'Hinata', personality: 'passionate', emoji: '💜' },
-        { name: 'Itachi', personality: 'strategic', emoji: '🐦‍⬛' },
-        
-        // Attack on Titan
-        { name: 'Eren', personality: 'aggressive', emoji: '⚔️' },
-        { name: 'Mikasa', personality: 'strategic', emoji: '🗡️' },
-        { name: 'Armin', personality: 'calculated', emoji: '🧠' },
-        { name: 'Levi', personality: 'aggressive', emoji: '💀' },
-        { name: 'Erwin', personality: 'strategic', emoji: '🎖️' },
-        { name: 'Annie', personality: 'calculated', emoji: '💎' },
-        
-        // One Piece
-        { name: 'Luffy', personality: 'impulsive', emoji: '🏴‍☠️' },
-        { name: 'Zoro', personality: 'aggressive', emoji: '⚔️' },
-        { name: 'Nami', personality: 'strategic', emoji: '💰' },
-        { name: 'Sanji', personality: 'passionate', emoji: '🚬' },
-        { name: 'Usopp', personality: 'impulsive', emoji: '🎯' },
-        { name: 'Chopper', personality: 'passionate', emoji: '🦌' },
-        { name: 'Robin', personality: 'calculated', emoji: '📚' },
-        { name: 'Franky', personality: 'impulsive', emoji: '🤖' },
-        
-        // Hunter x Hunter
-        { name: 'Gon', personality: 'impulsive', emoji: '🎣' },
-        { name: 'Killua', personality: 'strategic', emoji: '⚡' },
-        { name: 'Kurapika', personality: 'calculated', emoji: '⛓️' },
-        { name: 'Leorio', personality: 'passionate', emoji: '💼' },
-        { name: 'Hisoka', personality: 'aggressive', emoji: '🃏' },
-        
-        // Slam Dunk
-        { name: 'Sakuragi', personality: 'impulsive', emoji: '🏀' },
-        { name: 'Rukawa', personality: 'calculated', emoji: '🦊' },
-        { name: 'Akagi', personality: 'strategic', emoji: '🦍' },
-        { name: 'Mitsui', personality: 'passionate', emoji: '🔥' },
-        
-        // Shin-chan
-        { name: 'Shinnosuke', personality: 'impulsive', emoji: '👶' },
-        { name: 'Misae', personality: 'aggressive', emoji: '👩' },
-        
-        // Doraemon
-        { name: 'Doraemon', personality: 'strategic', emoji: '🤖' },
-        { name: 'Nobita', personality: 'impulsive', emoji: '👦' },
-        
-        // Clannad
-        { name: 'Tomoya', personality: 'strategic', emoji: '🌸' },
-        { name: 'Nagisa', personality: 'passionate', emoji: '🎭' },
-        
-        // Inuyasha
-        { name: 'Inuyasha', personality: 'aggressive', emoji: '🗡️' },
-        { name: 'Kagome', personality: 'passionate', emoji: '🏹' },
-        { name: 'Sesshomaru', personality: 'calculated', emoji: '🌙' },
-        
-        // Cardcaptor Sakura
-        { name: 'Sakura', personality: 'passionate', emoji: '🌸' },
-        { name: 'Syaoran', personality: 'strategic', emoji: '⚔️' },
-        
-        // Great Teacher Onizuka
-        { name: 'Onizuka', personality: 'impulsive', emoji: '🏍️' },
-        { name: 'Fuyutsuki', personality: 'calculated', emoji: '👩‍🏫' }
-    ];
-
-    const MOTIVATIONAL_MESSAGES = [
-        '¡Excelente decisión! 🎉',
-        '¡Tu fuerza de voluntad es increíble! 💪',
-        '¡Cada venta te hace más fuerte! ⚡',
-        '¡Estás rompiendo el ciclo! 🔥',
-        '¡Tu futuro yo te lo agradecerá! 🌟'
-    ];
-
-    // 🎭 MENSAJES ESPECÍFICOS POR PERSONAJE - Basados en su personalidad y trasfondo
-    const CHARACTER_SPECIFIC_MESSAGES = {
-        // Final Fantasy VII
-        'Cloud': [
-            'recuerda algo importante y puja',
-            'siente que debe proteger este ticket',
-            'actúa como un verdadero SOLDIER',
-            'no dejará que Shinra se lo lleve'
-        ],
-        'Sephiroth': [
-            'considera que merece lo mejor',
-            'no acepta ser superado por nadie',
-            'su orgullo no le permite perder',
-            'desata su poder para conseguirlo'
-        ],
-        'Aerith': [
-            'siente que el planeta le dice que puje',
-            'quiere ayudar con su compra',
-            'su corazón le dice que es importante',
-            'lucha por un futuro mejor'
-        ],
-        'Tifa': [
-            'no se rinde fácilmente',
-            'lucha con toda su determinación',
-            'sus puños hablan por ella',
-            'defiende lo que considera justo'
-        ],
-        'Barret': [
-            '¡No dejará que se lo quiten!',
-            'lucha por el futuro de Marlene',
-            'su brazo-arma está listo',
-            '¡Por AVALANCHE!'
-        ],
-        
-        // Final Fantasy VIII - Con pérdida de memoria por GF
-        'Squall': [
-            'no recuerda por qué, pero debe tenerlo',
-            'algo en su memoria le dice que puje',
-            'olvida el precio anterior y puja más',
-            'los GF le nublan el juicio'
-        ],
-        'Artemisa': [
-            'manipula el tiempo para pujar primero',
-            'su poder temporal le da ventaja',
-            'comprime el tiempo de la subasta',
-            'no acepta la derrota temporal'
-        ],
-        'Rinoa': [
-            'olvida cuánto llevaba pujado',
-            'los GF le confunden los números',
-            'actúa por impulso romántico',
-            'quiere impresionar a Squall'
-        ],
-        'Seifer': [
-            'compite contra Squall por principio',
-            'su rivalidad no conoce límites',
-            'olvida su presupuesto por los GF',
-            'debe demostrar que es superior'
-        ],
-        'Zell': [
-            'se emociona y olvida el precio',
-            'los GF le hacen perder la cuenta',
-            'puja como si fuera un combate',
-            'su energía es incontrolable'
-        ],
-        
-        // Dragon Ball
-        'Goku': [
-            'quiere entrenar con este ticket',
-            'siente que le hará más fuerte',
-            'su instinto de lucha se activa',
-            'nunca se rinde en una batalla'
-        ],
-        'Vegeta': [
-            'su orgullo saiyajin está en juego',
-            'debe superar a Kakaroto',
-            'no acepta ser el segundo',
-            'el príncipe no conoce la derrota'
-        ],
-        'Frieza': [
-            'considera que todo le pertenece',
-            'su poder debe ser respetado',
-            'no tolera la insubordinación',
-            'destruirá a quien se oponga'
-        ],
-        
-        // Naruto
-        'Naruto': [
-            'cree en su ninja way',
-            'nunca abandona, dattebayo!',
-            'protegerá lo importante',
-            'su determinación no tiene límites'
-        ],
-        'Sasuke': [
-            'busca poder para su venganza',
-            'debe ser más fuerte que Naruto',
-            'su sharingan ve la oportunidad',
-            'la venganza justifica todo'
-        ],
-        'Itachi': [
-            'todo es por el bien de la aldea',
-            'sus sacrificios tienen propósito',
-            'actúa desde las sombras',
-            'protege lo que realmente importa'
-        ],
-        
-        // Death Note
-        'Light': [
-            'todo está según su plan',
-            'será el dios del nuevo mundo',
-            'su justicia debe prevalecer',
-            'eliminará cualquier obstáculo'
-        ],
-        'L': [
-            'hay un 85% de probabilidad de ganar',
-            'sus cálculos nunca fallan',
-            'la lógica dicta que debe pujar',
-            'resuelve el misterio del precio'
-        ],
-        
-        // One Piece
-        'Luffy': [
-            '¡Quiere ser el Rey de los Piratas!',
-            'protegerá a sus nakama',
-            'su sombrero de paja está en juego',
-            'nunca abandona a un amigo'
-        ],
-        'Zoro': [
-            'se perdió pero encontró la subasta',
-            'cortará cualquier precio alto',
-            'sus tres espadas están listas',
-            'nunca retrocede en una lucha'
-        ],
-        
-        // Attack on Titan
-        'Eren': [
-            'luchará por la libertad',
-            'no se someterá a los titanes',
-            'su determinación es inquebrantable',
-            'avanzará hasta destruir al enemigo'
-        ],
-        'Levi': [
-            'limpiará esta subasta de competencia',
-            'su técnica es perfecta',
-            'no tolera la mediocridad',
-            'cortará por lo sano'
-        ]
-    };
-
-    // Mensajes genéricos por personalidad (fallback)
-    const BIDDER_MESSAGES = {
-        aggressive: [
-            'ataca sin piedad',
-            'desata su poder',
-            'no conoce límites',
-            'lucha hasta el final'
-        ],
-        strategic: [
-            'analiza la situación',
-            'ejecuta su estrategia',
-            'calcula cada movimiento',
-            'espera el momento exacto'
-        ],
-        impulsive: [
-            'actúa por instinto',
-            'se lanza sin pensar',
-            'sigue su corazón',
-            'no puede contenerse'
-        ],
-        calculated: [
-            'hace cálculos precisos',
-            'analiza cada detalle',
-            'busca la lógica perfecta',
-            'estudia las probabilidades'
-        ],
-        passionate: [
-            'lucha por sus sueños',
-            'puja con el corazón',
-            'muestra gran determinación',
-            'sigue su pasión'
-        ]
-    };
 
     /**
      * 🎯 Función principal de subasta épica
@@ -383,13 +50,65 @@
         let auctionInterval;
         let isAuctionInProgress = false;
         let activeBidders = [];
+        
+        // 🎯 SISTEMA DE COLA SECUENCIAL PARA MENSAJES
+        let messageQueue = [];
+        let isProcessingQueue = false;
+        let queueTimeout = null;
 
         // 🎭 Función para cerrar modal con limpieza épica
         const closeModal = () => {
             clearInterval(auctionInterval);
+            clearTimeout(queueTimeout);
+            messageQueue = [];
+            isProcessingQueue = false;
             modal.classList.remove('visible');
             closeBtn.style.display = 'block'; 
             closeBtn.disabled = false;
+        };
+        
+        // 🎯 SISTEMA DE COLA SECUENCIAL - Procesa mensajes uno por uno
+        const processMessageQueue = () => {
+            if (isProcessingQueue || messageQueue.length === 0) return;
+            
+            isProcessingQueue = true;
+            const nextMessage = messageQueue.shift();
+            
+            // Ejecutar el mensaje actual
+            nextMessage.action();
+            
+            // Programar el siguiente mensaje
+            queueTimeout = setTimeout(() => {
+                isProcessingQueue = false;
+                processMessageQueue();
+            }, nextMessage.delay || TIMING_CONFIG.MESSAGE_MIN_DELAY);
+        };
+        
+        // 🎯 Agregar mensaje a la cola secuencial con validación de estado
+        const queueMessage = (action, delay = TIMING_CONFIG.MESSAGE_MIN_DELAY, priority = false, allowInFinishing = false) => {
+            // 🚫 VALIDACIÓN DE ESTADO - Evitar mensajes incoherentes
+            if (isFinalizingAuction && !allowInFinishing) {
+                console.log('🚫 Mensaje bloqueado: subasta finalizando');
+                return;
+            }
+            
+            if (auctionState === 'finished' && !allowInFinishing) {
+                console.log('🚫 Mensaje bloqueado: subasta terminada');
+                return;
+            }
+            
+            const message = { action, delay };
+            
+            if (priority) {
+                messageQueue.unshift(message); // Prioridad alta = al inicio
+            } else {
+                messageQueue.push(message); // Normal = al final
+            }
+            
+            // Iniciar procesamiento si no está activo
+            if (!isProcessingQueue) {
+                processMessageQueue();
+            }
         };
 
         // 🎨 Actualización de UI con efectos visuales épicos
@@ -433,20 +152,51 @@
 
         // 📜 Sistema de historial animado con control de timing
         const messageHistory = [];
-        const MAX_MESSAGES = 7;
+        const MAX_MESSAGES = 20;
         let lastMessageTime = 0;
         
-        // MODIFICACIÓN: Se añade el parámetro 'immediate' para forzar la visualización instantánea
-        const addHistoryMessage = (message, type = 'system', forceDelay = false, immediate = false) => {
-            const now = Date.now();
-            const timeSinceLastMessage = now - lastMessageTime;
+        // 🎯 NUEVA FUNCIÓN - Agregar mensaje usando cola secuencial con validación de contexto
+        const addHistoryMessage = (message, type = 'system', forceDelay = false, immediate = false, allowInFinishing = false) => {
+            // 🚫 VALIDACIÓN DE CONTEXTO - Evitar mensajes incoherentes
+            if (isFinalizingAuction && !allowInFinishing) {
+                console.log(`🚫 Mensaje bloqueado durante finalización: [${type}] ${message}`);
+                return;
+            }
             
-            const showMessage = () => {
+            if (auctionState === 'finished' && !allowInFinishing) {
+                console.log(`🚫 Mensaje bloqueado en subasta terminada: [${type}] ${message}`);
+                return;
+            }
+            
+            const messageObj = {
+                text: message,
+                type: type,
+                timestamp: Date.now()
+            };
+            
+            // Crear acción para mostrar el mensaje
+            const showMessageAction = () => {
+                // Doble validación antes de mostrar
+                if (isFinalizingAuction && !allowInFinishing) {
+                    console.log(`🚫 Mensaje cancelado en último momento: [${type}] ${message}`);
+                    return;
+                }
+                
                 const messageElement = document.createElement('div');
                 messageElement.className = `auction-message ${type} new`;
                 messageElement.textContent = message;
                 historyContainer.insertBefore(messageElement, historyContainer.firstChild);
                 messageHistory.unshift({ element: messageElement, message, type });
+                
+                // 📱 SCROLL AUTOMÁTICO HACIA EL MENSAJE MÁS RECIENTE
+                const historyContainerElement = document.querySelector('.auction-history-container');
+                if (historyContainerElement) {
+                    // Scroll suave hacia arriba para mostrar el mensaje más reciente
+                    historyContainerElement.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }
                 
                 if (messageHistory.length > MAX_MESSAGES) {
                     const oldMessage = messageHistory.pop();
@@ -460,14 +210,21 @@
                 
                 lastMessageTime = Date.now();
                 console.log(`📜 Mensaje añadido: [${type}] ${message}`);
+                
+                // Vibración sincronizada con el mensaje
+                if (navigator.vibrate && type === 'bid') {
+                    navigator.vibrate(100);
+                }
             };
             
-            // MODIFICACIÓN: Si es 'immediate', se salta la comprobación de tiempo.
-            if (!immediate && (timeSinceLastMessage < TIMING_CONFIG.MESSAGE_MIN_DELAY || forceDelay)) {
-                const delay = forceDelay ? TIMING_CONFIG.FORCE_DELAY_AMOUNT : (TIMING_CONFIG.MESSAGE_MIN_DELAY - timeSinceLastMessage);
-                setTimeout(showMessage, delay);
+            // Determinar delay
+            let delay = immediate ? 0 : (forceDelay ? TIMING_CONFIG.FORCE_DELAY_AMOUNT : TIMING_CONFIG.MESSAGE_MIN_DELAY);
+            
+            // Agregar a la cola secuencial
+            if (immediate) {
+                showMessageAction(); // Mostrar inmediatamente sin cola
             } else {
-                showMessage();
+                queueMessage(showMessageAction, delay, forceDelay, allowInFinishing); // Usar cola secuencial
             }
         };
         
@@ -496,7 +253,8 @@
         let isInDecisionPause = false;
         let uncertaintyMoments = 0;
         let lastBidder = null;
-        
+        let ticksSinceLastBid = 0; // 🎯 NUEVO: Controla la coherencia y el fin de la subasta
+
         // 🎲 Variables para hacer cada subasta única
         let auctionType = '';
         let auctionIntensity = 0;
@@ -549,6 +307,8 @@
         const startAuction = () => {
             if (isAuctionInProgress) return;
             isAuctionInProgress = true;
+            auctionState = 'running'; // 🎯 ESTABLECER ESTADO
+            isFinalizingAuction = false; // 🎯 RESETEAR FLAG DE FINALIZACIÓN
            // Ocultar y desactivar el botón de cerrar para evitar que cierre sin obtener los puntos
            closeBtn.style.display = 'none';
            closeBtn.disabled = true;           
@@ -563,130 +323,131 @@
             takeBtn.style.display = 'none';
             progressContainer.style.display = 'none';
             
+            // 🎯 EXPANDIR HISTORIAL - Aprovechar espacio libre
+            const actionsContainer = document.querySelector('.auction-actions');
+            const historyContainerElement = document.querySelector('.auction-history-container');
+            
+            if (actionsContainer && historyContainerElement) {
+                actionsContainer.classList.add('hidden');
+                historyContainerElement.classList.add('expanded');
+            }
+            
             generateActiveBidders();
             
             historyContainer.innerHTML = '';
             messageHistory.length = 0;
             lastMessageTime = 0;
-            addHistoryMessage('🔥 ¡SUBASTA EN VIVO! 🔥', 'system');
             
-            const processAuctionTick = () => {
-                // ARREGLADO: Verificar que la subasta siga activa antes de procesar
-                if (!isAuctionInProgress) {
-                    clearInterval(auctionInterval);
-                    return;
-                }
+            // 🎭 RESETEAR ESTADO NARRATIVO
+            lastNarrativeMessageType = 'system';
+            
+            // 🎭 DECLARAR FUNCIONES ANTES DE USARLAS (HOISTING)
+            
+            // 🎭 SECUENCIA ÉPICA DE ENTRADA DE PARTICIPANTES
+            const startParticipantEntrySequence = () => {
+                let participantIndex = 0;
                 
-                if (!isInDecisionPause) {
-                    // Usar la frecuencia de incertidumbre específica del tipo de subasta
-                    let uncertaintyProbability = uncertaintyFrequency;
-                    if (bidCount >= 5) uncertaintyProbability += 0.1;
-                    if (bidCount >= 8) uncertaintyProbability += 0.2;
-                    if (auctionEnergy < 40) uncertaintyProbability += 0.15;
-                    
-                    // Ajustes por tipo de subasta
-                    if (auctionType === 'rápida' && bidCount >= 3) uncertaintyProbability += 0.3;
-                    if (auctionType === 'épica' && bidCount < 10) uncertaintyProbability -= 0.2;
-                    if (auctionType === 'volátil') uncertaintyProbability += Math.random() * 0.3 - 0.15; // ±15%
-                    
-                    const shouldForceUncertainty = bidCount >= 4 && uncertaintyMoments === 0;
-                    
-                    if ((bidCount >= 2 && Math.random() < uncertaintyProbability) || shouldForceUncertainty) {
-                        startUncertaintyMoment();
+                // 1. Mensaje de espera inicial
+                const waitingMessage = SubastaConstantes?.getWaitingMessage ? 
+                    SubastaConstantes.getWaitingMessage() : 
+                    '🕰️ Esperando a los participantes...';
+                
+                addHistoryMessage(waitingMessage, 'system', false, false, true);
+                
+                // 2. Secuencia de entrada de participantes (uno por uno)
+                const showNextParticipant = () => {
+                    if (participantIndex < activeBidders.length) {
+                        const participant = activeBidders[participantIndex];
+                        
+                        const entryMessage = SubastaConstantes?.getParticipantEntryMessage ? 
+                            SubastaConstantes.getParticipantEntryMessage(participant) :
+                            `${participant.emoji} ${participant.name} entra a la subasta`;
+                        
+                        addHistoryMessage(entryMessage, 'participant-entry', false, false, true);
+                        
+                        participantIndex++;
+                        
+                        // Programar siguiente participante
+                        setTimeout(showNextParticipant, 1200); // 1.2 segundos entre entradas
                     } else {
-                        processBid();
+                        // 3. Todos los participantes han entrado, iniciar subasta
+                        setTimeout(() => {
+                            addHistoryMessage('🔥 ¡SUBASTA EN VIVO! ¡QUE COMIENCE LA BATALLA! 🔥', 'victory', false, false, true);
+                            
+                            // 4. Iniciar el bucle principal de la subasta
+                            setTimeout(() => {
+                                // 🔥 INICIAR SUBASTA REAL
+                                console.log('🚀 Iniciando bucle principal de subasta...');
+                                
+                                // Usar la lógica de processAuctionTick que ya existe en startAuction
+                                const intervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
+                                const intervalDuration = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
+                                
+                                // Crear el tick que usa las funciones ya definidas en startAuction
+                                const auctionTick = () => {
+                                    if (!isAuctionInProgress || isInDecisionPause || isFinalizingAuction) {
+                                        if (!isAuctionInProgress) clearInterval(auctionInterval);
+                                        return;
+                                    }
+                                
+                                    ticksSinceLastBid++; // Incrementar el contador en cada tick
+                                
+                                    // Solo puede haber incertidumbre si ha pasado al menos un turno desde la última puja
+                                    if (ticksSinceLastBid > 1) {
+                                        let uncertaintyProbability = uncertaintyFrequency;
+                                        if (bidCount >= 5) uncertaintyProbability += 0.1;
+                                        if (bidCount >= 8) uncertaintyProbability += 0.2;
+                                        if (auctionEnergy < 40) uncertaintyProbability += 0.15;
+                                
+                                        if (auctionType === 'rápida' && bidCount >= 3) uncertaintyProbability += 0.3;
+                                        if (auctionType === 'épica' && bidCount < 10) uncertaintyProbability -= 0.2;
+                                
+                                        const shouldForceUncertainty = bidCount >= 4 && uncertaintyMoments === 0;
+                                
+                                        if ((bidCount >= 2 && Math.random() < uncertaintyProbability) || shouldForceUncertainty) {
+                                            startUncertaintyMoment();
+                                            return; // Salir después de iniciar la incertidumbre
+                                        }
+                                    }
+                                
+                                    // Si no hay incertidumbre, procesar una puja
+                                    processBid();
+                                };
+                                
+                                auctionInterval = setInterval(auctionTick, intervalDuration);
+                            }, 1500);
+                        }, 800);
                     }
-                }
+                };
+                
+                // Iniciar la secuencia después de un breve delay
+                setTimeout(showNextParticipant, 1000);
             };
             
-            const startUncertaintyMoment = () => {
-                isInDecisionPause = true;
-                uncertaintyMoments++;
-                const uncertaintyMessages = [
-                    '🤔 Los pujadores están dudando...',
-                    '⏳ Momento de reflexión...',
-                    '🧐 Analizando la situación...',
-                    '💭 ¿Alguien más pujará?',
-                    '😶 El silencio invade la sala...',
-                    '👀 Todos se observan con cautela...',
-                    '😏 ¿Será un farol o una retirada?',
-                    '🕰️ El tiempo corre, nadie se decide...',
-                    '😬 Tensión en el aire...',
-                    '📉 El entusiasmo parece enfriarse...',
-                    '🔮 Nadie sabe lo que ocurrirá...',
-                    '😯 Una pausa inesperada...',
-                    '🙄 El público comienza a impacientarse...',
-                    '🤨 Todos miden su próximo movimiento...',
-                    '😑 Los pujadores respiran hondo antes de decidir...'
-                  ];
-                addHistoryMessage(uncertaintyMessages[Math.floor(Math.random() * uncertaintyMessages.length)], 'uncertainty');
-                
-                // Usar configuración de timing para la pausa de incertidumbre
-                const uncertaintyDuration = TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN + 
-                    Math.random() * (TIMING_CONFIG.UNCERTAINTY_PAUSE_MAX - TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN);
-                setTimeout(resolveUncertainty, uncertaintyDuration);
-            };
+            // 🚀 INICIAR SECUENCIA
+            startParticipantEntrySequence();
             
-            const resolveUncertainty = () => {
-                isInDecisionPause = false;
-                let continueProbability = 0.75;
-                if (auctionEnergy < 30) continueProbability -= 0.2;
-                if (bidCount >= 6) continueProbability -= 0.1;
-                if (currentPrice > basePrice * 3) continueProbability -= 0.1;
-                continueProbability = Math.max(0.3, continueProbability);
-                
-                if (Math.random() < continueProbability) {
-                    const encouragingMessages = [
-                        '🔥 ¡Alguien no se rinde!',
-                        '⚡ ¡La competencia continúa!',
-                        '💪 ¡Hay más interés!',
-                        '🚀 ¡Esto se está calentando!',
-                        '🏆 ¡Nadie quiere quedarse atrás!',
-                        '🤯 ¡La puja sube y sube!',
-                        '🔥 ¡El ambiente está al rojo vivo!',
-                        '😮 ¡Sorpresa! Otro ofertante entra en juego!',
-                        '🎯 ¡La victoria está cada vez más cerca!',
-                        '👊 ¡Esto se pone intenso!',
-                        '📈 ¡El precio sigue escalando!',
-                        '💥 ¡Puja explosiva!',
-                        '🤩 ¡El público enloquece con esta subasta!',
-                        '😏 ¡Nadie da su brazo a torcer!',
-                        '✨ ¡Cada vez más emocionante!',
-                        '🤑 ¡La codicia mueve montañas!',
-                        '🥵 ¡Nadie quiere soltarlo todavía!',
-                        '🦾 ¡La fuerza de los pujadores no tiene límites!',
-                        '😎 ¡Parece que la cosa va para largo!'
-                      ];
-                    addHistoryMessage(encouragingMessages[Math.floor(Math.random() * encouragingMessages.length)], 'system');
-                    setTimeout(processBid, TIMING_CONFIG.POST_UNCERTAINTY_BID_DELAY);
-                } else {
-                    // ARREGLADO: Marcar que la subasta debe terminar después de esta resolución
-                    isAuctionInProgress = false;
-                    const finalMessages = ['⏰ ¡Tiempo agotado!', '🏁 ¡No hay más pujas!', '✋ ¡Nadie más se atreve!'];
-                    addHistoryMessage(finalMessages[Math.floor(Math.random() * finalMessages.length)], 'system');
-                    setTimeout(finishAuction, TIMING_CONFIG.FINISH_AUCTION_DELAY);
-                }
-            };
+            // 🔥 Las demás funciones están más abajo
             
             const processBid = () => {
+                if (isFinalizingAuction) {
+                    clearTimeout(finalizationTimeout);
+                    isFinalizingAuction = false;
+                    addHistoryMessage('💥 ¡PUJA DE ÚLTIMO SEGUNDO! ¡La subasta continúa!', 'victory', true, false, true);
+                }
+            
                 bidCount++;
                 lastBidTime = Date.now();
                 
-                // 🚫 Seleccionar pujador evitando repeticiones consecutivas
                 let activeBidder;
+                // ... (lógica para seleccionar pujador)
                 let attempts = 0;
                 const maxAttempts = 10;
-                
                 do {
                     activeBidder = activeBidders[Math.floor(Math.random() * activeBidders.length)];
                     attempts++;
-                } while (
-                    activeBidder === lastBidder && 
-                    activeBidders.length > 1 && 
-                    attempts < maxAttempts
-                );
+                } while (activeBidder === lastBidder && activeBidders.length > 1 && attempts < maxAttempts);
                 
-                // Actualizar el tiempo de la última puja del personaje
                 activeBidder.lastBidTime = Date.now();
                 
                 const priceRatio = currentPrice / basePrice;
@@ -696,146 +457,48 @@
                 let increase = 0;
                 const energyFactor = Math.max(0.3, auctionEnergy / 100);
                 
-// Usar el límite específico del tipo de subasta
-if (currentPrice < maxBidLimit) {
-    // Ajustar probabilidades de pujas extremas según el tipo de subasta
-    let extremeProbability = 0.1; // Base 10%
-    if (auctionType === 'épica') extremeProbability = 0.2; // 20% en subastas épicas
-    if (auctionType === 'volátil') extremeProbability = 0.25; // 25% en volátiles
-    if (auctionType === 'rápida') extremeProbability = 0.05; // 5% en rápidas
-    
-    switch (activeBidder.personality) {
-        case 'aggressive':
-            if (Math.random() < extremeProbability) {
-                // Puja BRUTAL - multiplicar por intensidad de subasta
-                increase = currentPrice * (0.4 + Math.random() * 0.8) * energyFactor * auctionIntensity;
-            } else {
-                // Normal ajustado por intensidad
-                increase = Math.max(2, currentPrice * (0.08 + Math.random() * 0.15) * energyFactor * auctionIntensity);
-            }
-            break;
-
-        case 'strategic':
-            // Strategic nunca hace pujas extremas, pero se ajusta a la intensidad
-            increase = Math.max(1, currentPrice * (0.03 + Math.random() * 0.04) * energyFactor * auctionIntensity);
-            break;
-
-        case 'impulsive':
-            if (Math.random() < extremeProbability * 1.5) { // 50% más probable que aggressive
-                // Puja IMPULSIVA EXTREMA
-                increase = currentPrice * (0.3 + Math.random() * 1.2) * energyFactor * auctionIntensity;
-            } else {
-                // Normal pero más variable
-                increase = Math.max(3, currentPrice * (0.06 + Math.random() * 0.2) * energyFactor * auctionIntensity);
-            }
-            break;
-
-        case 'calculated':
-            // Muy medido, apenas se ve afectado por la intensidad
-            increase = Math.max(1, currentPrice * (0.02 + Math.random() * 0.03) * energyFactor * (0.5 + auctionIntensity * 0.5));
-            break;
-
-        case 'passionate':
-            if (Math.random() < extremeProbability) {
-                // Arrebato pasional
-                increase = currentPrice * (0.2 + Math.random() * 0.5) * energyFactor * auctionIntensity;
-            } else {
-                increase = Math.max(2, currentPrice * (0.04 + Math.random() * 0.08) * energyFactor * auctionIntensity);
-            }
-            break;
-    }
-}
-
-                
+                if (currentPrice < maxBidLimit && auctionEnergy > 0) {
+                    // ... (la lógica interna del switch para calcular el 'increase' se mantiene igual)
+                    let extremeProbability = 0.1;
+                    if (auctionType === 'épica') extremeProbability = 0.2;
+                    if (auctionType === 'volátil') extremeProbability = 0.25;
+                    if (auctionType === 'rápida') extremeProbability = 0.05;
+                    
+                    switch (activeBidder.personality) {
+                        case 'aggressive':
+                            increase = Math.random() < extremeProbability ? currentPrice * (0.4 + Math.random() * 0.8) * energyFactor * auctionIntensity : Math.max(2, currentPrice * (0.08 + Math.random() * 0.15) * energyFactor * auctionIntensity);
+                            break;
+                        case 'strategic':
+                            increase = Math.max(1, currentPrice * (0.03 + Math.random() * 0.04) * energyFactor * auctionIntensity);
+                            break;
+                        case 'impulsive':
+                            increase = Math.random() < extremeProbability * 1.5 ? currentPrice * (0.3 + Math.random() * 1.2) * energyFactor * auctionIntensity : Math.max(3, currentPrice * (0.06 + Math.random() * 0.2) * energyFactor * auctionIntensity);
+                            break;
+                        case 'calculated':
+                            increase = Math.max(1, currentPrice * (0.02 + Math.random() * 0.03) * energyFactor * (0.5 + auctionIntensity * 0.5));
+                            break;
+                        case 'passionate':
+                            increase = Math.random() < extremeProbability ? currentPrice * (0.2 + Math.random() * 0.5) * energyFactor * auctionIntensity : Math.max(2, currentPrice * (0.04 + Math.random() * 0.08) * energyFactor * auctionIntensity);
+                            break;
+                    }
+                }
+            
                 if (increase > 0) {
                     currentPrice += increase;
                     lastBidder = activeBidder;
+                    ticksSinceLastBid = 0; // 🎯 RESETEAR: Acaba de haber una puja
                     
                     const increaseAmount = Math.round(increase);
-                    const increasePercentage = (increase / (currentPrice - increase)) * 100;
+                    const coherentMessage = SubastaConstantes.getCoherentMessage('afterBid', lastNarrativeMessageType);
+                    const bidMessage = `${coherentMessage.message} ${activeBidder.emoji} ${activeBidder.name} puja ${increaseAmount} pts!`;
+                    lastNarrativeMessageType = coherentMessage.type;
                     
-                    // Determinar si es una puja extrema (más del 30% de incremento)
-                    let bidMessage = '';
-                    if (increasePercentage > 30) {
-                        // PUJAS EXTREMAS - Mensajes específicos por personaje
-                        const extremeCharacterMessages = {
-                            'Sephiroth': `${activeBidder.emoji} ${activeBidder.name} ¡DESCIENDE DEL CIELO! ¡${increaseAmount} pts de poder divino!`,
-                            'Vegeta': `${activeBidder.emoji} ${activeBidder.name} ¡FINAL FLASH! ¡${increaseAmount} pts de orgullo saiyajin!`,
-                            'Frieza': `${activeBidder.emoji} ${activeBidder.name} ¡ESTO ES MI PODER REAL! ¡${increaseAmount} pts!`,
-                            'Squall': `${activeBidder.emoji} ${activeBidder.name} ¡Los GF le confunden! ¡Puja ${increaseAmount} pts sin recordar por qué!`,
-                            'Artemisa': `${activeBidder.emoji} ${activeBidder.name} ¡COMPRIME EL TIEMPO! ¡${increaseAmount} pts en un instante!`,
-                            'Seifer': `${activeBidder.emoji} ${activeBidder.name} ¡Su memoria falla por los GF! ¡${increaseAmount} pts sin control!`,
-                            'Light': `${activeBidder.emoji} ${activeBidder.name} ¡TODO SEGÚN EL KEIKAKU! ¡${increaseAmount} pts calculados!`,
-                            'Eren': `${activeBidder.emoji} ${activeBidder.name} ¡TATAKAE! ¡${increaseAmount} pts por la libertad!`,
-                            'Levi': `${activeBidder.emoji} ${activeBidder.name} ¡Corta la competencia! ¡${increaseAmount} pts limpios!`,
-                            'Naruto': `${activeBidder.emoji} ${activeBidder.name} ¡RASENGAN! ¡${increaseAmount} pts, dattebayo!`,
-                            'Luffy': `${activeBidder.emoji} ${activeBidder.name} ¡GOMU GOMU NO PUJA! ¡${increaseAmount} pts elásticos!`
-                        };
-                        
-                        if (extremeCharacterMessages[activeBidder.name]) {
-                            bidMessage = extremeCharacterMessages[activeBidder.name];
-                        } else {
-                            // Fallback a mensajes genéricos por personalidad
-                            const extremeMessages = {
-                                'aggressive': [
-                                    `${activeBidder.emoji} ${activeBidder.name} ¡EXPLOTA! ¡PUJA BRUTAL DE ${increaseAmount} pts!`,
-                                    `${activeBidder.emoji} ${activeBidder.name} ¡ATAQUE DEVASTADOR! +${increaseAmount} pts`
-                                ],
-                                'impulsive': [
-                                    `${activeBidder.emoji} ${activeBidder.name} ¡SE VUELVE LOCO! ¡${increaseAmount} pts por impulso!`,
-                                    `${activeBidder.emoji} ${activeBidder.name} ¡IMPULSO DESCONTROLADO! +${increaseAmount} pts`
-                                ],
-                                'passionate': [
-                                    `${activeBidder.emoji} ${activeBidder.name} ¡ARREBATO PASIONAL! ¡${increaseAmount} pts!`,
-                                    `${activeBidder.emoji} ${activeBidder.name} ¡PASIÓN DESATADA! ¡${increaseAmount} pts!`
-                                ]
-                            };
-                            
-                            if (extremeMessages[activeBidder.personality]) {
-                                const messages = extremeMessages[activeBidder.personality];
-                                bidMessage = messages[Math.floor(Math.random() * messages.length)];
-                            } else {
-                                bidMessage = `${activeBidder.emoji} ${activeBidder.name} ¡PUJA EXTREMA! ¡${increaseAmount} pts!`;
-                            }
-                        }
-                    } else {
-                        // Pujas normales - Usar mensajes específicos del personaje si existen
-                        let bidderAction;
-                        
-                        if (CHARACTER_SPECIFIC_MESSAGES[activeBidder.name]) {
-                            // Usar mensaje específico del personaje
-                            const characterMessages = CHARACTER_SPECIFIC_MESSAGES[activeBidder.name];
-                            bidderAction = characterMessages[Math.floor(Math.random() * characterMessages.length)];
-                        } else {
-                            // Fallback a mensajes genéricos por personalidad
-                            const personalityMessages = BIDDER_MESSAGES[activeBidder.personality];
-                            bidderAction = personalityMessages[Math.floor(Math.random() * personalityMessages.length)];
-                        }
-                        
-                        bidMessage = `${activeBidder.emoji} ${activeBidder.name} ${bidderAction} y puja ${increaseAmount} pts más`;
-                    }
-                    
-                    // Vibración más intensa para pujas extremas
-                    if (navigator.vibrate) {
-                        if (increasePercentage > 30) {
-                            navigator.vibrate([150, 50, 150]); // Vibración doble para pujas extremas
-                        } else {
-                            navigator.vibrate(100); // Vibración normal
-                        }
-                    }
-                    
-                    // Mensaje aparece inmediatamente
                     addHistoryMessage(bidMessage, 'bid', false, true);
-                    
-                    // Animación del precio
-                    updateUI(true); 
-                    
-                    console.log(`💰 Puja ${bidCount}: ${activeBidder.name} - +${increaseAmount} pts (${Math.round(increasePercentage)}%) (Total: ${Math.round(currentPrice)}) [${auctionType.toUpperCase()}]`);
-                    
+                    updateUI(true);
                 } else {
-                    auctionEnergy -= 10;
-                    addHistoryMessage(`${activeBidder.emoji} ${activeBidder.name} duda y no puja`, 'uncertainty');
-                    console.log('📉 Sin puja, energía reducida');
+                    if (!isFinalizingAuction) {
+                        startFinalizationSequence();
+                    }
                 }
             };
             
@@ -843,34 +506,132 @@ if (currentPrice < maxBidLimit) {
             const intervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
             const intervalDuration = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
             
-            auctionInterval = setInterval(processAuctionTick, intervalDuration);
+            // 🎭 FUNCIÓN PARA INICIAR EL BUCLE PRINCIPAL
+            const startMainAuctionLoop = () => {
+                const intervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
+                const intervalDuration = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
+                auctionInterval = setInterval(processAuctionTick, intervalDuration);
+            };
+            
+            // 🚫 FUNCIÓN DUPLICADA ELIMINADA - Ya está declarada arriba
         };
         
-        // 🏆 Finaliza la subasta con celebración
-        const finishAuction = () => {
-            clearInterval(auctionInterval);
-            isAuctionInProgress = false;
+        // 🎭 FUNCIONES DE SUBASTA - Movidas fuera para accesibilidad global
+        const startUncertaintyMoment = () => {
+            isInDecisionPause = true;
+            uncertaintyMoments++;
+
+            // 🎭 USAR SISTEMA COHERENTE - Mensaje de incertidumbre contextual
+            if (SubastaConstantes?.getCoherentMessage) {
+                const coherentMessage = SubastaConstantes.getCoherentMessage('uncertainty', lastNarrativeMessageType);
+                addHistoryMessage(coherentMessage.message, 'uncertainty');
+                lastNarrativeMessageType = coherentMessage.type;
+            } else {
+                // Fallback si no hay sistema coherente
+                addHistoryMessage('🤔 Los pujadores están dudando...', 'uncertainty');
+            }
             
+            // Usar configuración de timing para la pausa de incertidumbre
+            const uncertaintyDuration = TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN + 
+                Math.random() * (TIMING_CONFIG.UNCERTAINTY_PAUSE_MAX - TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN);
+            setTimeout(resolveUncertainty, uncertaintyDuration);
+        };
+        
+        const resolveUncertainty = () => {
+            isInDecisionPause = false;
+            let continueProbability = 0.75;
+            if (auctionEnergy < 30) continueProbability -= 0.2;
+            if (bidCount >= 6) continueProbability -= 0.1;
+            if (currentPrice > basePrice * 3) continueProbability -= 0.1;
+            continueProbability = Math.max(0.3, continueProbability);
+            
+            if (Math.random() < continueProbability) {
+                // 🎭 CONTINUACIÓN COHERENTE - Solo si la subasta sigue activa
+                if (auctionState === 'running' && !isFinalizingAuction) {
+                    if (SubastaConstantes?.getCoherentMessage) {
+                        const coherentMessage = SubastaConstantes.getCoherentMessage('continuation', lastNarrativeMessageType);
+                        addHistoryMessage(coherentMessage.message, 'system');
+                        lastNarrativeMessageType = coherentMessage.type;
+                    } else {
+                        // Fallback
+                        startFinalizationSequence();
+                    }
+                    setTimeout(processBid, TIMING_CONFIG.POST_UNCERTAINTY_BID_DELAY);
+                }
+            } else {
+                // La subasta no continúa, iniciar secuencia de finalización del martillo
+                addHistoryMessage('🔥 ¡Alguien no se rinde!', 'system');
+            }
+        };
+        
+        let finalizationTimeout = null; // Para controlar la secuencia de finalización
+
+        // 🔨 NUEVA FUNCIÓN - Secuencia de finalización tipo martillo
+        const startFinalizationSequence = () => {
+            if (isFinalizingAuction) return; // Ya está en proceso
+
+            isFinalizingAuction = true;
+
+            console.log('🔨 Iniciando secuencia de finalización...');
+
+            const hammerMessages = SubastaConstantes.narrativeMessages.hammer || ['A la una...', 'A las dos...'];
+            const shuffledMessages = [...hammerMessages].sort(() => 0.5 - Math.random());
+
+            const finalizationSteps = [
+                { message: shuffledMessages[0], delay: 3000, type: 'finalization' },
+                { message: shuffledMessages[1], delay: 3000, type: 'finalization' },
+                { message: `¡Adjudicado a...`, delay: 2000, type: 'victory' }
+            ];
+
+            let cumulativeDelay = 0;
+
+            const executeStep = (stepIndex) => {
+                if (stepIndex >= finalizationSteps.length) {
+                    finishAuction(); // Terminar la subasta
+                    return;
+                }
+
+                const step = finalizationSteps[stepIndex];
+                
+                finalizationTimeout = setTimeout(() => {
+                    if (!isFinalizingAuction) {
+                        console.log('🔨 Secuencia de finalización interrumpida.');
+                        return;
+                    }
+                    addHistoryMessage(step.message, step.type, true, false, true);
+                    executeStep(stepIndex + 1);
+                }, step.delay);
+            };
+
+            executeStep(0);
+        };
+
+        // 🚫 FUNCIÓN DUPLICADA ELIMINADA - Ya está dentro de showAuction()
+        
+        // 🏆 Finaliza la subasta con celebración CONTROLADA
+        const finishAuction = () => {
+            clearInterval(auctionInterval); // 🎯 Asegurarse de que el intervalo se detiene
+            isAuctionInProgress = false;
+            auctionState = 'finished';
+            messageQueue = [];
             const winner = lastBidder || activeBidders[0] || { name: '🏆 Coleccionista VIP', emoji: '🏆' };
             const victoryMessage = `🎉 ¡${winner.name} GANÓ con ${Math.round(currentPrice)} pts! 🎉`;
-            addHistoryMessage(victoryMessage, 'victory', true);
-            
-            console.log(`🏆 Subasta finalizada. Ganador: ${winner.name} con ${Math.round(currentPrice)} pts`);
-            
-            // Mostrar botón de aceptar con delay configurado
-            setTimeout(() => {
+            addHistoryMessage(victoryMessage, 'victory', true, false, true);
+        
+            const showAcceptButtonAction = () => {
                 takeBtn.style.display = 'block';
-                takeBtn.innerHTML = `
-                    <span class="btn-icon">💰</span>
-                    <span class="btn-text">¡ACEPTAR ${Math.round(currentPrice)} PTS!</span>
-                `;
-            }, TIMING_CONFIG.ACCEPT_BUTTON_DELAY);
-            
-            // Mensaje motivacional con delay configurado
-            setTimeout(() => {
-                const motivationalMsg = MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)];
-                addHistoryMessage(motivationalMsg, 'system', true);
-            }, TIMING_CONFIG.MOTIVATIONAL_MESSAGE_DELAY);
+                takeBtn.textContent = `💰 ¡ACEPTAR ${Math.round(currentPrice)} pts!`;
+                takeBtn.classList.add('pulse-victory');
+                const actionsContainerRestore = document.querySelector('.auction-actions');
+                const historyContainerRestore = document.querySelector('.auction-history-container');
+                if (actionsContainerRestore && historyContainerRestore) {
+                    actionsContainerRestore.classList.remove('hidden');
+                    historyContainerRestore.classList.remove('expanded');
+                }
+                closeBtn.style.display = 'block';
+                closeBtn.disabled = false;
+            };
+            queueMessage(showAcceptButtonAction, TIMING_CONFIG.ACCEPT_BUTTON_DELAY, false, true);
         };
 
         // 💎 Acepta el precio con celebración épica
@@ -896,9 +657,20 @@ if (currentPrice < maxBidLimit) {
     
         // 🎯 Resetea y prepara el modal
         isAuctionInProgress = false;
+        auctionState = 'idle'; // 🎯 RESETEAR ESTADO
+        isFinalizingAuction = false; // 🎯 RESETEAR FLAG
         startBtn.style.display = 'block';
         takeBtn.style.display = 'none';
         progressContainer.style.display = 'none';
+        
+        // 🎯 RESTAURAR ESPACIO - Al resetear el modal
+        const actionsContainerReset = document.querySelector('.auction-actions');
+        const historyContainerReset = document.querySelector('.auction-history-container');
+        
+        if (actionsContainerReset && historyContainerReset) {
+            actionsContainerReset.classList.remove('hidden');
+            historyContainerReset.classList.remove('expanded');
+        }
 
         updateUI();
         modal.classList.add('visible');

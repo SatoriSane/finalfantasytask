@@ -94,6 +94,24 @@
 
         loadState: function(importedState) {
             state = importedState;
+            
+            // --- NUEVO BLOQUE: Procesamiento y limpieza de datos importados ---
+            if (state.habits && Array.isArray(state.habits.challenges)) {
+                const now = new Date();
+                state.habits.challenges.forEach(challenge => {
+                    if (challenge.isActive && challenge.nextAllowedTime) {
+                        const nextAllowed = new Date(challenge.nextAllowedTime);
+                        // Si el siguiente tiempo permitido ya pasó, lo reiniciamos
+                        if (nextAllowed.getTime() < now.getTime()) {
+                            // Reinicia el tiempo a ahora mismo y el contador de consumos disponibles
+                            challenge.nextAllowedTime = now.toISOString();
+                            challenge.availableConsumptions = 0;
+                        }
+                    }
+                });
+            }
+            // --- FIN DEL NUEVO BLOQUE ---
+
             _saveStateToLocalStorage();
             App.events.emit('stateRefreshed');
         },

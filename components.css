@@ -205,7 +205,7 @@
 /* ===================== MENSAJE DISCRETO (POP-UP) ===================== */
 .discreet-message {
     position: fixed;
-    top: 20px;
+    bottom: 60px;
     left: 50%;
     transform: translateX(-50%) translateY(-20px);
     background-color: rgba(var(--ff-primary-dark-rgb), 0.95);
@@ -219,9 +219,12 @@
     opacity: 0;
     transition: opacity 0.4s ease-out, transform 0.4s ease-out;
     z-index: 1000;
-    white-space: nowrap;
-    text-align: center;
+    white-space: normal;      /* 🔥 permite múltiples líneas */
+    text-align: center;       /* 🔥 centra el texto si ocupa varias líneas */
+    max-width: 90%;           /* 🔥 evita que se extienda más allá de la pantalla */
+    word-wrap: break-word;    /* 🔥 fuerza corte si hay palabras muy largas */
 }
+
 
 .discreet-message.show {
     opacity: 1;

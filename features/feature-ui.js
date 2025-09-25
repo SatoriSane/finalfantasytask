@@ -177,7 +177,7 @@
             setTimeout(() => {
                 msgElement.classList.remove('show');
                 msgElement.addEventListener('transitionend', () => msgElement.remove(), { once: true });
-            }, 3000);
+            }, 5000);
         },
 
         // --- Métodos de Eventos (de ui-events.js) ---

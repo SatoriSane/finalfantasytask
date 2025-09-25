@@ -152,37 +152,27 @@
     opacity: 1;
 }
 
-/* -------------------- Título Épico con Efectos -------------------- */
+/* -------------------- Título Compacto para Móvil -------------------- */
 .auction-header {
     text-align: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
 }
 
 .auction-title {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     font-weight: 800;
-    background: linear-gradient(45deg, var(--auction-gold), var(--auction-gold-light), var(--auction-gold));
-    background-size: 200% 200%;
+    background: linear-gradient(45deg, var(--auction-gold), var(--auction-gold-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin: 0;
-    text-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
     animation: shimmerTitle 3s ease-in-out infinite;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
 }
 
-.auction-subtitle {
-    font-size: 0.85rem;
-    color: var(--auction-gold-light);
-    margin-top: 0.8rem;
-    font-weight: 500;
-    opacity: 0.7;
-    font-style: italic;
-}
 
 @keyframes shimmerTitle {
     0%, 100% { background-position: 0% 50%; }
@@ -394,14 +384,14 @@
     color: var(--auction-gold-light);
 }
 
-/* -------------------- Historial Animado de Subasta - EXPANDIDO -------------------- */
+/* -------------------- Historial Animado de Subasta - MÁXIMO ESPACIO -------------------- */
 .auction-history-container {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
     padding: 1rem;
     border: 1px solid rgba(255, 215, 0, 0.1);
-    min-height: 200px;
-    max-height: 200px;
+    min-height: 240px;
+    max-height: 240px;
     overflow: hidden;
     position: relative;
 }
@@ -479,44 +469,6 @@
         transform: translateY(0) scale(1);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-}
-
-/* -------------------- Barra de Progreso de Subasta -------------------- */
-.auction-progress {
-    margin-top: 1rem;
-    padding: 0.8rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    border: 1px solid var(--auction-gold);
-}
-
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 0.5rem;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--auction-gold), var(--auction-gold-light));
-    border-radius: 4px;
-    transition: width 0.5s ease;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-    animation: progressGlow 2s ease-in-out infinite;
-}
-
-@keyframes progressGlow {
-    0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
-    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
-}
-
-.progress-text {
-    font-size: 0.9rem;
-    color: var(--auction-gold-light);
-    font-weight: 600;
 }
 
 .auction-messages {
@@ -735,56 +687,13 @@
     100% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 1; }
 }
 
-/* -------------------- Responsive Design -------------------- */
-@media (max-width: 480px) {
-    #auctionModal .modal-content {
-        padding: 2rem 1.5rem;
-        max-width: 380px;
-    }
+/* -------------------- Diseño Optimizado para Móvil -------------------- */
+#auctionModal .modal-content {
+    padding: 1.5rem 1rem;
+    max-width: 380px;
+}
 
-    .auction-header {
-        margin-bottom: 1.5rem;
-    }
-
-    .auction-title {
-        font-size: 1.3rem;
-    }
-
-    .auction-main-area {
-        gap: 1.5rem;
-    }
-
-    .auction-price-container {
-        min-width: 180px;
-        padding: 0.8rem 1rem;
-    }
-
-    .current-price {
-        font-size: 1.5rem;
-    }
-
-    .price-label {
-        font-size: 0.7rem;
-        margin-bottom: 0.4rem;
-    }
-
-    .auction-history-container {
-        min-height: 160px;
-        max-height: 160px;
-        padding: 0.8rem;
-    }
-    
-    .auction-message {
-        font-size: 0.8rem;
-        padding: 0.4rem 0.6rem;
-    }
-
-    .auction-btn {
-        padding: 0.9rem 1.2rem;
-        font-size: 0.85rem;
-    }
-
-    .btn-icon {
-        font-size: 1rem;
-    }
+.auction-history-container {
+    min-height: 240px;
+    max-height: 240px;
 }

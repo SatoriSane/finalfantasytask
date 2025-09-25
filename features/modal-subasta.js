@@ -75,10 +75,7 @@
         const historyContainer = document.getElementById('auctionHistory');
         const closeBtn = modal.querySelector('.modal-close-btn');
         const progressContainer = document.getElementById('auctionProgress');
-        const progressFill = document.getElementById('progressFill');
-        const bidCounter = document.getElementById('bidCounter');
-        const maxBidsDisplay = document.getElementById('maxBidsDisplay');
-
+        
         // Limpia eventos anteriores
         closeBtn.onclick = null;
         startBtn.onclick = null;
@@ -94,12 +91,13 @@
         let auctionInterval;
         let isAuctionInProgress = false;
         let activeBidders = [];
-        let lastPriceIncrease = 0;
 
         // 🎭 Función para cerrar modal con limpieza épica
         const closeModal = () => {
             clearInterval(auctionInterval);
             modal.classList.remove('visible');
+            closeBtn.style.display = 'block'; 
+            closeBtn.disabled = false;
         };
 
         // 🎨 Actualización de UI con efectos visuales épicos
@@ -109,7 +107,6 @@
             const roundedPrice = Math.round(currentPrice);
             
             if (animate && roundedPrice !== lastDisplayedPrice) {
-                // Usar animación numérica del precio
                 animatePrice(lastDisplayedPrice, roundedPrice, 800);
                 lastDisplayedPrice = roundedPrice;
             } else {
@@ -137,25 +134,22 @@
 
         // 📜 Sistema de historial animado con control de timing
         const messageHistory = [];
-        const MAX_MESSAGES = 7; // Aumentado para aprovechar el espacio extra
+        const MAX_MESSAGES = 7;
         let lastMessageTime = 0;
-        const MIN_MESSAGE_DELAY = 3500; // Mínimo 2 segundos entre mensajes
+        const MIN_MESSAGE_DELAY = 3500;
         
-        const addHistoryMessage = (message, type = 'system', forceDelay = false) => {
+        // MODIFICACIÓN: Se añade el parámetro 'immediate' para forzar la visualización instantánea
+        const addHistoryMessage = (message, type = 'system', forceDelay = false, immediate = false) => {
             const now = Date.now();
             const timeSinceLastMessage = now - lastMessageTime;
             
             const showMessage = () => {
-                // Crear elemento del mensaje
                 const messageElement = document.createElement('div');
                 messageElement.className = `auction-message ${type} new`;
                 messageElement.textContent = message;
-                
-                // Añadir al principio del historial
                 historyContainer.insertBefore(messageElement, historyContainer.firstChild);
                 messageHistory.unshift({ element: messageElement, message, type });
                 
-                // Eliminar mensajes antiguos si excede el límite
                 if (messageHistory.length > MAX_MESSAGES) {
                     const oldMessage = messageHistory.pop();
                     oldMessage.element.classList.add('fade-out');
@@ -170,8 +164,8 @@
                 console.log(`📜 Mensaje añadido: [${type}] ${message}`);
             };
             
-            // Si no ha pasado suficiente tiempo o se fuerza delay, esperar
-            if (timeSinceLastMessage < MIN_MESSAGE_DELAY || forceDelay) {
+            // MODIFICACIÓN: Si es 'immediate', se salta la comprobación de tiempo.
+            if (!immediate && (timeSinceLastMessage < MIN_MESSAGE_DELAY || forceDelay)) {
                 const delay = forceDelay ? 2500 : (MIN_MESSAGE_DELAY - timeSinceLastMessage);
                 setTimeout(showMessage, delay);
             } else {
@@ -187,70 +181,58 @@
             const updatePrice = () => {
                 const elapsed = Date.now() - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                
-                // Usar easing para suavizar la animación
                 const easeProgress = 1 - Math.pow(1 - progress, 3);
-                const currentPrice = Math.round(fromPrice + (priceDiff * easeProgress));
-                
-                currentPriceDisplay.textContent = `⚡${currentPrice} pts`;
+                const currentPriceVal = Math.round(fromPrice + (priceDiff * easeProgress));
+                currentPriceDisplay.textContent = `⚡${currentPriceVal} pts`;
                 
                 if (progress < 1) {
                     requestAnimationFrame(updatePrice);
-                } else {
-                    // Añadir efecto final cuando termina la animación
-                    currentPriceDisplay.classList.add('price-change');
-                    setTimeout(() => {
-                        currentPriceDisplay.classList.remove('price-change');
-                    }, 800);
                 }
             };
-            
             requestAnimationFrame(updatePrice);
         };
 
         let bidCount = 0;
-        let auctionEnergy = 100; // Energía de la subasta (0-100)
+        let auctionEnergy = 100;
         let lastBidTime = Date.now();
         let isInDecisionPause = false;
-        let uncertaintyMoments = 0; // Contador de momentos de incertidumbre
-        let lastBidder = null; // Último pujador para determinar ganador
+        let uncertaintyMoments = 0;
+        let lastBidder = null;
 
         // 🚀 Inicia la subasta épica REALISTA
         const startAuction = () => {
             if (isAuctionInProgress) return;
-            console.log('🚀 Iniciando subasta realista con energía variable');
             isAuctionInProgress = true;
+           // Ocultar y desactivar el botón de cerrar para evitar que cierre sin obtener los puntos
+           closeBtn.style.display = 'none';
+           closeBtn.disabled = true;           
             bidCount = 0;
-            auctionEnergy = 80 + Math.random() * 20; // Energía inicial aleatoria (80-100)
+            auctionEnergy = 40 + Math.random() * 120;
             lastBidTime = Date.now();
             
-            // Oculta botón de inicio (NO mostrar barra de progreso)
             startBtn.style.display = 'none';
             takeBtn.style.display = 'none';
-            progressContainer.style.display = 'none'; // Eliminamos la barra de progreso
+            progressContainer.style.display = 'none';
             
-            // Genera pujadores y comienza la acción
             generateActiveBidders();
-            console.log('👥 Pujadores generados:', activeBidders.length);
-            console.log('⚡ Energía inicial de subasta:', Math.round(auctionEnergy));
             
-            // Limpiar historial y añadir mensaje inicial
             historyContainer.innerHTML = '';
             messageHistory.length = 0;
-            lastMessageTime = 0; // Reset del timing de mensajes
+            lastMessageTime = 0;
             addHistoryMessage('🔥 ¡SUBASTA EN VIVO! 🔥', 'system');
             
-            // 🎭 LÓGICA DE SUBASTA REALISTA CON INCERTIDUMBRE
             const processAuctionTick = () => {
-                // Si no estamos en pausa de indecisión, decidir qué hacer
+                // ARREGLADO: Verificar que la subasta siga activa antes de procesar
+                if (!isAuctionInProgress) {
+                    clearInterval(auctionInterval);
+                    return;
+                }
+                
                 if (!isInDecisionPause) {
-                    // Aumentar probabilidad de incertidumbre conforme avanza la subasta
                     let uncertaintyProbability = 0.35;
                     if (bidCount >= 5) uncertaintyProbability = 0.5;
                     if (bidCount >= 8) uncertaintyProbability = 0.7;
                     if (auctionEnergy < 40) uncertaintyProbability += 0.2;
-                    
-                    // Siempre debe haber al menos un momento de incertidumbre antes del final
                     const shouldForceUncertainty = bidCount >= 4 && uncertaintyMoments === 0;
                     
                     if ((bidCount >= 2 && Math.random() < uncertaintyProbability) || shouldForceUncertainty) {
@@ -261,158 +243,132 @@
                 }
             };
             
-            // 🤔 MOMENTO DE INCERTIDUMBRE - Punto crítico de decisión
             const startUncertaintyMoment = () => {
                 isInDecisionPause = true;
                 uncertaintyMoments++;
-                
-                const uncertaintyMessages = [
-                    '🤔 Los pujadores están evaluando...',
-                    '⏳ Momento de reflexión...',
-                    '🧐 Analizando la situación...',
-                    '💭 ¿Alguien más pujará?',
-                    '⚖️ Sopesando opciones...',
-                    '🎯 ¿Vale la pena seguir?',
-                    '💰 Calculando el siguiente movimiento...'
-                ];
-                
-                const uncertaintyMsg = uncertaintyMessages[Math.floor(Math.random() * uncertaintyMessages.length)];
-                addHistoryMessage(uncertaintyMsg, 'uncertainty');
-                console.log(`🤔 Momento de incertidumbre #${uncertaintyMoments}`);
-                
-                // Pausa de incertidumbre de 3-10 segundos
-                const uncertaintyDuration = 4000 + Math.random() * 6000;
-                
-                setTimeout(() => {
-                    resolveUncertainty();
-                }, uncertaintyDuration);
+                const uncertaintyMessages = ['🤔 Los pujadores están evaluando...', '⏳ Momento de reflexión...', '🧐 Analizando la situación...', '💭 ¿Alguien más pujará?'];
+                addHistoryMessage(uncertaintyMessages[Math.floor(Math.random() * uncertaintyMessages.length)], 'uncertainty');
+                setTimeout(resolveUncertainty, 4000 + Math.random() * 6000);
             };
             
-            // 🎲 RESOLVER LA INCERTIDUMBRE - Momento de verdad
             const resolveUncertainty = () => {
                 isInDecisionPause = false;
-                
-                // Calcular probabilidad de que alguien puje basada en varios factores
-                let continueProbability = 0.75; // Base 60%
-                
-                // Factores que reducen la probabilidad de continuar
+                let continueProbability = 0.75;
                 if (auctionEnergy < 30) continueProbability -= 0.2;
-                if (auctionEnergy < 50) continueProbability -= 0.1;
                 if (bidCount >= 6) continueProbability -= 0.1;
-                if (bidCount >= 12) continueProbability -= 0.2;
                 if (currentPrice > basePrice * 3) continueProbability -= 0.1;
-                if (currentPrice > basePrice * 5) continueProbability -= 0.2;
-                if (uncertaintyMoments >= 3) continueProbability -= 0.1;
-                
-                // Mínimo 10% de probabilidad de continuar
                 continueProbability = Math.max(0.3, continueProbability);
                 
-                console.log(`🎲 Probabilidad de continuar: ${Math.round(continueProbability * 100)}%`);
-                
                 if (Math.random() < continueProbability) {
-                    // ¡Alguien decide pujar!
-                    console.log('✅ ¡La incertidumbre fue superada! Alguien puja');
-                    const encouragingMessages = [
-                        '🔥 ¡Alguien no se rinde!',
-                        '⚡ ¡La competencia continúa!',
-                        '💪 ¡Hay más interés!',
-                        '🎯 ¡La batalla sigue!'
-                    ];
-                    const encouragingMsg = encouragingMessages[Math.floor(Math.random() * encouragingMessages.length)];
-                    addHistoryMessage(encouragingMsg, 'system');
-                    
-                    // Procesar la puja después de un breve momento
-                    setTimeout(() => {
-                        processBid();
-                    }, 4000);
+                    const encouragingMessages = ['🔥 ¡Alguien no se rinde!', '⚡ ¡La competencia continúa!', '💪 ¡Hay más interés!'];
+                    addHistoryMessage(encouragingMessages[Math.floor(Math.random() * encouragingMessages.length)], 'system');
+                    setTimeout(processBid, 4000);
                 } else {
-                    // ¡Nadie más puja! La subasta termina
-                    console.log('🏁 La incertidumbre no fue superada. Subasta terminada');
-                    const finalMessages = [
-                        '⏰ ¡Tiempo agotado!',
-                        '🏁 ¡No hay más pujas!',
-                        '✋ ¡Nadie más se atreve!',
-                        '🎯 ¡Subasta finalizada!'
-                    ];
-                    const finalMsg = finalMessages[Math.floor(Math.random() * finalMessages.length)];
-                    addHistoryMessage(finalMsg, 'system');
-                    
-                    // Esperar más tiempo antes de mostrar la victoria para que no sea inmediato
-                    setTimeout(() => {
-                        finishAuction();
-                    }, 3000); // Reducido para que el mensaje de victoria tenga su propio delay
+                    // ARREGLADO: Marcar que la subasta debe terminar después de esta resolución
+                    isAuctionInProgress = false;
+                    const finalMessages = ['⏰ ¡Tiempo agotado!', '🏁 ¡No hay más pujas!', '✋ ¡Nadie más se atreve!'];
+                    addHistoryMessage(finalMessages[Math.floor(Math.random() * finalMessages.length)], 'system');
+                    setTimeout(finishAuction, 3000);
                 }
             };
             
-            // 💰 PROCESAR UNA PUJA
             const processBid = () => {
                 bidCount++;
                 lastBidTime = Date.now();
-                
-                // Selecciona un pujador activo
                 const activeBidder = activeBidders[Math.floor(Math.random() * activeBidders.length)];
                 
-                // 📉 La energía de la subasta disminuye con el tiempo y precio
                 const priceRatio = currentPrice / basePrice;
-                auctionEnergy -= (2 + Math.random() * 3); // Disminuye 2-5 por puja
-                if (priceRatio > 3) auctionEnergy -= 5; // Penalización por precio alto
-                if (priceRatio > 5) auctionEnergy -= 10; // Penalización mayor
+                auctionEnergy -= (2 + Math.random() * 3);
+                if (priceRatio > 3) auctionEnergy -= 5;
                 
-                // 🎯 Calcula incremento basado en personalidad Y energía de subasta
                 let increase = 0;
-                const energyFactor = Math.max(0.3, auctionEnergy / 100); // Mínimo 30% de energía
+                const energyFactor = Math.max(0.3, auctionEnergy / 100);
                 
-                if (currentPrice < basePrice * (3 + Math.random() * 2)) { // Límite variable
-                    switch (activeBidder.personality) {
-                        case 'aggressive':
-                            increase = Math.max(2, currentPrice * (0.05 + Math.random() * 0.04) * energyFactor);
-                            break;
-                        case 'strategic':
-                            increase = Math.max(1, currentPrice * (0.03 + Math.random() * 0.02) * energyFactor);
-                            break;
-                        case 'impulsive':
-                            increase = Math.max(3, currentPrice * (0.06 + Math.random() * 0.05) * energyFactor);
-                            break;
-                        case 'calculated':
-                            increase = Math.max(1, currentPrice * (0.02 + Math.random() * 0.02) * energyFactor);
-                            break;
-                        case 'passionate':
-                            increase = Math.max(2, currentPrice * (0.04 + Math.random() * 0.04) * energyFactor);
-                            break;
-                    }
-                }
+// Nuevo límite más variable (2x – 20x basePrice)
+if (currentPrice < basePrice * (2 + Math.random() * 20)) {
+    switch (activeBidder.personality) {
+        case 'aggressive':
+            if (Math.random() < 0.1) {
+                // 10% de las veces mete una puja brutal (50–100% extra)
+                increase = currentPrice * (0.5 + Math.random() * 1) * energyFactor;
+            } else {
+                // Normal: 5–10%
+                increase = Math.max(2, currentPrice * (0.1 + Math.random() * 0.2) * energyFactor);
+            }
+            break;
+
+        case 'strategic':
+            // 3–6%, sin sorpresas fuertes
+            increase = Math.max(1, currentPrice * (0.03 + Math.random() * 0.03) * energyFactor);
+            break;
+
+        case 'impulsive':
+            if (Math.random() < 0.15) {
+                // 15% de las veces mete un salto enorme (20–60%)
+                increase = currentPrice * (0.3 + Math.random() * 0.6) * energyFactor;
+            } else {
+                // Normal: 6–12%
+                increase = Math.max(3, currentPrice * (0.05 + Math.random() * 0.3) * energyFactor);
+            }
+            break;
+
+        case 'calculated':
+            // Muy medido: 2–4%
+            increase = Math.max(1, currentPrice * (0.02 + Math.random() * 0.02) * energyFactor);
+            break;
+
+        case 'passionate':
+            // Normal: 4–9%, pero a veces un arrebato grande (10% de las veces 15–40%)
+            if (Math.random() < 0.1) {
+                increase = currentPrice * (0.15 + Math.random() * 0.25) * energyFactor;
+            } else {
+                increase = Math.max(2, currentPrice * (0.04 + Math.random() * 0.05) * energyFactor);
+            }
+            break;
+    }
+}
+
                 
                 if (increase > 0) {
-                    lastPriceIncrease = increase;
                     currentPrice += increase;
-                    lastBidder = activeBidder; // Guarda el último pujador
+                    lastBidder = activeBidder;
                     
-                    // Crear mensaje realista con incremento
                     const personalityMessages = BIDDER_MESSAGES[activeBidder.personality];
                     const bidderAction = personalityMessages[Math.floor(Math.random() * personalityMessages.length)];
                     const increaseAmount = Math.round(increase);
-                    
                     const bidMessage = `${activeBidder.emoji} ${activeBidder.name} ${bidderAction} y puja ${increaseAmount} pts más`;
-                    addHistoryMessage(bidMessage, 'bid');
+                    
+                    // =============================================================
+                    // INICIO DE LA MODIFICACIÓN: Zona de sincronización de eventos
+                    // Todos estos eventos ahora ocurren juntos.
+                    // =============================================================
+                    
+                    // 1. VIBRACIÓN: El móvil vibra en el instante de la puja.
+                    if (navigator.vibrate) {
+                        navigator.vibrate(100); // Vibración corta de 100ms
+                    }
+                    
+                    // 2. MENSAJE: El mensaje de la puja aparece inmediatamente.
+                    // El 'true' final fuerza que el mensaje ignore la cola de delays.
+                    addHistoryMessage(bidMessage, 'bid', false, true);
+                    
+                    // 3. PRECIO: La animación del precio comienza al mismo tiempo.
+                    updateUI(true); 
                     
                     console.log(`💰 Puja ${bidCount}: ${activeBidder.name} - +${increaseAmount} pts (Total: ${Math.round(currentPrice)}) [Energía: ${Math.round(auctionEnergy)}%]`);
                     
-                    updateUI(true); // Activa la animación del precio
-                    
-                    // ❌ ELIMINADO: No hay finalización inmediata después de una puja
-                    // La subasta solo puede terminar durante momentos de incertidumbre
+                    // =============================================================
+                    // FIN DE LA MODIFICACIÓN
+                    // =============================================================
                     
                 } else {
-                    // No hay incremento, pero no termina inmediatamente
-                    // En su lugar, reduce la energía más rápidamente
                     auctionEnergy -= 10;
                     addHistoryMessage(`${activeBidder.emoji} ${activeBidder.name} duda y no puja`, 'uncertainty');
                     console.log('📉 Sin puja, energía reducida');
                 }
             };
             
-            // Inicia el procesamiento con intervalos variables MÁS LENTOS
-            auctionInterval = setInterval(processAuctionTick, 3000 + Math.random() * 4000); // 2.5-6 segundos
+            auctionInterval = setInterval(processAuctionTick, 3000 + Math.random() * 4000);
         };
         
         // 🏆 Finaliza la subasta con celebración
@@ -420,16 +376,12 @@
             clearInterval(auctionInterval);
             isAuctionInProgress = false;
             
-            // El ganador es el último que pujó (más realista)
             const winner = lastBidder || activeBidders[0] || { name: '🏆 Coleccionista VIP', emoji: '🏆' };
-            
             const victoryMessage = `🎉 ¡${winner.name} GANÓ con ${Math.round(currentPrice)} pts! 🎉`;
-            // Usar forceDelay para asegurar que la victoria aparezca después de un delay apropiado
             addHistoryMessage(victoryMessage, 'victory', true);
             
-            console.log(`🏆 Subasta finalizada. Ganador: ${winner.name} con ${Math.round(currentPrice)} pts después de ${bidCount} pujas y ${uncertaintyMoments} momentos de incertidumbre`);
+            console.log(`🏆 Subasta finalizada. Ganador: ${winner.name} con ${Math.round(currentPrice)} pts`);
             
-            // Muestra botón de aceptar con precio final después del mensaje de victoria
             setTimeout(() => {
                 takeBtn.style.display = 'block';
                 takeBtn.innerHTML = `
@@ -438,11 +390,10 @@
                 `;
             }, 3000);
             
-            // Mensaje motivacional después de un momento más largo
             setTimeout(() => {
                 const motivationalMsg = MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)];
                 addHistoryMessage(motivationalMsg, 'system', true);
-            }, 6000);
+            }, 5000);
         };
 
         // 💎 Acepta el precio con celebración épica
@@ -453,11 +404,9 @@
             App.state.sellConsumption(challenge.id, finalPrice);
             closeModal();
             
-            // Mensaje de victoria épico
             const victoryMessage = `🎉 ¡SUBASTA GANADA! Vendiste tu ticket por ${finalPrice} puntos!${bonusMessage}`;
             App.events.emit('showDiscreetMessage', victoryMessage);
             
-            // Vibración en dispositivos móviles (si está disponible)
             if (navigator.vibrate) {
                 navigator.vibrate([100, 50, 100, 50, 200]);
             }
@@ -470,32 +419,17 @@
     
         // 🎯 Resetea y prepara el modal
         isAuctionInProgress = false;
-        bidCount = 0;
-        auctionEnergy = 100;
-        isInDecisionPause = false;
-        uncertaintyMoments = 0;
-        lastBidder = null;
         startBtn.style.display = 'block';
         takeBtn.style.display = 'none';
         progressContainer.style.display = 'none';
-        
-        // Mensaje inicial motivacional
-        const streakBonus = isRecordBreaking ? ' 🔥 ¡RACHA RÉCORD = PRECIO x2!' : '';
-        // El mensaje de récord ahora va al historial, no necesitamos statusDisplay
 
         updateUI();
         modal.classList.add('visible');
 
-        console.log('✅ Modal de subasta épica mostrado correctamente');
-        console.log('💰 Precio base:', basePrice, 'pts');
-        console.log('🔥 Récord personal:', isRecordBreaking ? 'SÍ (x2 bonus)' : 'NO');
-
-        // Limpiar historial inicial y añadir mensaje motivacional
         historyContainer.innerHTML = '';
         messageHistory.length = 0;
-        lastMessageTime = 0; // Reset del timing de mensajes
+        lastMessageTime = 0;
         
-        // Añadir mensaje de récord si corresponde
         if (isRecordBreaking) {
             addHistoryMessage('🔥 ¡RACHA RÉCORD = PRECIO x2!', 'victory');
             setTimeout(() => {
@@ -504,54 +438,20 @@
         } else {
             addHistoryMessage('💡 ¡Vender es más rentable que consumir! ¡Inicia la subasta!', 'system');
         }
-
     }
 
-    // Exporta la función épica para que sea accesible globalmente
-    // Usa un enfoque más robusto para asegurar que se registre correctamente
+    // Exporta la función épica
     const registerEpicAuction = () => {
         if (!window.App) window.App = {};
         if (!window.App.ui) window.App.ui = {};
         if (!window.App.ui.habits) window.App.ui.habits = {};
-        
         window.App.ui.habits.showEpicAuction = showAuction;
-        
-        // También registra la función de test
-        window.App.ui.habits.testEpicAuction = function() {
-            console.log('🧪 TESTING SUBASTA ÉPICA...');
-            console.log('📋 Pujadores disponibles:', VIRTUAL_BIDDERS.length);
-            console.log('💬 Mensajes de pujadores:', BIDDER_MESSAGES.length);
-            console.log('🎉 Mensajes motivacionales:', MOTIVATIONAL_MESSAGES.length);
-            
-            // Test con datos de prueba
-            const testChallenge = {
-                id: 'test-123',
-                name: 'Test Abstinencia',
-                firstLevelPoints: 100,
-                incrementPercent: 5,
-                currentLevel: 3,
-                lastConsumptionTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-                bestStreak: 12 * 60 * 60 * 1000,
-                availableConsumptions: 1
-            };
-            
-            console.log('🎯 Iniciando test con challenge:', testChallenge.name);
-            showAuction(testChallenge);
-        };
-        
         console.log('🏆 SUBASTA ÉPICA REGISTRADA CORRECTAMENTE');
-        console.log('📍 Función disponible en: App.ui.habits.showEpicAuction');
-        console.log('🔍 Verificación:', typeof window.App.ui.habits.showEpicAuction);
     };
     
-    // Registra inmediatamente
     registerEpicAuction();
-    
-    // También registra cuando el DOM esté listo (por si acaso)
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', registerEpicAuction);
     }
-
-    // La función de test ya está registrada en registerEpicAuction()
 
 })(window.App = window.App || {});

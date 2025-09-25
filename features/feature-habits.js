@@ -1,4 +1,3 @@
-// features/feature-habits.js
 // Consolidated module for Abstinence Challenge feature
 
 (function() {
@@ -27,7 +26,7 @@
         const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
         const seconds = totalSeconds % 60;
         
-        // --- NUEVO: Lógica para reducir la ansiedad ---
+        // --- Lógica para reducir la ansiedad ---
         if (days > 0) return `${days}d ${hours}h ${minutes}m`;
         if (hours > 0) return `${hours}h ${minutes}m`;
         if (minutes > 0) return `${minutes}m ${seconds}s`;
@@ -102,11 +101,15 @@
             const elapsedMs = now.getTime() - createdAt.getTime();
             const progressPercent = Math.min(100, (elapsedMs / durationMs) * 100);
 
-            const progressFill = card.querySelector('.progress-fill');
-            if (progressFill) progressFill.style.width = `${progressPercent}%`;
+            // Actualizar el círculo de progreso
+            const circle = card.querySelector('.progress-circle-fill');
+            const radius = 25; // Radio 25
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (progressPercent / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
 
-            const progressLabel = card.querySelector('.progress-label');
-            if (progressLabel) progressLabel.textContent = `Progreso del reto: ${Math.round(progressPercent)}%`;
+            const progressText = card.querySelector('.progress-percent-text');
+            if (progressText) progressText.textContent = `${Math.round(progressPercent)}%`;
 
             const consumeBtn = card.querySelector('.consume-btn');
             const sellBtn = card.querySelector('.sell-btn');
@@ -114,14 +117,14 @@
 
             if (challenge.availableConsumptions > 0) {
                 if (consumeBtn) {
-                    consumeBtn.textContent = `Gastar ticket (${challenge.availableConsumptions})`;
+                    consumeBtn.textContent = `Consumir ticket (${challenge.availableConsumptions})`;
                     consumeBtn.classList.add('available');
                     consumeBtn.classList.remove('waiting');
                 }
                 if (sellBtn) {
                     // Actualizado: Texto del botón de venta para ser más atractivo
                     sellBtn.textContent = `Vender ticket por ${pointsForCurrentLevel} pts`;
-                    sellBtn.style.display = 'inline-block';
+                    sellBtn.style.display = 'block';
                 }
             } else {
                 if (consumeBtn) {
@@ -182,45 +185,61 @@
             else if (successRate >= 50) complianceClass = 'compliance-medium';
             else complianceClass = 'compliance-low';
 
-            // --- CAMBIO CLAVE: Calculamos la Racha en tiempo real desde lastConsumptionTime ---
+            // CAMBIO CLAVE: Calculamos la Racha en tiempo real desde lastConsumptionTime y usamos el nuevo formato
             const lastConsumptionDate = new Date(lastConsumptionTime);
             const currentStreakMs = now.getTime() - lastConsumptionDate.getTime();
-            const formattedCurrentStreak = formatDuration(currentStreakMs);
-            const formattedBestStreak = formatDuration(bestStreak);
+            const formattedCurrentStreak = formatSimplifiedDuration(currentStreakMs);
+            const formattedBestStreak = formatSimplifiedDuration(bestStreak);
+
+            const circumference = 2 * Math.PI * 25; // Radio 25
+            const progressOffset = circumference - (progressPercent / 100) * circumference;
 
             return `
                 <div class="abstinence-card ${statusClass}" data-id="${id}">
-                    <div class="abstinence-card-header">
-                        <h3 class="challenge-name">${name}</h3>
-                        <!-- CAMBIO: Ahora mostramos el nivel en el header para ahorrar espacio vertical -->
-                        <div class="challenge-level-status">Nivel ${currentLevel}/${finalLevel}</div>
+                    <div class="card-header-dashboard">
+                        <h3 class="challenge-name-dashboard">${name}</h3>
+                        <div class="progress-circle-container">
+                            <svg width="50" height="50" viewBox="0 0 50 50">
+                                <circle class="progress-circle-bg" cx="25" cy="25" r="22.5"></circle>
+                                <circle class="progress-circle-fill" cx="25" cy="25" r="22.5"
+                                    stroke-dasharray="${circumference}"
+                                    stroke-dashoffset="${progressOffset}">
+                                </circle>
+                                <text class="progress-percent-text" x="25" y="25">${Math.round(progressPercent)}%</text>
+                            </svg>
+                        </div>
                     </div>
-                    <div class="abstinence-card-body">
-                        <!-- CAMBIO: Eliminamos el Nivel de aquí para hacer espacio para 3 stats por fila -->
-                        <div class="challenge-stats">
-                            <div class="stat-item"><span class="stat-label">Éxito reto</span><span class="stat-value ${complianceClass}">${Math.round(successRate)}%</span></div>
-                            <div class="stat-item"><span class="stat-label">Racha actual</span><span class="stat-value">🔥${formattedCurrentStreak}</span></div>
-                            <div class="stat-item"><span class="stat-label">Mejor Racha</span><span class="stat-value">🏆${formattedBestStreak}</span></div>
+                    <div class="card-body-dashboard">
+                        <div class="main-metrics-grid">
+                            <div class="metric-item">
+                                <span class="metric-label">Tasa de Cumplimiento</span>
+                                <span class="metric-value ${complianceClass}">${Math.round(successRate)}%</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Nivel</span>
+                                <span class="metric-value">${currentLevel}/${finalLevel}</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Racha actual</span>
+                                <span class="metric-value">🔥${formattedCurrentStreak}</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Mejor Racha</span>
+                                <span class="metric-value">🏆${formattedBestStreak}</span>
+                            </div>
                         </div>
                         ${isActive ? `
-                        <div class="timer-container">
+                        <div class="timer-section">
                             <div class="timer-label">Ticket de consumición en:</div>
                             <div class="timer-display">${formatTimeRemaining(timeRemaining)}</div>
                         </div>` : `<div class="completed-message">¡Reto completado! 🏆</div>`}
-                        <div class="progress-container">
-                            <div class="progress-label">Progreso del reto: ${Math.round(progressPercent)}%</div>
-                            <div class="progress-bar"><div class="progress-fill" style="width: ${progressPercent}%"></div></div>
-                        </div>
                     </div>
-                    <div class="abstinence-card-footer">
+                    <div class="card-footer-dashboard">
                         ${isActive ? `
                             <button class="consume-btn ${buttonClass}" data-challenge-id="${id}">${buttonText}</button>
-                            <!-- Actualizado: Mensaje del botón para destacar la recompensa y el logro -->
-                            <button class="sell-btn" style="display: ${challenge.availableConsumptions > 0 ? 'inline-block' : 'none'};" data-challenge-id="${id}">Vender ticket por ${pointsForCurrentLevel} pts</button>
+                            <button class="sell-btn" style="display: ${challenge.availableConsumptions > 0 ? 'block' : 'none'};" data-challenge-id="${id}">Vender ticket por ${pointsForCurrentLevel} pts</button>
                         ` : ''}
-                        <div class="action-buttons">
-                            <button class="action-btn delete-btn" data-challenge-id="${id}" title="Eliminar reto">🗑️</button>
-                        </div>
+                        <button class="action-btn delete-btn" data-challenge-id="${id}" title="Eliminar reto">🗑️</button>
                     </div>
                 </div>`;
         }).join('');
@@ -515,6 +534,23 @@
         if (parts.length === 0) parts.push(`${seconds}s`);
 
         return parts.join(' ');
+    }
+    
+    // Nueva función para un formato de duración más simple
+    function formatSimplifiedDuration(ms) {
+        if (ms <= 0) return '0s';
+        const totalSeconds = Math.floor(ms / 1000);
+        
+        const days = Math.floor(totalSeconds / (24 * 60 * 60));
+        if (days > 0) return `${days}d`;
+        
+        const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+        if (hours > 0) return `${hours}h`;
+
+        const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+        if (minutes > 0) return `${minutes}m`;
+
+        return `${totalSeconds}s`;
     }
 
     // --- Public API ---

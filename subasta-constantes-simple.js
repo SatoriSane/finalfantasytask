@@ -7,13 +7,13 @@
         MAX_BIDDERS: 15,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
-            MESSAGE_DELAY: 3000,              // Delay entre mensajes
+            MESSAGE_DELAY: 4000,              // Delay entre mensajes
             PRICE_ANIMATION_DURATION: 1200,   // Duración animación precio
-            BID_INTERVAL_MIN: 2500,          // Intervalo mínimo entre pujas
-            BID_INTERVAL_MAX: 6000,          // Intervalo máximo entre pujas
-            HAMMER_PAUSE: 4500,              // Pausa en cada frase del hammer
+            BID_INTERVAL_MIN: 3500,          // Intervalo mínimo entre pujas
+            BID_INTERVAL_MAX: 6500,          // Intervalo máximo entre pujas
+            HAMMER_PAUSE: 5000,              // Pausa en cada frase del hammer
             FINAL_DELAY: 2000,                // Delay antes de mostrar botón final
-            HAMMER_FIRST_DELAY: 4500, // ⏳ Espera inicial extra antes del primer mensaje del martillo
+            HAMMER_FIRST_DELAY: 5000, // ⏳ Espera inicial extra antes del primer mensaje del martillo
         },
         EXTREME_BID_RANGE: {
             min: 0.3,   // 30%
@@ -34,8 +34,8 @@
                 aggressive: 0.50,
                 default: 0.6     // Para cualquier personalidad no definida
             },
-            FEAR_MESSAGE_DELAY_MAX: 3500,  // Más espaciado para no interferir con martillo
-            FEAR_MESSAGE_DELAY_MIN: 1200   // Delay mínimo más alto
+            FEAR_MESSAGE_DELAY_MAX: 5000,  // Más espaciado para no interferir con martillo
+            FEAR_MESSAGE_DELAY_MIN: 2000   // Delay mínimo más alto
         },
 
         // 🔨 SECUENCIA SIMPLE DEL MARTILLO - 4 frases secuenciales

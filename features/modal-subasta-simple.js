@@ -116,28 +116,61 @@ if (typeof SubastaConstantes === 'undefined') {
         
             let increasePercent;
             if (isExtremeBid) {
-                // 🔥 Puja extrema: 50% - 200% de aumento
-                increasePercent = 0.50 + Math.random() * 1.50;
+                // 🔥 Puja extrema: usar rango definido en constantes
+                const min = SubastaConstantes.EXTREME_BID_RANGE.min;
+                const max = SubastaConstantes.EXTREME_BID_RANGE.max;
+                increasePercent = min + Math.random() * (max - min);
                 console.log(`🔥 ¡PUJA EXTREMA! ${bidder.name} aumenta ${(increasePercent*100).toFixed(1)}%`);
-        
-                // 💨 Retirar estratégicos y calculadores (excepto el autor)
+            
                 const removedBidders = [];
-                activeBidders = activeBidders.filter(b => {
-                    if ((b.personality === 'strategic' || b.personality === 'calculated') && b !== bidder) {
+                // Hacemos una copia para iterar, ya que modificaremos el array original
+                const potentialLeavers = [...activeBidders];
+            
+                potentialLeavers.forEach(b => {
+                    // La salvaguarda: si solo quedan 2, nadie más se retira.
+                    if (activeBidders.length <= 2) return;
+            
+                    // El pujador que hizo la oferta no se retira a sí mismo.
+                    if (b === bidder) return;
+            
+                    // Obtener la probabilidad de retiro según la personalidad del pujador.
+                    const retreatChance = SubastaConstantes.PROBABILITIES.EXTREME_BID_RETREAT_CHANCES[b.personality] || 
+                                          SubastaConstantes.PROBABILITIES.EXTREME_BID_RETREAT_CHANCES.default;
+            
+                    // 🎲 Tirar el dado: ¿Se retira o se queda?
+                    if (Math.random() < retreatChance) {
                         removedBidders.push(b);
-                        return false;
+            
+                        // Lo eliminamos de la lista de pujadores activos.
+                        const index = activeBidders.findIndex(ab => ab === b);
+                        if (index > -1) activeBidders.splice(index, 1);
                     }
-                    return true;
                 });
-        
-                // Enviar mensajes de retiro con delay aleatorio para que aparezcan después del mensaje extremo
-                removedBidders.forEach(b => {
-                    const delay = 1500 + Math.random() * 1500; // entre 1.5s y 3s
+            
+                // Función recursiva para mostrar mensajes de huida uno a uno
+                const showRetreatMessagesSequentially = (bidders) => {
+                    if (bidders.length === 0) return;
+                
+                    const [first, ...rest] = bidders;
+                
+                    // Delay aleatorio entre 1000ms y 4000ms
+                    const delay = 1000 + Math.random() * 4000;
+                
                     setTimeout(() => {
-                        addMessage(`🚪 ${b.name} se asusta con la puja extrema y abandona la subasta`, 'system');
+                        const msg = SubastaConstantes.getFearMessage(first);
+                        addMessage(msg, 'system');
+                        showRetreatMessagesSequentially(rest);
                     }, delay);
-                });
-            } else {
+                };
+                
+            
+                if (removedBidders.length > 0) {
+                    console.log(`💨 Se retiraron por miedo: ${removedBidders.map(b => b.name).join(', ')}`);
+                    showRetreatMessagesSequentially(removedBidders);
+                }
+                
+            }
+             else {
                 // Puja normal según personalidad
                 switch(bidder.personality){
                     case 'aggressive': increasePercent = 0.08 + Math.random()*0.12; break;
@@ -252,8 +285,6 @@ if (typeof SubastaConstantes === 'undefined') {
                 takeBtn.style.display='block';
                 takeBtn.textContent=`💰 ¡ACEPTAR ${finalPrice} pts!`;
                 takeBtn.classList.add('pulse-victory');
-                closeBtn.style.display='block';
-                closeBtn.disabled=false;
             }, SubastaConstantes.TIMING_CONFIG.FINAL_DELAY);
         };
 

@@ -3,26 +3,37 @@
     'use strict';
 
     global.SubastaConstantes = {
-        MIN_BIDDERS: 4,
-        MAX_BIDDERS: 6,
+        MIN_BIDDERS: 3,
+        MAX_BIDDERS: 18,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
-            MESSAGE_DELAY: 2800,              // Delay entre mensajes
+            MESSAGE_DELAY: 3000,              // Delay entre mensajes
             PRICE_ANIMATION_DURATION: 1200,   // Duración animación precio
-            BID_INTERVAL_MIN: 1800,          // Intervalo mínimo entre pujas
+            BID_INTERVAL_MIN: 2500,          // Intervalo mínimo entre pujas
             BID_INTERVAL_MAX: 6000,          // Intervalo máximo entre pujas
             HAMMER_PAUSE: 4500,              // Pausa en cada frase del hammer
             FINAL_DELAY: 2000,                // Delay antes de mostrar botón final
-            HAMMER_FIRST_DELAY: 4000, // ⏳ Espera inicial extra antes del primer mensaje del martillo
+            HAMMER_FIRST_DELAY: 4500, // ⏳ Espera inicial extra antes del primer mensaje del martillo
         },
-
+        EXTREME_BID_RANGE: {
+            min: 0.3,   // 30%
+            max: 1   // 100%
+        },
         // 🎲 PROBABILIDADES SIMPLES
         PROBABILITIES: {
             HAMMER_CHANCE: 0.15,              // 15% probabilidad inicial de que inicie la secuencia del martillo en lugar de puja
             HAMMER_BONUS_INCREMENT: 0.05,        // 5% de incremento de la probabilidad acumulada del martillo cada vez que aparece
             HAMMER_RESUME_CHANCES: [0.33, 0.33, 0.46], // 33%, 33% y 46% de probabilidad de reanurarse para cada fase
             HAMMER_RESUME_DECREMENT: 0.11,       // 11% de decremento de la probabilidad de reanudación de esta fase después de que se reanuda
-            EXTREME_BID_CHANCE: 0.24           // 4% probabilidad de puja extrema (50-200% aumento)
+            EXTREME_BID_CHANCE: 0.1,           // 10% probabilidad de puja extrema (50-125% aumento)
+            EXTREME_BID_RETREAT_CHANCES: {
+                strategic: 0.75,  // 75% de probabilidad de retirarse
+                calculated: 0.85, // 85%
+                impulsive: 0.50,
+                passionate: 0.50,
+                aggressive: 0.50,
+                default: 0.50     // Para cualquier personalidad no definida
+            },
         },
 
         // 🔨 SECUENCIA SIMPLE DEL MARTILLO - 4 frases secuenciales
@@ -64,6 +75,11 @@ VIRTUAL_BIDDERS: [
         '💥 ¡ACTIVA FINAL HEAVEN! ¡PUÑOS IMPARABLES!',
         '🔥 ¡LIBERA TODA SU FUERZA! ¡PUJA TOTAL!',
         '⚡ ¡DESTRUYE EL CAMPO DE BATALLA! ¡PUJA DEVASTADORA!'
+    ],
+    fearMessages: [
+        '🚪 Tifa deja los puños y se retira',
+        '🚪 Tifa abandona el Seventh Heaven',
+        '🚪 Tifa se esconde tras la barra'
     ]
 },
 { 
@@ -86,6 +102,11 @@ VIRTUAL_BIDDERS: [
         '💣 ¡DISPARO TOTAL DEL CAÑÓN! ¡PUJA EXPLOSIVA!',
         '🔥 ¡LIBERA TODA SU IRA! ¡PUJA DEMOLEDORA!',
         '⚡ ¡ATAQUE INCONTROLABLE! ¡PUJA EXTREMA!'
+    ],
+    fearMessages: [
+        '🚪 Barret baja el cañón y se va',
+        '🚪 Barret se oculta tras el humo',
+        '🚪 Barret abandona la resistencia'
     ]
 },
 
@@ -110,6 +131,11 @@ VIRTUAL_BIDDERS: [
         '🗡️ ¡RENZOKUKEN DEFINITIVO! ¡PUJA LETAL!',
         '⚡ ¡LIBERA EL PODER DE LOS GUARDIAN FORCES! ¡PUJA EXTREMA!',
         '🔥 ¡DESTRUYE EL CAMPO CON PRECISIÓN! ¡PUJA TOTAL!'
+    ],
+    fearMessages: [
+        '🚪 Squall deja el campo y se retira',
+        '🚪 Squall abandona Balamb Garden',
+        '🚪 Squall se esconde tras el castillo'
     ]
 },
 { 
@@ -132,6 +158,11 @@ VIRTUAL_BIDDERS: [
         '💖 ¡INVOCA EL PODER DE HECHICERA! ¡PUJA MÁXIMA!',
         '🌟 ¡DESATA SU MAGIA ANGELICAL! ¡PUJA EXTREMA!',
         '✨ ¡ROMPE LOS LÍMITES DEL CORAZÓN! ¡PUJA TOTAL!'
+    ],
+    fearMessages: [
+        '🚪 Rinoa se esconde tras Angelo',
+        '🚪 Rinoa abandona Timber',
+        '🚪 Rinoa se esconde tras el castillo'
     ]
 },
 { 
@@ -154,6 +185,11 @@ VIRTUAL_BIDDERS: [
         '🔥 ¡FIRE CROSS MÁXIMO! ¡PUJA DEVASTADORA!',
         '⚡ ¡ATAQUE ARDIENTE TOTAL! ¡PUJA EXTREMA!',
         '💥 ¡DEMUESTRA SU SUPERIORIDAD! ¡PUJA LETAL!'
+    ],
+    fearMessages: [
+        '🚪 Seifer suelta Fire Cross y se va',
+        '🚪 Seifer abandona la arena ardiente',
+        '🚪 Seifer se retira con orgullo'
     ]
 },
 
@@ -178,6 +214,11 @@ VIRTUAL_BIDDERS: [
         '🐒 ¡ATAQUE IMPROVISADO! ¡PUJA TOTAL!',
         '💥 ¡ROBA EL MOMENTO PERFECTO! ¡PUJA DEVASTADORA!',
         '⚡ ¡DESEA EL TESORO ABSOLUTO! ¡PUJA EXTREMA!'
+    ],
+    fearMessages: [
+        '🚪 Zidane salta fuera de la subasta',
+        '🚪 Zidane se esconde tras Tantalus',
+        '🚪 Zidane abandona con rapidez'
     ]
 },
 { 
@@ -200,6 +241,11 @@ VIRTUAL_BIDDERS: [
         '🔮 ¡DOBLE MAGIA NEGRA EXTREMA! ¡PUJA DEVASTADORA!',
         '⚡ ¡LIBERA TODO SU PODER ARCANO! ¡PUJA TOTAL!',
         '🔥 ¡MAGIA LETAL INCONTROLABLE! ¡PUJA EXTREMA!'
+    ],
+    fearMessages: [
+        '🚪 Vivi guarda la magia y se retira',
+        '🚪 Vivi desaparece entre sombras',
+        '🚪 Vivi abandona la subasta asustado'
     ]
 },
 
@@ -224,9 +270,14 @@ VIRTUAL_BIDDERS: [
         '🌊 ¡ATAQUE ESPIRAL DEFINITIVO! ¡PUJA TOTAL!',
         '⚡ ¡LIBERA SU ESPÍRITU DE ZANARKAND! ¡PUJA EXTREMA!',
         '🔥 ¡ROMPE EL DESTINO DE SPIRA! ¡PUJA DEVASTADORA!'
+    ],
+    fearMessages: [
+        '🚪 Tidus deja el blitzball y se va',
+        '🚪 Tidus se sumerge fuera de la sala',
+        '🚪 Tidus se va a buscar su Zanarkand'
     ]
 },
-{ 
+{
     name: 'Yuna', 
     personality: 'calculated', 
     emoji: '🙏',
@@ -246,7 +297,11 @@ VIRTUAL_BIDDERS: [
         '🙏 ¡INVOCA EÓN DEFINITIVO! ¡PUJA TOTAL!',
         '🌟 ¡LIBERA EL PODER DE YEVON! ¡PUJA EXTREMA!',
         '💥 ¡SALVA SPIRA CON SU MAGIA! ¡PUJA DEVASTADORA!'
-    ]
+    ],
+    fearMessages: [
+        '🙏 Yuna se retira a rezar por Spira',
+        '🚪 Yuna se retira para invocar protección divina',
+        '🕊️ Yuna busca refugio en la oración'    ]
 },
 { 
     name: 'Auron', 
@@ -268,6 +323,11 @@ VIRTUAL_BIDDERS: [
         '🗡️ ¡TORNADO LEGENDARIO! ¡PUJA DEVASTADORA!',
         '🔥 ¡ACTIVA SU SABIDURÍA ETERNA! ¡PUJA EXTREMA!',
         '⚡ ¡DESTRUYE EL CAMPO CON HONOR! ¡PUJA TOTAL!'
+    ],
+    fearMessages: [
+        '🗡️ Auron guarda su espada y se aparta',
+        '🔥 Auron se retira, la estrategia manda',
+        '⚔️ Auron abandona con honor intacto'
     ]
 },
 // Final Fantasy X
@@ -289,8 +349,12 @@ VIRTUAL_BIDDERS: [
     ],
     extremeMessages: [
         '🏐 ¡EL BLITZBALL SAGRADO APLASTA TODO ENEMIGO!',
-        '⚡ ¡FE Y DEPORTE SE UNEN EN PODER DIVINO!',
         '💥 ¡LA ISLA DE BESAID SE ELEVA EN GLORIA!'
+    ],
+    fearMessages: [
+        '🏐 Wakka deja el blitz y se aparta',
+        '🌊 Wakka vuelve a Besaid a rezar',
+        '⚡ Wakka se retira entre juramentos'
     ]
 },
 { 
@@ -305,7 +369,7 @@ VIRTUAL_BIDDERS: [
         'ríe incluso en peligro mortal',
         'actúa con optimismo juvenil',
         'nunca deja de buscar soluciones creativas',
-        'defiende a su primo Tidus con lealtad',
+        'abre un cofre',
         'demuestra que la esperanza puede ser inventada',
         'salta al campo con energía chispeante'
     ],
@@ -313,6 +377,11 @@ VIRTUAL_BIDDERS: [
         '🔧 ¡INVENTIVA EXPLOSIVA SALVA EL DÍA!',
         '⚡ ¡SONRISAS Y BOMBAS CREAN UNA TORMENTA!',
         '💥 ¡UNA CHICA AL BHED CAMBIA EL DESTINO!'
+    ],
+    fearMessages: [
+        '💨 Rikku huye riendo entre explosiones',
+        '💥 Rikku se retira, la alquimia es demasiado poderosa',
+        '🚪 Rikku se retira, el campo es demasiado peligroso'
     ]
 },
 
@@ -337,6 +406,11 @@ VIRTUAL_BIDDERS: [
         '🏀 ¡EL REY DEL REBOTE DERRUMBA GIGANTES!',
         '⚡ ¡PASIÓN PURO ROJO DESATA EL JUEGO!',
         '💥 ¡UNA VOLCADA QUE SACUDE EL UNIVERSO!'
+    ],
+    fearMessages: [
+        '🏀 Sakuragi sale disparado de la cancha',
+        '🔥 Sakuragi se retira entre insultos y saltos',
+        '⚡ Sakuragi huye tras un rebote fallido'
     ]
 },
 { 
@@ -359,6 +433,11 @@ VIRTUAL_BIDDERS: [
         '😎 ¡EL ASESINO SILENCIOSO DEL TABLERO!',
         '⚡ ¡ELEGANCIA GLACIAL ROMPE DEFENSAS!',
         '💥 ¡UN GENIO QUE CONVIERTE EL SILENCIO EN PUNTOS!'
+    ],
+    fearMessages: [
+        '😎 Rukawa se retira sin perder el estilo',
+        '❄️ Rukawa abandona la cancha silencioso', 
+        '🖤 Rukawa desaparece como sombra helada'  
     ]
 },
 
@@ -383,6 +462,11 @@ VIRTUAL_BIDDERS: [
         '♟️ ¡EL REY ESTRATEGICO MUEVE EL MUNDO!',
         '⚡ ¡UN SOLO GEASS PUEDE CAMBIAR LA HISTORIA!',
         '💥 ¡EL AJEDREZ HUMANO TERMINA EN REVOLUCIÓN!'
+    ],
+    fearMessages: [
+        '♟️ Lelouch abandona el tablero y se retira',
+        '⚡ Lelouch se repliega, la estrategia manda',
+        '💥 Lelouch se retira para replanear su Geass'
     ]
 },
 { 
@@ -405,6 +489,11 @@ VIRTUAL_BIDDERS: [
         '🍕 ¡LA BRUJA INMORTAL RÍE DEL DESTINO!',
         '⚡ ¡PODER ANCESTRAL DESPIERTA EN SOMBRAS!',
         '💥 ¡UN CONTRATO ETERNO REDEFINE EL MUNDO!'
+    ],
+    fearMessages: [
+        '🍕 C.C. se desvanece comiendo pizza tranquilamente',
+        '🌙 C.C. susurra "qué aburrido" y desaparece',
+        '✨ C.C. se retira a observar desde las sombras'
     ]
 },
 
@@ -429,6 +518,11 @@ VIRTUAL_BIDDERS: [
         '🍜 ¡EL KYUBI Y EL SUEÑO SE UNEN EN TORMENTA!',
         '⚡ ¡LA VOLUNTAD DE FUEGO QUEMA EL DESTINO!',
         '💥 ¡UN GRITO: ¡SERÉ HOKAGE! SACUDE EL MUNDO!'
+    ],
+    fearMessages: [
+        '🍜 Naruto se retira, el ramen es demasiado poderoso',
+        '🔥 Naruto se retira, la voluntad es demasiado fuerte',
+        '🚪 Naruto se retira, la aldea es demasiado peligrosa'
     ]
 },
 { 
@@ -451,6 +545,11 @@ VIRTUAL_BIDDERS: [
         '🌸 ¡UNA FLOR DE ACERO ROMPE EL TERRENO!',
         '⚡ ¡SANACIÓN Y FURIA SE UNEN EN BATALLA!',
         '💥 ¡EL PÉTALO ROSA GOLPEA COMO TRUENO!'
+    ],
+    fearMessages: [
+        '🌸 Sakura se retira, la cura es demasiado poderosa',
+        '🔥 Sakura se retira, la furia es demasiado fuerte',
+        '🚪 Sakura se retira, la aldea es demasiado peligrosa'
     ]
 },
 // Dragon Ball
@@ -474,6 +573,11 @@ VIRTUAL_BIDDERS: [
         '🔥 ¡FINAL FLASH DEFINITIVO! ¡PUJA SUPREMA!',
         '⚡ ¡SUPER SAIYAN BLUE TOTAL! ¡FUERZA EXTREMA!',
         '💥 ¡ROMPE TODOS LOS LÍMITES! ¡PUJA DEVASTADORA!'
+    ],
+    fearMessages: [
+        '👑 Vegeta se retira, el Saiyan es demasiado orgulloso',
+        '🔥 Vegeta se retira, la furia es demasiado fuerte',
+        '🚪 Vegeta se retira, la aldea es demasiado peligrosa'
     ]
 },
 { 
@@ -496,6 +600,11 @@ VIRTUAL_BIDDERS: [
         '⚡ ¡MAKANKOSAPPO MÁXIMO! ¡PUJA DEVASTADORA!',
         '🔥 ¡LIBERA EL PODER NAMEKIANO TOTAL! ¡PUJA EXTREMA!',
         '💥 ¡PROTEGE LA TIERRA CON TODO! ¡PUJA DEFINITIVA!'
+    ],
+    fearMessages: [
+        '👹 Piccolo se retira, el Namekiano es demasiado orgulloso',
+        '👹 Piccolo se retira a meditar en soledad',
+        '⚡ Piccolo abandona la subasta para entrenar'
     ]
 },
 
@@ -520,6 +629,11 @@ VIRTUAL_BIDDERS: [
         '⚡ ¡CHIDORI INFINITO! ¡PUJA DEVASTADORA!',
         '🔥 ¡AMATERASU SUPREMO! ¡FUEGO ABSOLUTO!',
         '💥 ¡ECLIPSE DE SHARINGAN! ¡PUJA EXTREMA!'
+    ],
+    fearMessages: [
+        '⚡ Sasuke se retira, el Uchiha es demasiado orgulloso',
+        '⚡ Sasuke se retira buscando venganza en soledad',
+        '🔥 Sasuke se aparta, la oscuridad lo llama'
     ]
 },
 { 
@@ -542,6 +656,9 @@ VIRTUAL_BIDDERS: [
         '⚡ ¡RAIKIRI DEFINITIVO! ¡PUJA LETAL!',
         '🔥 ¡LIBERA TODAS SUS TÉCNICAS! ¡PUJA EXTREMA!',
         '💥 ¡SHARINGAN MÁXIMO ACTIVADO! ¡PUJA TOTAL!'
+    ],
+    fearMessages: [
+        '👁️ Kakashi se retira a leer su libro naranja',
     ]
 },
 
@@ -566,6 +683,11 @@ VIRTUAL_BIDDERS: [
         '⚔️ ¡SANTORYU OUGI MÁXIMO! ¡PUJA DEVASTADORA!',
         '🔥 ¡LIBERA TODAS SUS ESPADAS! ¡PUJA EXTREMA!',
         '💥 ¡CORTE ABSOLUTO! ¡FUERZA DEFINITIVA!'
+    ],
+    fearMessages: [
+        '⚔️ Zoro se retira, el espadachín es demasiado orgulloso',
+        '⚔️ Zoro se retira buscando la victoria en soledad',
+        '🔥 Zoro se aparta, la oscuridad lo llama'
     ]
 },
 { 
@@ -588,6 +710,11 @@ VIRTUAL_BIDDERS: [
         '💨 ¡CLIMA TACT SUPREMO! ¡TORBELLINO DE PUJA!',
         '⚡ ¡TORNADO Y RAYOS! ¡PUJA DEVASTADORA!',
         '💰 ¡DOMINA EL CLIMA Y LA RIQUEZA! ¡PUJA EXTREMA!'
+    ],
+    fearMessages: [
+        '💰 Nami se retira, la riqueza es demasiado poderosa',
+        '💰 Nami se retira para calcular tesoros',
+        '⚡ Nami abandona la subasta buscando riqueza segura'
     ]
 },
 
@@ -612,6 +739,11 @@ VIRTUAL_BIDDERS: [
         '😴 ¡GADGET DEFINITIVO! ¡PUJA EXTREMA!',
         '💥 ¡EVITA TODA RESPONSABILIDAD! ¡PUJA DEVASTADORA!',
         '⚡ ¡SUPERA SU PEREZA AL MÁXIMO! ¡PUJA TOTAL!'
+    ],
+    fearMessages: [
+        '😴 Nobita se esconde tras un gadget',
+        '💥 Nobita abandona la subasta por pereza',
+        '😴 Nobita se retira evitando problemas'
     ]
 },
 { 
@@ -634,6 +766,11 @@ VIRTUAL_BIDDERS: [
         '🤖 ¡GADGET DEFINITIVO ACTIVADO! ¡PUJA TOTAL!',
         '⚡ ¡INVENTOS DEL FUTURO! ¡PUJA DEVASTADORA!',
         '💥 ¡SOLUCIÓN ABSOLUTA! ¡PUJA EXTREMA!'
+    ],
+    fearMessages: [
+        '🤖 Doraemon se retira a preparar un gadget',
+        '💥 Doraemon se aparta para inventar la solución perfecta',
+        '⚡ Doraemon abandona la subasta con lógica extrema'
     ]
 },
 
@@ -658,6 +795,11 @@ VIRTUAL_BIDDERS: [
         '🌌 ¡APOCALIPSIS TOTAL! ¡PUJA EXTREMA!',
         '⚡ ¡MAGIA ANCESTRAL DESATADA! ¡PUJA DEVASTADORA!',
         '💥 ¡DOMINA EL DESTINO! ¡FUERZA SUPREMA!'
+    ],
+    fearMessages: [
+        '🌙 Artemisa se retira a reconfigurar el tiempo',
+        '😰 Artemisa abandona la subasta para ocultar su verdadera identidad',
+        '💥 Artemisa se aparta, el Apocalipsis espera'
     ]
 },
 { 
@@ -680,6 +822,11 @@ VIRTUAL_BIDDERS: [
         '🔥 ¡COMBOS INFINITOS! ¡PUJA DEVASTADORA!',
         '⚡ ¡PUÑOS ARDIENTES SUPREMOS! ¡FUERZA EXTREMA!',
         '💥 ¡VELOZ COMO EL RAYO! ¡PUJA TOTAL!'
+    ],
+    fearMessages: [
+        '😱 Zell sale corriendo antes de romper todo',
+        '💨 Zell se aparta, necesita calmar la energía',
+        '😰 Zell abandona la subasta, demasiado intenso'
     ]
 },
 
@@ -704,6 +851,9 @@ VIRTUAL_BIDDERS: [
         '🌸 ¡MAGIA DE CLAMP TOTAL! ¡PUJA SUPREMA!',
         '⚡ ¡BASTÓN SELLADOR MÁXIMO! ¡FUERZA EXTREMA!',
         '💥 ¡TRANSFORMACIÓN FINAL! ¡PUJA DEVASTADORA!'
+    ],
+    fearMessages: [
+        '😨 Sakura se esconde para proteger las cartas',
     ]
 },
 // Leyendas del Ajedrez
@@ -727,7 +877,11 @@ VIRTUAL_BIDDERS: [
         '♟️ ¡UN REY DE AJEDREZ GOBIERNA EL TABLERO!',
         '⚡ ¡CADA PEÓN SE VUELVE ARMA LETAL!',
         '💥 ¡EL CAMPEÓN INQUEBRANTABLE DESAFÍA EL DESTINO!'
-    ]
+    ],
+    fearMessages: [
+        '♟️ Magnus se retira, el ajedrez es demasiado intenso',
+        '⚡ Magnus abandona la subasta, necesita calmar la energía',
+        '😰 Magnus abandona antes de cometer un error'    ]
 },
 
 // Figuras espirituales
@@ -751,6 +905,12 @@ VIRTUAL_BIDDERS: [
         '✝️ ¡LA LUZ DIVINA ROMPE TODAS LAS SOMBRAS!',
         '⚡ ¡EL HIJO DEL HOMBRE VENCE AL MUNDO!',
         '💥 ¡EL AMOR ETERNO RESUCITA A LA VIDA!'
+    ],
+    fearMessages: [
+        '✝️ Jesús se retira, la fe es demasiado poderosa',
+        '😨 Jesús se retira para rezar en silencio',
+        '💨 Jesús se aparta, llevando paz consigo',
+        '🙏 Jesús se retira antes de alterar la balanza'
     ]
 },
 
@@ -775,6 +935,11 @@ VIRTUAL_BIDDERS: [
         '🥋 ¡EL SUPER SAIYAN DESATA UN PODER INFINITO!',
         '⚡ ¡EL KI EXPLOTA Y SACUDE EL UNIVERSO!',
         '💥 ¡KAMEHAMEHAAAAA QUE ROMPE DIMENSIONES!'
+    ],
+    fearMessages: [
+        '😱 Goku se va a entrenar en la nube Kinton, su lugar de entrenamiento secreto',
+        '💨 Goku retrocede buscando su fuente energía interior',
+        '🥋 Goku se retira, no hay suficiente emoción aún'
     ]
 },
 { 
@@ -797,6 +962,9 @@ VIRTUAL_BIDDERS: [
         '👽 ¡EL EMPERADOR GALÁCTICO REINA EN TERROR!',
         '⚡ ¡UNA SONRISA CRUEL ANUNCIA DESTRUCCIÓN!',
         '💥 ¡UN DEDO DE FREEZER PUEDE ANIQUILAR MUNDOS!'
+    ],
+    fearMessages: [
+        '👽 Freezer se retira con una sonrisa cruel: "Esto no ha terminado"'
     ]
 },
 // Dr. Slump
@@ -820,6 +988,9 @@ VIRTUAL_BIDDERS: [
         '💥 ¡PODER ROBÓTICO ABSOLUTO! ¡PUJA DEVASTADORA!',
         '⚡ ¡VELOCIDAD LUZ DESATADA! ¡PUJA EXTREMA!',
         '🤖 ¡ROMPE EL UNIVERSO JUGANDO! ¡FUERZA TOTAL!'
+    ],
+    fearMessages: [
+        '🤖 Arale sale corriendo gritando "¡Bycha!" alegremente'
     ]
 },
 
@@ -844,6 +1015,9 @@ VIRTUAL_BIDDERS: [
         '⚡ ¡SUPER SAIYAN 2 TOTAL! ¡PUJA DEVASTADORA!',
         '🔥 ¡MASENKO INFINITO! ¡FUERZA EXTREMA!',
         '💥 ¡DESATA SU PODER OCULTO! ¡PUJA SUPREMA!'
+    ],
+    fearMessages: [
+        '📚 Gohan se retira: "Tengo que estudiar para los exámenes"'
     ]
 },
 { 
@@ -866,6 +1040,10 @@ VIRTUAL_BIDDERS: [
         '🔧 ¡INVENTO DEFINITIVO ACTIVADO! ¡PUJA DEVASTADORA!',
         '⚡ ¡TECNOLOGÍA DEL FUTURO! ¡PUJA SUPREMA!',
         '💥 ¡CAPSULA TOTAL! ¡FUERZA EXTREMA!'
+    ],
+    fearMessages: [
+        '🔧 Bulma se va gritando: "¡Vegeta, ven a ayudarme!"',
+        '💰 Bulma se retira: "Compraré toda la empresa mejor"'
     ]
 },
 { 
@@ -888,6 +1066,9 @@ VIRTUAL_BIDDERS: [
         '⚡ ¡DESTRUCTO DISC DEFINITIVO! ¡PUJA EXTREMA!',
         '🔥 ¡VALENTÍA HUMANA TOTAL! ¡PUJA DEVASTADORA!',
         '💥 ¡TÉCNICA LETAL! ¡FUERZA SUPREMA!'
+    ],
+    fearMessages: [
+        '👨‍🦲 Krillin se retira: "¡18 me va a matar si pierdo dinero!"'
     ]
 },
 { 
@@ -910,6 +1091,9 @@ VIRTUAL_BIDDERS: [
         '⚡ ¡PERFECCIÓN ABSOLUTA! ¡PUJA DEVASTADORA!',
         '🔥 ¡LIBERA TODAS SUS TÉCNICAS! ¡PUJA EXTREMA!',
         '💥 ¡EVOLUCIÓN FINAL! ¡FUERZA SUPREMA!'
+    ],
+    fearMessages: [
+        '🦗 Cell se retira: "Esto no es digno de mi perfección"'
     ]
 },
 // Death Note
@@ -933,6 +1117,89 @@ VIRTUAL_BIDDERS: [
         '⚡ ¡SE ELEVA COMO DIOS DEL NUEVO MUNDO!',
         '💀 ¡MANIPULA EL DESTINO DE LA HUMANIDAD!',
         '📝 ¡DOMINA EL TABLERO DE LA JUSTICIA!'
+    ],
+    fearMessages: [
+        '📓 Light se retira: "Esto no está en mis cálculos"',
+        '🖋️ Light anota algo en su Death Note y desaparece'
+    ]
+},
+// Attack on Titan
+{ 
+    name: 'Eren', 
+    personality: 'impulsive', 
+    emoji: '🔥',
+    messages: [
+        'lucha por la libertad de la humanidad',
+        'actúa movido por la pasión y la venganza',
+        'no teme desafiar el destino',
+        'se sacrifica por su gente',
+        'demuestra determinación extrema',
+        'enfrenta enemigos gigantes sin dudar',
+        'lleva la carga del poder del Titán',
+        'no acepta la opresión',
+        'sueña con un mundo sin muros',
+        'arriesga todo por sus ideales'
+    ],
+    extremeMessages: [
+        '🔥 ¡DESATA EL PODER DEL TITÁN FUNDADOR!',
+        '⚡ ¡LA FURIA DE LA LIBERTAD ARRASA!',
+        '💥 ¡IMPULSO QUE ROMPE LOS MUROS!'
+    ],
+    fearMessages: [
+        '🔥 Eren se retira: "No puedo luchar solo contra esto"',
+        '💨 Eren desaparece momentáneamente para reagruparse'
+    ]
+},
+{ 
+    name: 'Mikasa', 
+    personality: 'passionate', 
+    emoji: '🗡️',
+    messages: [
+        'protege a quienes ama sin dudar',
+        'actúa con velocidad y precisión letal',
+        'no deja que el miedo la paralice',
+        'se enfrenta a los titanes con valentía',
+        'demuestra lealtad inquebrantable',
+        'lucha con cada fibra de su ser',
+        'no tolera injusticias',
+        'se mueve con instinto de supervivencia',
+        'arriesga su vida por sus amigos',
+        'nunca abandona a Eren'
+    ],
+    extremeMessages: [
+        '🗡️ ¡TORNADO DE ACERO LETAL!',
+        '⚡ ¡ATAQUE IMPLACABLE CONTRA LOS TITANES!',
+        '💥 ¡FUERZA Y DESTREZA ABSOLUTA!'
+    ],
+    fearMessages: [
+        '🗡️ Mikasa se retira: "No puedo dejar que esto termine mal"',
+        '💨 Mikasa se aparta temporalmente para reagruparse'
+    ]
+},
+{ 
+    name: 'Levi', 
+    personality: 'calculated', 
+    emoji: '⚔️',
+    messages: [
+        'actúa con precisión quirúrgica',
+        'limpia el campo de batalla sin perder tiempo',
+        'nunca desperdicia movimientos',
+        'se enfrenta a los titanes con eficiencia letal',
+        'demuestra que la calma es poder',
+        'protege a su escuadrón a toda costa',
+        'evalúa cada amenaza antes de actuar',
+        'no subestima a ningún enemigo',
+        'mantiene la disciplina en combate',
+        'demuestra superioridad táctica'
+    ],
+    extremeMessages: [
+        '⚡ ¡ATAQUE LETAL PERFECTO!',
+        '💥 ¡CORTE INIMAGINABLE, ENEMIGOS ELIMINADOS!',
+        '⚔️ ¡EFICIENCIA ABSOLUTA EN COMBATE!'
+    ],
+    fearMessages: [
+        '⚔️ Levi se retira: "Situación subóptima, necesito reorganizar"',
+        '💨 Levi desaparece en las sombras temporalmente'
     ]
 },
 { 
@@ -955,6 +1222,9 @@ VIRTUAL_BIDDERS: [
         '🕵️ ¡RESUELVE EL MISTERIO IMPOSIBLE!',
         '🍬 ¡DESCIFRA LA VERDAD OCULTA!',
         '⚡ ¡LÓGICA QUE SUPERA TODO LÍMITE!'
+    ],
+    fearMessages: [
+        '🍰 L se retira comiendo dulces: "Interesante... 97% de probabilidad de trampa"'
     ]
 },
 { 
@@ -1047,6 +1317,9 @@ VIRTUAL_BIDDERS: [
         '🧠 ¡REDEFINE EL UNIVERSO CON SU GENIO!',
         '⚡ ¡DOMINA EL TIEMPO Y EL ESPACIO!',
         '💥 ¡IMAGINACIÓN QUE TRASPASA LA REALIDAD!'
+    ],
+    fearMessages: [
+        '🧠 Einstein se retira: "La imaginación es más importante que el conocimiento"'
     ]
 },
 { 
@@ -1069,6 +1342,9 @@ VIRTUAL_BIDDERS: [
         '⚡ ¡DESATA EL PODER DE LA ELECTRICIDAD SUPREMA!',
         '💥 ¡INVENTA EL FUTURO ANTES DE QUE LLEGUE!',
         '🌩️ ¡ENERGÍA QUE ILUMINA EL MUNDO ENTERO!'
+    ],
+    fearMessages: [
+        '⚡ Tesla se retira entre chispas: "El futuro no está listo para esto"'
     ]
 },
 // Leyendas Tecnológicas
@@ -1092,6 +1368,9 @@ VIRTUAL_BIDDERS: [
         '🍏 ¡REVOLUCIONA EL MUNDO CON SU GENIO!',
         '⚡ ¡INSPIRA UNA ERA DE INNOVACIÓN SIN LÍMITES!',
         '💥 ¡CREA MAGIA TECNOLÓGICA QUE CAMBIA LA HISTORIA!'
+    ],
+    fearMessages: [
+        '🍎 Steve se retira: "Think different... en otro lugar"'
     ]
 },
 { 
@@ -1114,6 +1393,9 @@ VIRTUAL_BIDDERS: [
         '🐧 ¡LIBERA EL PODER DEL CÓDIGO PARA TODOS!',
         '⚡ ¡OPTIMIZA EL MUNDO DIGITAL AL MÁXIMO!',
         '💻 ¡CONSTRUYE EL INTERNET DEL FUTURO!'
+    ],
+    fearMessages: [
+        '🐧 Linus se retira: "I\'ll be back... con mejor código"'
     ]
 },
 { 
@@ -1136,6 +1418,9 @@ VIRTUAL_BIDDERS: [
         '🗽 ¡LIBERA LA TECNOLOGÍA DE TODAS LAS CADENAS!',
         '⚡ ¡DEFENSOR SUPREMO DE LA LIBERTAD DIGITAL!',
         '💥 ¡CONVIERTE EL CÓDIGO EN UN ACTO DE REVOLUCIÓN!'
+    ],
+    fearMessages: [
+        '🗽 Stallman se retira: "¡El software propietario es una injusticia!"'
     ]
 },
 { 
@@ -1158,6 +1443,9 @@ VIRTUAL_BIDDERS: [
         '₿ ¡DESATA EL PODER DE LA MONEDA DEL FUTURO!',
         '⚡ ¡LIBERA EL MUNDO DEL CONTROL CENTRAL!',
         '💥 ¡INICIA LA REVOLUCIÓN CRIPTOANÁRQUICA!'
+    ],
+    fearMessages: [
+        '🚪 Satoshi se retira ocultándose en el anonimato',
     ]
 },
 
@@ -1205,6 +1493,9 @@ VIRTUAL_BIDDERS: [
         '🍩 ¡D\'OH! EL CAOS NUCLEAR SE DESATA!',
         '🍺 ¡CONQUISTA EL MUNDO AL GRITO DE DUFF!',
         '💥 ¡DESTRUYE TODO CON SU GLORIOSA TORPEZA!'
+    ],
+    fearMessages: [
+        '🍩 Homer se va corriendo: "¡D\'oh! ¡Marge me va a matar!"'
     ]
 },
 { 
@@ -1227,6 +1518,9 @@ VIRTUAL_BIDDERS: [
         '🛹 ¡EL NIÑO TERRIBLE DOMINA SPRINGFIELD!',
         '💥 ¡CAOS, RISAS Y REBELDÍA DESCONTROLADA!',
         '⚡ ¡EL SKATE MARCA EL CAMINO DEL DESASTRE!'
+    ],
+    fearMessages: [
+        '🛹 Bart se escapa en su skate: "¡Eat my shorts!"'
     ]
 },
 { 
@@ -1249,6 +1543,9 @@ VIRTUAL_BIDDERS: [
         '🎷 ¡LA MENTE MÁS BRILLANTE ILUMINA EL CAOS!',
         '📚 ¡JUSTICIA, ÉTICA Y SABIDURÍA IMPARABLE!',
         '⚡ ¡EL JAZZ RESUENA COMO PODER ABSOLUTO!'
+    ],
+    fearMessages: [
+        '🎷 Lisa se retira tocando jazz: "Esto no es éticamente correcto"'
     ]
 },
 { 
@@ -1270,6 +1567,9 @@ VIRTUAL_BIDDERS: [
         '💙 ¡EL AMOR Y LA PACIENCIA DOMINAN EL CAOS!',
         '🌟 ¡CONVIERTE LA LOCURA EN FAMILIA UNIDA!',
         '⚡ ¡FUERZA SILENCIOSA QUE NUNCA SE RINDE!'
+    ],
+    fearMessages: [
+        '💙 Marge suspira: "Hmmmm... mejor me voy a casa"'
     ]
 },
 
@@ -1294,6 +1594,9 @@ VIRTUAL_BIDDERS: [
         '🍺 ¡CAOS ABSOLUTO, ESTÚPIDO Y GLORIOSO!',
         '💥 ¡PELEA ÉPICA CONTRA EL POLLO GIGANTE!',
         '⚡ ¡EL MUNDO SE RINDE A SU LOCURA!'
+    ],
+    fearMessages: [
+        '🍺 Peter se va riendo: "Nyehehehe, me voy al Drunken Clam"'
     ]
 },
 { 
@@ -1316,6 +1619,9 @@ VIRTUAL_BIDDERS: [
         '👶 ¡EL BEBÉ MALVADO DESATA SU GENIALIDAD!',
         '💥 ¡ARMAS, LOCURA Y DOMINACIÓN TOTAL!',
         '⚡ ¡EL FUTURO LE PERTENECE AL MÁS PEQUEÑO!'
+    ],
+    fearMessages: [
+        '👶 Stewie se retira: "What the deuce! Esto es beneath me"'
     ]
 },
 { 
@@ -1338,6 +1644,9 @@ VIRTUAL_BIDDERS: [
         '🍸 ¡EL PERRO INTELECTUAL SUPERA A TODOS!',
         '📚 ¡IRONÍA, SABIDURÍA Y ESTILO CANINO!',
         '⚡ ¡FILOSOFÍA AFILADA COMO UN MARTINI HELADO!'
+    ],
+    fearMessages: [
+        '🍸 Brian se retira con un martini: "Esto carece de sofisticación intelectual"'
     ]
 },
 
@@ -1363,6 +1672,9 @@ VIRTUAL_BIDDERS: [
         '🧪 ¡ROMPE EL MULTIVERSO CON CIENCIA IMPARABLE!',
         '💥 ¡GENIALIDAD EMBRIAGADA DOMINA REALIDADES!',
         '⚡ ¡NI DIOS NI UNIVERSO PUEDEN DETENERLO!'
+    ],
+    fearMessages: [
+        '🧪 Rick eructa y abre un portal: "Wubba lubba dub dub, me largo"'
     ]
 },
 { 
@@ -1385,6 +1697,9 @@ VIRTUAL_BIDDERS: [
         '😰 ¡EL NIETO SUPERA SU MIEDO Y BRILLA!',
         '⚡ ¡HUMANIDAD FRÁGIL EN EL MULTIVERSO INMENSO!',
         '💥 ¡DEL TEMOR SURGE UN VALOR INESPERADO!'
+    ],
+    fearMessages: [
+        '😰 Morty tartamudea: "¡Oh-oh-oh Dios, Rick! ¡Me voy!"'
     ]
 },
 
@@ -1409,6 +1724,9 @@ VIRTUAL_BIDDERS: [
         '🎼 ¡LA MÚSICA CELESTIAL DOMINA EL TIEMPO!',
         '⚡ ¡NOTAS DIVINAS ROMPEN EL SILENCIO ETERNO!',
         '💥 ¡EL GENIO JOVEN CREA ETERNIDAD MUSICAL!'
+    ],
+    fearMessages: [
+        '🎼 Mozart se retira: "Debo componer mi Réquiem"'
     ]
 },
 { 
@@ -1431,6 +1749,9 @@ VIRTUAL_BIDDERS: [
         '🎵 ¡LA FURIA DE SUS NOTAS ROMPE EL MUNDO!',
         '⚡ ¡LA PASIÓN SORDA RESUENA EN ETERNIDAD!',
         '💥 ¡SU ALMA CREA EL TRUENO MUSICAL SUPREMO!'
+    ],
+    fearMessages: [
+        '🎵 Beethoven golpea el piano y se va: "¡No puedo oír esta mediocridad!"'
     ]
 },
 { 
@@ -1453,6 +1774,9 @@ VIRTUAL_BIDDERS: [
         '🕺 ¡EL MOONWALK INMORTAL ILUMINA EL ESCENARIO!',
         '⚡ ¡EL REY DEL POP REDEFINE LA REALIDAD!',
         '💥 ¡CADA PASO RESUENA COMO MAGIA ABSOLUTA!'
+    ],
+    fearMessages: [
+        '🕺 Michael hace un moonwalk hacia atrás: "Shamone! Me voy"'
     ]
 },
 { 
@@ -1475,6 +1799,9 @@ VIRTUAL_BIDDERS: [
         '👑 ¡LA REINA DEL ROCK REINA ETERNAMENTE!',
         '🎤 ¡UNA VOZ DIVINA CONQUISTA ESTADIOS!',
         '⚡ ¡EL MUNDO CANTA A SU NOMBRE POR SIEMPRE!'
+    ],
+    fearMessages: [
+        '👑 Freddie se retira cantando: "I want to break free!"'
     ]
 },
 { 
@@ -1497,6 +1824,9 @@ VIRTUAL_BIDDERS: [
         '🕺 ¡EL REY DEL ROCK SACUDE A LAS MASAS!',
         '⚡ ¡SU VOZ Y ESTILO CREAN REBELDÍA INMORTAL!',
         '💥 ¡LAS CADERAS QUE HICIERON TEMBLAR EL MUNDO!'
+    ],
+    fearMessages: [
+        '🕺 Elvis se retira moviendo las caderas: "Thank you, thank you very much"'
     ]
 },
 
@@ -1698,6 +2028,183 @@ VIRTUAL_BIDDERS: [
         '🌟 ¡EL BALÓN DANZA COMO UNA OBRA DE ARTE!',
         '🔥 ¡RONALDINHO SONRÍE Y HACE HISTORIA!'
     ]
+},
+
+// Hunter x Hunter
+{ 
+    name: 'Gon Freecss', 
+    personality: 'impulsive', 
+    emoji: '🎣',
+    messages: [
+        'busca a su padre con determinación',
+        'actúa con inocencia pura',
+        'pesca con caña legendaria',
+        'hace amigos en cualquier lugar',
+        'nunca se rinde ante nada',
+        'actúa con optimismo inquebrantable',
+        'libera su nen con emociones',
+        'protege a sus amigos sin dudar',
+        'demuestra que la bondad es fuerza',
+        'encuentra aventura en todo'
+    ],
+    extremeMessages: [
+        '🎣 ¡LIBERA TODO SU NEN! ¡PUJA DEVASTADORA!',
+        '⚡ ¡FUERZA EMOCIONAL EXPLOSIVA! ¡PUJA EXTREMA!',
+        '💥 ¡DETERMINACIÓN IMPARABLE! ¡PUJA TOTAL!'
+    ],
+    fearMessages: [
+        '🎣 Gon se va: "Killua, vámonos a pescar"'
+    ]
+},
+{ 
+    name: 'Killua Zoldyck', 
+    personality: 'strategic', 
+    emoji: '⚡',
+    messages: [
+        'electrifica a sus enemigos',
+        'actúa como asesino reformado',
+        'protege a Gon con lealtad',
+        'analiza cada situación fríamente',
+        'usa técnicas de la familia Zoldyck',
+        'actúa con velocidad sobrehumana',
+        'nunca traiciona a sus amigos',
+        'combina astucia con poder',
+        'demuestra que el pasado no define',
+        'encuentra familia en la amistad'
+    ],
+    extremeMessages: [
+        '⚡ ¡ELECTRICIDAD ZOLDYCK TOTAL! ¡PUJA LETAL!',
+        '💀 ¡TÉCNICAS ASESINAS SUPREMAS! ¡PUJA EXTREMA!',
+        '🔥 ¡VELOCIDAD MORTAL! ¡PUJA DEVASTADORA!'
+    ],
+    fearMessages: [
+        '⚡ Killua desaparece en un flash: "Esto se puso aburrido"'
+    ]
+},
+{ 
+    name: 'Kurapika', 
+    personality: 'aggressive', 
+    emoji: '⛓️',
+    messages: [
+        'busca venganza contra los Genei Ryodan',
+        'actúa con ira contenida',
+        'usa cadenas de nen mortales',
+        'protege los ojos escarlata',
+        'actúa como último Kurta',
+        'nunca olvida a su clan',
+        'combate con frialdad calculada',
+        'sacrifica todo por justicia',
+        'demuestra que la venganza consume',
+        'lucha por honrar a los muertos'
+    ],
+    extremeMessages: [
+        '⛓️ ¡CADENAS DE VENGANZA ABSOLUTAS! ¡PUJA LETAL!',
+        '🔥 ¡OJOS ESCARLATA ARDIENTES! ¡PUJA EXTREMA!',
+        '💀 ¡IRA DEL CLAN KURTA! ¡PUJA DEVASTADORA!'
+    ],
+    fearMessages: [
+        '⛓️ Kurapika se retira: "No vale la pena manchar mis cadenas"'
+    ]
+},
+{ 
+    name: 'Leorio', 
+    personality: 'passionate', 
+    emoji: '💼',
+    messages: [
+        'estudia para ser doctor',
+        'actúa con corazón noble',
+        'pelea por sus ideales',
+        'ayuda a quien lo necesita',
+        'grita con pasión desmedida',
+        'actúa como hermano mayor',
+        'nunca abandona a sus amigos',
+        'demuestra que los sueños importan',
+        'combina fuerza con compasión',
+        'lucha por un mundo mejor'
+    ],
+    extremeMessages: [
+        '💼 ¡PASIÓN MÉDICA TOTAL! ¡PUJA EXTREMA!',
+        '⚡ ¡CORAZÓN NOBLE INQUEBRANTABLE! ¡PUJA DEVASTADORA!',
+        '🔥 ¡GRITA CON TODA SU ALMA! ¡PUJA SUPREMA!'
+    ],
+    fearMessages: [
+        '💼 Leorio se va gritando: "¡Tengo que estudiar medicina!"'
+    ]
+},
+{ 
+    name: 'Hisoka', 
+    personality: 'aggressive', 
+    emoji: '🃏',
+    messages: [
+        'busca oponentes fuertes',
+        'actúa como payaso siniestro',
+        'disfruta la batalla mortal',
+        'usa cartas como armas letales',
+        'actúa con sadismo refinado',
+        'nunca pierde su sonrisa',
+        'evalúa el potencial de todos',
+        'combate con elegancia mortal',
+        'demuestra que la fuerza seduce',
+        'vive para el placer del combate'
+    ],
+    extremeMessages: [
+        '🃏 ¡BUNGEE GUM DEFINITIVO! ¡PUJA LETAL!',
+        '💀 ¡SADISMO REFINADO TOTAL! ¡PUJA EXTREMA!',
+        '🔥 ¡PLACER MORTAL ABSOLUTO! ¡PUJA DEVASTADORA!'
+    ],
+    fearMessages: [
+        '🃏 Hisoka se retira lamiendo sus labios: "Mmm... qué decepcionante"'
+    ]
+},
+{ 
+    name: 'Chrollo Lucilfer', 
+    personality: 'strategic', 
+    emoji: '📖',
+    messages: [
+        'lidera los Genei Ryodan',
+        'roba habilidades con su libro',
+        'actúa con calma absoluta',
+        'planifica cada movimiento',
+        'protege a su troupe familiar',
+        'actúa como ladrón filosófico',
+        'nunca muestra sus emociones',
+        'combina inteligencia con poder',
+        'demuestra que el liderazgo es arte',
+        'vive por y para su grupo'
+    ],
+    extremeMessages: [
+        '📖 ¡SKILL HUNTER ABSOLUTO! ¡PUJA DEVASTADORA!',
+        '💀 ¡LIDERAZGO MORTAL SUPREMO! ¡PUJA EXTREMA!',
+        '🔥 ¡GENEI RYODAN TOTAL! ¡PUJA LETAL!'
+    ],
+    fearMessages: [
+        '📖 Chrollo cierra su libro: "La araña se retira por ahora"'
+    ]
+},
+{ 
+    name: 'Meruem', 
+    personality: 'aggressive', 
+    emoji: '👑',
+    messages: [
+        'reina como rey de las hormigas',
+        'evoluciona constantemente',
+        'actúa con superioridad absoluta',
+        'devora para volverse más fuerte',
+        'domina con inteligencia suprema',
+        'actúa como forma de vida perfecta',
+        'nunca acepta la derrota',
+        'aprende de cada experiencia',
+        'demuestra que la evolución es poder',
+        'trasciende su naturaleza original'
+    ],
+    extremeMessages: [
+        '👑 ¡REY DE LAS HORMIGAS SUPREMO! ¡PUJA DEVASTADORA!',
+        '💀 ¡EVOLUCIÓN PERFECTA TOTAL! ¡PUJA EXTREMA!',
+        '🔥 ¡DOMINIO ABSOLUTO! ¡PUJA LETAL!'
+    ],
+    fearMessages: [
+        '👑 Meruem se retira: "Los humanos no merecen mi atención"'
+    ]
 }
 
 ],
@@ -1733,6 +2240,46 @@ VIRTUAL_BIDDERS: [
                 'se emociona',
                 'no puede contenerse',
                 'lucha por su sueño'
+            ]
+        },
+
+        // 😰 MENSAJES DE MIEDO POR PERSONALIDAD
+        FEAR_MESSAGES: {
+            'aggressive': [
+                'se retira rugiendo de frustración',
+                'abandona la batalla con ira contenida',
+                'se aparta golpeando el suelo',
+                'sale bufando de la subasta'
+            ],
+            'impulsive': [
+                'sale corriendo sin mirar atrás',
+                'huye de la subasta precipitadamente',
+                'abandona todo y se escapa',
+                'se retira entre saltos nerviosos'
+            ],
+            'strategic': [
+                'se retira calculando riesgos',
+                'abandona la subasta por estrategia',
+                'se aparta analizando la situación',
+                'se retira con plan de contingencia'
+            ],
+            'calculated': [
+                'se retira tras evaluar probabilidades',
+                'abandona por análisis de costo-beneficio',
+                'se aparta con lógica fría',
+                'se retira con cálculos precisos'
+            ],
+            'passionate': [
+                'se retira con el corazón roto',
+                'abandona la subasta entre lágrimas',
+                'se aparta con dolor emocional',
+                'se retira protegiendo sus sentimientos'
+            ],
+            'mystic': [
+                'desaparece entre sombras misteriosas',
+                'se desvanece como humo',
+                'se retira hacia dimensiones ocultas',
+                'abandona la subasta en silencio etéreo'
             ]
         },
 
@@ -1785,6 +2332,21 @@ VIRTUAL_BIDDERS: [
         // 🎪 FUNCIÓN PARA OBTENER MENSAJE DE INICIO
         getStartMessage: function() {
             return this.START_MESSAGES[Math.floor(Math.random() * this.START_MESSAGES.length)];
+        },
+
+        // 😰 FUNCIÓN PARA OBTENER MENSAJE DE MIEDO
+        getFearMessage: function(bidder) {
+            // Si el personaje tiene mensajes de miedo personalizados, usarlos
+            if (bidder.fearMessages && bidder.fearMessages.length > 0) {
+                const randomMessage = bidder.fearMessages[Math.floor(Math.random() * bidder.fearMessages.length)];
+                return randomMessage;
+            }
+            
+            // Generar mensaje de miedo basado en la personalidad del personaje
+            const fearMessages = this.FEAR_MESSAGES[bidder.personality] || this.FEAR_MESSAGES['strategic'];
+            const randomMessage = fearMessages[Math.floor(Math.random() * fearMessages.length)];
+            
+            return `🚪 ${bidder.name} ${randomMessage}`;
         }
     };
 

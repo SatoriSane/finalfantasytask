@@ -122,7 +122,7 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
                 animatePrice(lastDisplayedPrice, roundedPrice);
                 lastDisplayedPrice = roundedPrice;
             } else {
-                currentPriceDisplay.textContent = `⚡${roundedPrice} pts`;
+                currentPriceDisplay.textContent = `⭐${roundedPrice} pts`;
                 lastDisplayedPrice = roundedPrice;
             }
         };
@@ -249,58 +249,26 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
         };
 
         let bidCount = 0;
-        let auctionEnergy = 75;
-        const firstHammerThreshold = 3; // tras 3 pujas ya puede caer el martillo
-        let lastBidTime = Date.now();
         let isInHammerSequence = false;
+        let hammerStep = 0; // 0, 1, 2, 3 (final)
         let lastBidder = null;
-
-        // 🎲 Variables para hacer cada subasta única
         let auctionType = '';
-        let auctionIntensity = 0;
-        let maxBidLimit = 0;
-        let hammerContinueProbability = 0;
 
         // 🎲 Determina el tipo de subasta aleatoriamente
         const determineAuctionType = () => {
-            const rand = Math.random();
-            if (rand < 0.2) {
-                // 20% - Subasta RÁPIDA (termina pronto, precios moderados)
-                auctionType = 'rápida';
-                auctionIntensity = 0.3 + Math.random() * 0.4; // 30-70%
-                maxBidLimit = basePrice * (1.5 + Math.random() * 2); // 1.5x-3.5x
-                hammerContinueProbability = 0.3; // Baja probabilidad de continuar = termina antes
-                auctionEnergy = 30 + Math.random() * 40; // Energía baja
-                addHistoryMessage('⚡ Subasta EXPRESS detectada - ¡Pocos pujadores!', 'system');
-            } else if (rand < 0.4) {
-                // 20% - Subasta ÉPICA (larga duración, precios altísimos)
-                auctionType = 'épica';
-                auctionIntensity = 0.8 + Math.random() * 0.2; // 80-100%
-                maxBidLimit = basePrice * (8 + Math.random() * 12); // 8x-20x
-                hammerContinueProbability = 0.7; // Alta probabilidad de continuar = dura más
-                auctionEnergy = 120 + Math.random() * 80; // Energía alta
-                addHistoryMessage('🔥 ¡SUBASTA ÉPICA! Grandes coleccionistas detectados', 'victory');
-            } else if (rand < 0.6) {
-                // 20% - Subasta VOLÁTIL (impredecible, saltos grandes)
-                auctionType = 'volátil';
-                auctionIntensity = 0.4 + Math.random() * 0.5; // 40-90%
-                maxBidLimit = basePrice * (3 + Math.random() * 8); // 3x-11x
-                hammerContinueProbability = 0.5; // Probabilidad media
-                auctionEnergy = 60 + Math.random() * 80;
-                addHistoryMessage('🎢 Subasta VOLÁTIL - ¡Prepárate para sorpresas!', 'system');
-            } else {
-                // 40% - Subasta NORMAL (equilibrada)
-                auctionType = 'normal';
-                auctionIntensity = 0.5 + Math.random() * 0.3; // 50-80%
-                maxBidLimit = basePrice * (2 + Math.random() * 4); // 2x-6x
-                hammerContinueProbability = 0.6; // Probabilidad equilibrada
-                auctionEnergy = 70 + Math.random() * 60;
-                addHistoryMessage('🎯 Subasta equilibrada - ¡Que comience la batalla!', 'system');
-            }
+            const types = ['rápida', 'épica', 'volátil', 'normal'];
+            auctionType = types[Math.floor(Math.random() * types.length)];
             
+            // Mensaje simple según el tipo
+            const messages = {
+                'rápida': '⚡ Subasta EXPRESS detectada - ¡Pocos pujadores!',
+                'épica': '🔥 ¡SUBASTA ÉPICA! Grandes coleccionistas detectados',
+                'volátil': '🎢 Subasta VOLÁTIL - ¡Prepárate para sorpresas!',
+                'normal': '🎯 Subasta equilibrada - ¡Que comience la batalla!'
+            };
+            
+            addHistoryMessage(messages[auctionType], 'system');
             console.log(`🎲 Tipo de subasta: ${auctionType.toUpperCase()}`);
-            console.log(`📊 Intensidad: ${Math.round(auctionIntensity * 100)}%`);
-            console.log(`💰 Límite máximo: ${Math.round(maxBidLimit)} pts`);
         };
 
         // 🚀 Inicia la subasta épica VARIABLE
@@ -383,25 +351,12 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
                                 const intervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
                                 const intervalDuration = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
                                 
-                                // Crear el tick simplificado - solo procesa pujas
-                                const auctionTick = () => {
-                                    if (!isAuctionInProgress || isInHammerSequence || isFinalizingAuction) {
-                                        if (!isAuctionInProgress) clearInterval(auctionInterval);
-                                        return;
+                                // Iniciar la primera puja
+                                setTimeout(() => {
+                                    if (!isFinalizingAuction) {
+                                        processBid();
                                     }
-                                
-                                    // Procesar una puja directamente
-                                    processBid();
-                                    
-                                    // Programar el siguiente tick con intervalo aleatorio
-                                    clearInterval(auctionInterval);
-                                    const nextIntervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
-                                    const nextInterval = nextIntervalConfig.min + Math.random() * (nextIntervalConfig.max - nextIntervalConfig.min);
-                                    auctionInterval = setTimeout(auctionTick, nextInterval);
-                                };
-                                
-                                // Iniciar el primer tick
-                                auctionInterval = setTimeout(auctionTick, intervalDuration);
+                                }, intervalDuration);
                             }, 500);
                         }, 400);
                     }
@@ -417,171 +372,141 @@ let isFinalizingAuction = false; // Flag para evitar mensajes durante finalizaci
             // 🔥 Las demás funciones están más abajo
             
             const processBid = () => {
-                if (isFinalizingAuction || isInHammerSequence) {
-                    // Si está en secuencia de martillo o finalizando, interrumpir
-                    clearTimeout(finalizationTimeout);
-                    clearTimeout(auctionInterval); // Limpiar cualquier timeout pendiente
-                    isFinalizingAuction = false;
+                if (isFinalizingAuction) return;
+                
+                // Si está en secuencia de martillo, interrumpir
+                if (isInHammerSequence) {
                     isInHammerSequence = false;
+                    hammerStep = 0;
                     addHistoryMessage('💥 ¡PUJA DE ÚLTIMO SEGUNDO! ¡La subasta continúa!', 'victory', true, false, true);
                 }
             
                 bidCount++;
-                lastBidTime = Date.now();
                 
+                // Seleccionar pujador aleatorio (evitar repetir el último)
                 let activeBidder;
-                // ... (lógica para seleccionar pujador)
                 let attempts = 0;
-                const maxAttempts = 10;
                 do {
                     activeBidder = activeBidders[Math.floor(Math.random() * activeBidders.length)];
                     attempts++;
-                } while (activeBidder === lastBidder && activeBidders.length > 1 && attempts < maxAttempts);
+                } while (activeBidder === lastBidder && attempts < 10);
                 
-                activeBidder.lastBidTime = Date.now();
-                
-                const priceRatio = currentPrice / basePrice;
-                auctionEnergy -= (2 + Math.random() * 3);
-                if (priceRatio > 3) auctionEnergy -= 5;
-                
-                let increase = 0;
-                const energyFactor = Math.max(0.3, auctionEnergy / 100);
-                
-                if (currentPrice < maxBidLimit && auctionEnergy > 0) {
-                    // ... (la lógica interna del switch para calcular el 'increase' se mantiene igual)
-                    let extremeProbability = 0.1;
-                    if (auctionType === 'épica') extremeProbability = 0.2;
-                    if (auctionType === 'volátil') extremeProbability = 0.25;
-                    if (auctionType === 'rápida') extremeProbability = 0.05;
-                    
-                    switch (activeBidder.personality) {
-                        case 'aggressive':
-                            increase = Math.random() < extremeProbability ? currentPrice * (0.4 + Math.random() * 0.8) * energyFactor * auctionIntensity : Math.max(2, currentPrice * (0.08 + Math.random() * 0.15) * energyFactor * auctionIntensity);
-                            break;
-                        case 'strategic':
-                            increase = Math.max(1, currentPrice * (0.03 + Math.random() * 0.04) * energyFactor * auctionIntensity);
-                            break;
-                        case 'impulsive':
-                            increase = Math.random() < extremeProbability * 1.5 ? currentPrice * (0.3 + Math.random() * 1.2) * energyFactor * auctionIntensity : Math.max(3, currentPrice * (0.06 + Math.random() * 0.2) * energyFactor * auctionIntensity);
-                            break;
-                        case 'calculated':
-                            increase = Math.max(1, currentPrice * (0.02 + Math.random() * 0.03) * energyFactor * (0.5 + auctionIntensity * 0.5));
-                            break;
-                        case 'passionate':
-                            increase = Math.random() < extremeProbability ? currentPrice * (0.2 + Math.random() * 0.5) * energyFactor * auctionIntensity : Math.max(2, currentPrice * (0.04 + Math.random() * 0.08) * energyFactor * auctionIntensity);
-                            break;
-                    }
+                // Calcular incremento de precio simple
+                let increase;
+                switch (activeBidder.personality) {
+                    case 'aggressive':
+                        increase = Math.max(3, currentPrice * (0.05 + Math.random() * 0.15));
+                        break;
+                    case 'impulsive':
+                        increase = Math.max(2, currentPrice * (0.03 + Math.random() * 0.12));
+                        break;
+                    case 'strategic':
+                        increase = Math.max(1, currentPrice * (0.02 + Math.random() * 0.08));
+                        break;
+                    case 'calculated':
+                        increase = Math.max(1, currentPrice * (0.02 + Math.random() * 0.05));
+                        break;
+                    case 'passionate':
+                        increase = Math.max(2, currentPrice * (0.04 + Math.random() * 0.10));
+                        break;
+                    default:
+                        increase = Math.max(1, currentPrice * (0.03 + Math.random() * 0.07));
                 }
             
-                console.log(`📊 Puja procesada: Energía=${Math.round(auctionEnergy)}, Increase=${Math.round(increase)}, Precio=${Math.round(currentPrice)}`);
+                currentPrice += increase;
+                lastBidder = activeBidder;
                 
-                if (increase > 0) {
-                    currentPrice += increase;
-                    lastBidder = activeBidder;
-                    
-                    const increaseAmount = Math.round(increase);
-                    
-                    // Usar mensaje específico del personaje
-                    const characterMessage = SubastaConstantes.getCharacterBidMessage(activeBidder);
-                    const bidMessage = `${characterMessage} y puja ${increaseAmount} pts!`;
-                    
-                    addHistoryMessage(bidMessage, 'bid', false, true);
-                    updateUI(true);
-                } else {
-                    // No hay más pujas, iniciar secuencia de martillo
-                    console.log('🔨 No hay más pujas, iniciando martillo...');
-                    if (!isInHammerSequence && !isFinalizingAuction) {
-                        startHammerSequence();
-                    }
+                const increaseAmount = Math.round(increase);
+                
+                // Usar mensaje específico del personaje
+                const characterMessage = SubastaConstantes.getCharacterBidMessage(activeBidder);
+                const bidMessage = `${characterMessage} y puja ${increaseAmount} pts!`;
+                
+                addHistoryMessage(bidMessage, 'bid', false, true);
+                updateUI(true);
+                
+                // 20% probabilidad de que aparezca el martillo (después de la primera puja)
+                if (bidCount > 0 && Math.random() < 0.2) {
+                    setTimeout(() => {
+                        if (!isFinalizingAuction) {
+                            startHammerSequence();
+                        }
+                    }, 1000);
+                    return;
                 }
+                
+                // Continuar con la siguiente puja
+                scheduleNextBid();
             };
             
-            // Usar configuración de intervalos según el tipo de subasta
-            const intervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
-            const intervalDuration = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
-            
-            // 🎭 FUNCIÓN PARA INICIAR EL BUCLE PRINCIPAL
-            const startMainAuctionLoop = () => {
+            // Función para programar la siguiente puja
+            const scheduleNextBid = () => {
+                if (isFinalizingAuction || isInHammerSequence) return;
+                
                 const intervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
-                const intervalDuration = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
-                auctionInterval = setInterval(processAuctionTick, intervalDuration);
+                const nextInterval = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
+                
+                auctionInterval = setTimeout(() => {
+                    if (!isFinalizingAuction && !isInHammerSequence) {
+                        processBid();
+                    }
+                }, nextInterval);
             };
-            
-            // 🚫 FUNCIÓN DUPLICADA ELIMINADA - Ya está declarada arriba
         };
         
         const startHammerSequence = () => {
             if (isInHammerSequence || isFinalizingAuction) return;
         
             isInHammerSequence = true;
+            hammerStep = 0;
             console.log('🔨 Iniciando secuencia de martillo...');
-        
-            // Mensajes de martillo
-            const hammerMessages = SubastaConstantes.narrativeMessages.hammer || ['A la una...', 'A las dos...'];
-            const randomHammerMessage = hammerMessages[Math.floor(Math.random() * hammerMessages.length)];
-        
-            // Mostrar mensaje de martillo
-            addHistoryMessage(randomHammerMessage, 'hammer', true, false, true);
-        
-            // Vibración
-            if (navigator.vibrate) {
-                navigator.vibrate([100, 50, 100]);
-            }
-        
-            // Después de un delay, resolver martillo
-            setTimeout(resolveHammer, TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN + Math.random() * (TIMING_CONFIG.UNCERTAINTY_PAUSE_MAX - TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN));
+            
+            processHammerStep();
         };
         
-        const resolveHammer = () => {
-            // Ajustar probabilidad según contexto
-            let continueProbability = hammerContinueProbability;
-        
-            if (auctionEnergy < 30) continueProbability -= 0.15;
-            if (bidCount >= 5) continueProbability -= 0.1;
-            if (currentPrice > basePrice * 4) continueProbability -= 0.05;
-        
-            // Mantener probabilidad mínima
-            continueProbability = Math.max(0.25, Math.min(0.95, continueProbability));
-        
-            if (Math.random() < continueProbability) {
-                // 💥 Subasta continúa
-                isInHammerSequence = false;
-        
-                // Mensaje de continuación
-                const continuationMessages = [
-                    '💥 ¡PUJA DE ÚLTIMO MOMENTO!',
-                    '⚡ ¡Alguien no se rinde!',
-                    '🚀 ¡La batalla continúa!',
-                    '🔥 ¡Sorpresa! ¡Hay más competencia!'
-                ];
-                const randomContinuation = continuationMessages[Math.floor(Math.random() * continuationMessages.length)];
-                addHistoryMessage(randomContinuation, 'system', true, false, true);
-        
-                // Restaurar energía al 40-70%
-                const oldEnergy = auctionEnergy;
-                auctionEnergy = 40 + Math.random() * 30;
-                console.log(`🔋 Energía restaurada: ${Math.round(oldEnergy)} → ${Math.round(auctionEnergy)}`);
-        
-                // Reiniciar bucle de pujas de manera segura
-                const scheduleNextBid = () => {
-                    if (auctionState !== 'running' || isFinalizingAuction) return;
-        
-                    // Ejecutar la puja
-                    processBid();
-        
-                    // Programar siguiente puja
-                    const intervalConfig = TIMING_CONFIG.AUCTION_INTERVALS[auctionType] || TIMING_CONFIG.AUCTION_INTERVALS['normal'];
-                    const nextInterval = intervalConfig.min + Math.random() * (intervalConfig.max - intervalConfig.min);
-                    auctionInterval = setTimeout(scheduleNextBid, nextInterval);
-                };
-        
-                // Primer tick tras breve delay
-                auctionInterval = setTimeout(scheduleNextBid, TIMING_CONFIG.POST_UNCERTAINTY_BID_DELAY);
-        
-            } else {
-                // 🔨 Subasta termina
-                isInHammerSequence = false;
-                startFinalizationSequence();
+        const processHammerStep = () => {
+            if (!isInHammerSequence || isFinalizingAuction) return;
+            
+            const hammerMessages = SubastaConstantes.narrativeMessages.hammer;
+            
+            if (hammerStep < hammerMessages.length) {
+                // Mostrar mensaje de martillo
+                addHistoryMessage(hammerMessages[hammerStep], 'hammer', true, false, true);
+                
+                // Vibración
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100]);
+                }
+                
+                hammerStep++;
+                
+                // Si es el último mensaje, finalizar subasta
+                if (hammerStep >= hammerMessages.length) {
+                    setTimeout(() => {
+                        if (isInHammerSequence) {
+                            startFinalizationSequence();
+                        }
+                    }, 2000);
+                    return;
+                }
+                
+                // 25% probabilidad de continuar la puja en cada paso
+                setTimeout(() => {
+                    if (isInHammerSequence && Math.random() < 0.25) {
+                        // Continuar la subasta
+                        isInHammerSequence = false;
+                        hammerStep = 0;
+                        addHistoryMessage('💥 ¡PUJA DE ÚLTIMO MOMENTO!', 'victory', true, false, true);
+                        setTimeout(() => {
+                            if (!isFinalizingAuction) {
+                                scheduleNextBid();
+                            }
+                        }, 1000);
+                    } else {
+                        // Continuar con el siguiente paso del martillo
+                        processHammerStep();
+                    }
+                }, TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN + Math.random() * (TIMING_CONFIG.UNCERTAINTY_PAUSE_MAX - TIMING_CONFIG.UNCERTAINTY_PAUSE_MIN));
             }
         };
         

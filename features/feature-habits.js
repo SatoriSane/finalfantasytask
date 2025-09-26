@@ -34,16 +34,16 @@
      */
     function showAuctionModal(challenge) {
         // Intenta usar la función épica con múltiples verificaciones
-        if (window.App && window.App.ui && window.App.ui.habits && window.App.ui.habits.showEpicAuction) {
-            console.log('✅ Usando subasta épica');
-            window.App.ui.habits.showEpicAuction(challenge);
+        if (window.App && window.App.ui && window.App.ui.habits && window.App.ui.habits.showSimpleAuction) {
+            console.log('✅ Usando subasta simple');
+            window.App.ui.habits.showSimpleAuction(challenge);
         } else {
-            console.error('❌ La función de subasta épica no está disponible.');
+            console.error('❌ La función de subasta simple no está disponible.');
             console.log('🔍 Debug info:');
             console.log('- window.App:', !!window.App);
             console.log('- window.App.ui:', !!(window.App && window.App.ui));
             console.log('- window.App.ui.habits:', !!(window.App && window.App.ui && window.App.ui.habits));
-            console.log('- showEpicAuction:', !!(window.App && window.App.ui && window.App.ui.habits && window.App.ui.habits.showEpicAuction));
+            console.log('- showSimpleAuction:', !!(window.App && window.App.ui && window.App.ui.habits && window.App.ui.habits.showSimpleAuction));
             
             // Fallback: usar subasta básica temporal
             console.log('🔄 Usando subasta básica como fallback');

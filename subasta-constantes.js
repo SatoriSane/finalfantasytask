@@ -1,70 +1,38 @@
-// subasta-constantes.js
+// subasta-constantes.js - VERSIÓN SIMPLIFICADA
 (function(global) {
     'use strict';
 
     global.SubastaConstantes = {
+        // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
-        // --- Mensajes y Animaciones ---
-        MESSAGE_MIN_DELAY: 1000,           // Delay mínimo entre mensajes del historial
-        PRICE_ANIMATION_DURATION: 1000,     // Duración de la animación del precio
-        FORCE_DELAY_AMOUNT: 4500,          // Delay forzado para mensajes importantes
-        
-        // --- Momentos de Incertidumbre ---
-        UNCERTAINTY_PAUSE_MIN: 6000,       // Pausa mínima durante incertidumbre
-        UNCERTAINTY_PAUSE_MAX: 10000,      // Pausa máxima durante incertidumbre
-        POST_UNCERTAINTY_BID_DELAY: 5000,  // Delay antes de pujar tras incertidumbre
-        
-        // --- Secuencia de Finalización ---
-        FINISH_AUCTION_DELAY: 2500,        // Delay antes de mostrar ganador
-        VICTORY_MESSAGE_DELAY: 2500,       // Delay forzado para mensaje de victoria
-        ACCEPT_BUTTON_DELAY: 2000,         // Delay para mostrar botón de aceptar
-        MOTIVATIONAL_MESSAGE_DELAY: 3500,  // Delay para mensaje motivacional final
-        
-        // --- Intervalos de Tick por Tipo de Subasta ---
-        AUCTION_INTERVALS: {
-            'rápida':  { min: 500, max: 3500 },   // Subastas rápidas
-            'épica':   { min: 800, max: 4000 },   // Subastas largas y dramáticas
-            'volátil': { min: 500, max: 7500 },   // Intervalos muy variables
-            'normal':  { min: 200, max: 4000 }    // Intervalo equilibrado
+            MESSAGE_DELAY: 1500,              // Delay entre mensajes
+            PRICE_ANIMATION_DURATION: 800,   // Duración animación precio
+            BID_INTERVAL_MIN: 1000,          // Intervalo mínimo entre pujas
+            BID_INTERVAL_MAX: 3000,          // Intervalo máximo entre pujas
+            HAMMER_PAUSE: 2500,              // Pausa en cada frase del hammer
+            FINAL_DELAY: 2000                // Delay antes de mostrar botón final
         },
-        
-        // --- Mensajes de Inicio por Tipo ---
-        RECORD_MESSAGE_DELAY: 1000         // Delay para mensaje después de récord
-    },
-    // 🎭 SISTEMA DE MENSAJES COHERENTES - Solo mensajes específicos por personaje
-    narrativeMessages: {
-                
-        // 🤔 INCERTIDUMBRE - Momentos de duda y reflexión
-        uncertainty: [
-            '🤔 Los pujadores están dudando...',
-            '⏳ Momento de reflexión...',
-            '🧐 Analizando la situación...',
-            '💭 ¿Alguien más pujará?',
-            '👀 Todos se observan con cautela...',
-            '😏 ¿Será un farol o una retirada?',
-            '🤨 Todos miden su próximo movimiento...',
-            '😑 Los pujadores respiran hondo antes de decidir...'
-        ],
-        
-        // 😶 TENSIÓN BAJA - Cuando la energía decae
-        lowTension: [
-            '😶 El silencio invade la sala...',
-            '🕰️ El tiempo corre, nadie se decide...',
-            '😬 Tensión en el aire...',
-            '📉 El entusiasmo parece enfriarse...',
-            '🔮 Nadie sabe lo que ocurrirá...',
-            '😯 Una pausa inesperada...',
-            '🙄 El público comienza a impacientarse...'
-        ],
-        
 
-        // 🔨 CUENTA ATRÁS DEL MARTILLO - Para la secuencia final
-        hammer: [
-            'A la una... ¿nadie más se atreve?',
-            'A las dos... ¡última oportunidad!',
-            '¿Nadie da más? ¡A la una...!',
-            'El martillo está en alto... ¡a las dos...!',
-            '¡Última llamada! ¿Nadie más?'
+        // 🎲 PROBABILIDADES SIMPLES
+        PROBABILITIES: {
+            BID_CHANCE: 0.8,                 // 80% probabilidad de puja
+            HAMMER_CHANCE: 0.2,              // 20% probabilidad de hammer
+            HAMMER_RESUME_CHANCE: 0.2        // 20% probabilidad de reanudar en cada frase
+        },
+        // 🔨 SECUENCIA SIMPLE DEL MARTILLO - 4 frases secuenciales
+        HAMMER_MESSAGES: [
+            '🔨 A la una... ¿nadie más se atreve?',
+            '🔨 A las dos... ¡última oportunidad!', 
+            '🔨 A las tres... ¡se cierra la subasta!',
+            '🔨 ¡Adjudicado! ¡Subasta finalizada!'
+        ],
+
+        // 💥 MENSAJES DE REANUDACIÓN
+        RESUME_MESSAGES: [
+            '💥 ¡PUJA DE ÚLTIMO SEGUNDO!',
+            '⚡ ¡Alguien más entra en acción!',
+            '🔥 ¡La batalla continúa!',
+            '💪 ¡No se rinden tan fácil!'
         ],
         
         // 🎭 ENTRADA DE PARTICIPANTES - Mensajes épicos para la llegada de pujadores

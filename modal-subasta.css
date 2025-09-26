@@ -55,7 +55,7 @@
 
 .auction-particles::before,
 .auction-particles::after {
-    content: '💰';
+    content: '⭐';
     position: absolute;
     font-size: 2rem;
     animation: floatParticles 8s infinite linear;
@@ -68,7 +68,7 @@
 }
 
 .auction-particles::after {
-    content: '⚡';
+    content: '⭐';
     right: 10%;
     animation-delay: 4s;
 }
@@ -390,8 +390,8 @@
     border-radius: 12px;
     padding: 1rem;
     border: 1px solid rgba(255, 215, 0, 0.1);
-    min-height: 240px;
-    max-height: 240px;
+    min-height: 480px;
+    max-height: 640px;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
@@ -435,8 +435,8 @@
 
 /* 🎯 EXPANSIÓN DINÁMICA - Cuando los botones están ocultos */
 .auction-history-container.expanded {
-    min-height: 320px;
-    max-height: 320px;
+    min-height: 340px;
+    max-height: 540px;
     margin-bottom: 1rem;
     /* Mantener scroll en modo expandido */
     overflow-y: auto;

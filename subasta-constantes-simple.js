@@ -3,6 +3,8 @@
     'use strict';
 
     global.SubastaConstantes = {
+        MIN_BIDDERS: 4,
+        MAX_BIDDERS: 6,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
             MESSAGE_DELAY: 2800,              // Delay entre mensajes
@@ -20,7 +22,7 @@
             HAMMER_BONUS_INCREMENT: 0.05,        // 5% de incremento de la probabilidad acumulada del martillo cada vez que aparece
             HAMMER_RESUME_CHANCES: [0.33, 0.33, 0.46], // 33%, 33% y 46% de probabilidad de reanurarse para cada fase
             HAMMER_RESUME_DECREMENT: 0.11,       // 11% de decremento de la probabilidad de reanudación de esta fase después de que se reanuda
-            EXTREME_BID_CHANCE: 0.05           // 2% probabilidad de puja extrema (50-200% aumento)
+            EXTREME_BID_CHANCE: 0.24           // 4% probabilidad de puja extrema (50-200% aumento)
         },
 
         // 🔨 SECUENCIA SIMPLE DEL MARTILLO - 4 frases secuenciales

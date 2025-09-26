@@ -60,15 +60,23 @@ if (typeof SubastaConstantes === 'undefined') {
         };
 
         const generateBidders = () => {
-            const numBidders = 3 + Math.floor(Math.random()*4);
+            // Cantidad de pujadores entre MIN_BIDDERS y MAX_BIDDERS
+            const minBidders = SubastaConstantes.MIN_BIDDERS || 3;
+            const maxBidders = SubastaConstantes.MAX_BIDDERS || 6;
+            const numBidders = minBidders + Math.floor(Math.random() * (maxBidders - minBidders + 1));
+        
             activeBidders = [];
             const pool = [...SubastaConstantes.VIRTUAL_BIDDERS];
-            for(let i=0; i<numBidders && pool.length>0; i++){
-                const idx = Math.floor(Math.random()*pool.length);
-                activeBidders.push(pool.splice(idx,1)[0]);
+        
+            for (let i = 0; i < numBidders && pool.length > 0; i++) {
+                const idx = Math.floor(Math.random() * pool.length);
+                // Extrae aleatoriamente del pool para evitar repetidos
+                activeBidders.push(pool.splice(idx, 1)[0]);
             }
-            console.log(`👥 Pujadores: ${activeBidders.map(b=>b.name).join(', ')}`);
+        
+            console.log(`👥 Pujadores generados: ${activeBidders.map(b => b.name).join(', ')}`);
         };
+        
 
         // --- Turnos ---
         const processNextTurn = () => {
@@ -95,20 +103,40 @@ if (typeof SubastaConstantes === 'undefined') {
         };
 
         const executeBid = () => {
-            let bidder, attempts=0;
-            do{
-                bidder = activeBidders[Math.floor(Math.random()*activeBidders.length)];
+            let bidder, attempts = 0;
+        
+            // Elegir pujador aleatorio, evitando que sea el mismo que en la última puja si hay más de uno
+            do {
+                bidder = activeBidders[Math.floor(Math.random() * activeBidders.length)];
                 attempts++;
-            }while(bidder === lastBidder && attempts<5 && activeBidders.length>1);
-
-            // 🎲 Verificar si es una puja extrema (2% probabilidad)
+            } while (bidder === lastBidder && attempts < 5 && activeBidders.length > 1);
+        
+            // 🎲 Determinar si la puja es extrema
             const isExtremeBid = Math.random() < SubastaConstantes.PROBABILITIES.EXTREME_BID_CHANCE;
-            
+        
             let increasePercent;
             if (isExtremeBid) {
-                // Puja extrema: 50% a 200% de aumento
-                increasePercent = 0.50 + Math.random() * 1.50; // 50% - 200%
+                // 🔥 Puja extrema: 50% - 200% de aumento
+                increasePercent = 0.50 + Math.random() * 1.50;
                 console.log(`🔥 ¡PUJA EXTREMA! ${bidder.name} aumenta ${(increasePercent*100).toFixed(1)}%`);
+        
+                // 💨 Retirar estratégicos y calculadores (excepto el autor)
+                const removedBidders = [];
+                activeBidders = activeBidders.filter(b => {
+                    if ((b.personality === 'strategic' || b.personality === 'calculated') && b !== bidder) {
+                        removedBidders.push(b);
+                        return false;
+                    }
+                    return true;
+                });
+        
+                // Enviar mensajes de retiro con delay aleatorio para que aparezcan después del mensaje extremo
+                removedBidders.forEach(b => {
+                    const delay = 1500 + Math.random() * 1500; // entre 1.5s y 3s
+                    setTimeout(() => {
+                        addMessage(`🚪 ${b.name} se asusta con la puja extrema y abandona la subasta`, 'system');
+                    }, delay);
+                });
             } else {
                 // Puja normal según personalidad
                 switch(bidder.personality){
@@ -120,26 +148,30 @@ if (typeof SubastaConstantes === 'undefined') {
                     default: increasePercent = 0.04 + Math.random()*0.08; break;
                 }
             }
-
-            const increase = Math.max(1, currentPrice*increasePercent);
+        
+            // Calcular incremento de precio y actualizar
+            const increase = Math.max(1, currentPrice * increasePercent);
             currentPrice += increase;
             lastBidder = bidder;
-
-            // Usar mensaje apropiado (normal o extremo)
+        
+            // Mostrar mensaje de puja
             const bidMessage = SubastaConstantes.getBidMessage(bidder, isExtremeBid);
             const messageType = isExtremeBid ? 'extreme-bid' : 'bid';
-            
             addMessage(`${bidMessage} y puja +${Math.round(increase)} pts`, messageType);
             updatePriceDisplay();
+        
+            // 🚨 Si es puja extrema, iniciar martillo después de un pequeño delay; si no, turno normal
             if (isExtremeBid) {
-                // 🚨 PUJA EXTREMA -> activar inmediatamente la secuencia del martillo
                 setTimeout(() => {
                     if (isAuctionActive) processHammer();
-                }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 3500);
+                }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500);
             } else {
                 scheduleNextTurn();
             }
         };
+        
+        
+        
 
         const processHammer = () => {
             // Incrementar probabilidad acumulada del martillo

@@ -53,7 +53,7 @@ if (typeof SubastaConstantes === 'undefined') {
             historyContainer.insertBefore(div, historyContainer.firstChild);
 
             const messages = historyContainer.querySelectorAll('.auction-message');
-            if (messages.length > 15) messages[messages.length - 1].remove();
+            if (messages.length > 99) messages[messages.length - 1].remove();
 
             const historyWrapper = document.querySelector('.auction-history-container');
             if (historyWrapper) historyWrapper.scrollTo({ top: 0, behavior: 'smooth' });
@@ -75,8 +75,8 @@ if (typeof SubastaConstantes === 'undefined') {
             if(!isAuctionActive) return;
 
             const random = Math.random();
-            const hammerChance = Math.min(SubastaConstantes.PROBABILITIES.HAMMER_CHANCE + hammerBonusChance, 1);
-
+            const hammerChance = Math.min(SubastaConstantes.PROBABILITIES.HAMMER_CHANCE + hammerBonusChance, 0.35);
+            console.log(`🔎 Turno -> hammerChance=${(hammerChance*100).toFixed(1)}% | hammerBonus=${hammerBonusChance.toFixed(3)}`);
             if(random < hammerChance){
                 processHammer();
             } else {
@@ -101,23 +101,44 @@ if (typeof SubastaConstantes === 'undefined') {
                 attempts++;
             }while(bidder === lastBidder && attempts<5 && activeBidders.length>1);
 
+            // 🎲 Verificar si es una puja extrema (2% probabilidad)
+            const isExtremeBid = Math.random() < SubastaConstantes.PROBABILITIES.EXTREME_BID_CHANCE;
+            
             let increasePercent;
-            switch(bidder.personality){
-                case 'aggressive': increasePercent = 0.08 + Math.random()*0.12; break;
-                case 'impulsive': increasePercent = 0.05 + Math.random()*0.10; break;
-                case 'strategic': increasePercent = 0.03 + Math.random()*0.07; break;
-                case 'calculated': increasePercent = 0.02 + Math.random()*0.05; break;
-                case 'passionate': increasePercent = 0.06 + Math.random()*0.09; break;
-                default: increasePercent = 0.04 + Math.random()*0.08; break;
+            if (isExtremeBid) {
+                // Puja extrema: 50% a 200% de aumento
+                increasePercent = 0.50 + Math.random() * 1.50; // 50% - 200%
+                console.log(`🔥 ¡PUJA EXTREMA! ${bidder.name} aumenta ${(increasePercent*100).toFixed(1)}%`);
+            } else {
+                // Puja normal según personalidad
+                switch(bidder.personality){
+                    case 'aggressive': increasePercent = 0.08 + Math.random()*0.12; break;
+                    case 'impulsive': increasePercent = 0.05 + Math.random()*0.10; break;
+                    case 'strategic': increasePercent = 0.03 + Math.random()*0.07; break;
+                    case 'calculated': increasePercent = 0.02 + Math.random()*0.05; break;
+                    case 'passionate': increasePercent = 0.06 + Math.random()*0.09; break;
+                    default: increasePercent = 0.04 + Math.random()*0.08; break;
+                }
             }
 
             const increase = Math.max(1, currentPrice*increasePercent);
             currentPrice += increase;
             lastBidder = bidder;
 
-            addMessage(`${SubastaConstantes.getBidMessage(bidder)} y puja +${Math.round(increase)} pts`, 'bid');
+            // Usar mensaje apropiado (normal o extremo)
+            const bidMessage = SubastaConstantes.getBidMessage(bidder, isExtremeBid);
+            const messageType = isExtremeBid ? 'extreme-bid' : 'bid';
+            
+            addMessage(`${bidMessage} y puja +${Math.round(increase)} pts`, messageType);
             updatePriceDisplay();
-            scheduleNextTurn();
+            if (isExtremeBid) {
+                // 🚨 PUJA EXTREMA -> activar inmediatamente la secuencia del martillo
+                setTimeout(() => {
+                    if (isAuctionActive) processHammer();
+                }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 3500);
+            } else {
+                scheduleNextTurn();
+            }
         };
 
         const processHammer = () => {
@@ -159,7 +180,10 @@ if (typeof SubastaConstantes === 'undefined') {
             setTimeout(() => {
                 if (!isAuctionActive) return;
                 const resumeChance = hammerResumeChances[hammerStep - 1] || 0;
-        
+                // 👀 DEBUG: mostrar las chances actuales de reanudación
+                console.log(
+                    `🔁 Fase ${hammerStep} -> resumeChance=${(resumeChance*100).toFixed(1)}% | Todas=${hammerResumeChances.map(c=> (c*100).toFixed(1)+'%').join(' / ')}`
+                );
                 if (Math.random() < resumeChance) {
                     // Reducir probabilidad de reanudación de esta fase
                     hammerResumeChances[hammerStep - 1] = Math.max(

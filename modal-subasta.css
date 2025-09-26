@@ -488,6 +488,47 @@
     background: rgba(46, 213, 115, 0.1);
 }
 
+.auction-message.extreme-bid {
+    border-left-color: var(--auction-red);
+    background: linear-gradient(90deg, 
+        rgba(255, 71, 87, 0.2), 
+        rgba(255, 99, 72, 0.15), 
+        rgba(255, 71, 87, 0.2)
+    );
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 
+        0 0 15px rgba(255, 71, 87, 0.3),
+        0 4px 8px rgba(0, 0, 0, 0.2);
+    animation: extremeBidPulse 1.5s ease-in-out;
+    border: 1px solid rgba(255, 71, 87, 0.4);
+}
+
+@keyframes extremeBidPulse {
+    0% { 
+        transform: scale(1);
+        box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);
+    }
+    25% { 
+        transform: scale(1.05);
+        box-shadow: 0 0 25px rgba(255, 71, 87, 0.6);
+    }
+    50% { 
+        transform: scale(1.02);
+        box-shadow: 0 0 30px rgba(255, 71, 87, 0.8);
+    }
+    75% { 
+        transform: scale(1.05);
+        box-shadow: 0 0 25px rgba(255, 71, 87, 0.6);
+    }
+    100% { 
+        transform: scale(1);
+        box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);
+    }
+}
+
 .auction-message.uncertainty {
     border-left-color: var(--auction-orange);
     background: rgba(255, 99, 72, 0.1);

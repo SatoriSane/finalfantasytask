@@ -3,8 +3,8 @@
     'use strict';
 
     global.SubastaConstantes = {
-        MIN_BIDDERS: 3,
-        MAX_BIDDERS: 18,
+        MIN_BIDDERS: 4,
+        MAX_BIDDERS: 12,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
             MESSAGE_DELAY: 3000,              // Delay entre mensajes
@@ -25,7 +25,7 @@
             HAMMER_BONUS_INCREMENT: 0.05,        // 5% de incremento de la probabilidad acumulada del martillo cada vez que aparece
             HAMMER_RESUME_CHANCES: [0.33, 0.33, 0.46], // 33%, 33% y 46% de probabilidad de reanurarse para cada fase
             HAMMER_RESUME_DECREMENT: 0.11,       // 11% de decremento de la probabilidad de reanudación de esta fase después de que se reanuda
-            EXTREME_BID_CHANCE: 0.1,           // 10% probabilidad de puja extrema (50-125% aumento)
+            EXTREME_BID_CHANCE: 0.5,           // 10% probabilidad de puja extrema (50-125% aumento)
             EXTREME_BID_RETREAT_CHANCES: {
                 strategic: 0.75,  // 75% de probabilidad de retirarse
                 calculated: 0.85, // 85%
@@ -34,6 +34,8 @@
                 aggressive: 0.50,
                 default: 0.50     // Para cualquier personalidad no definida
             },
+            FEAR_MESSAGE_DELAY_MAX: 3500,  // Más espaciado para no interferir con martillo
+            FEAR_MESSAGE_DELAY_MIN: 1200   // Delay mínimo más alto
         },
 
         // 🔨 SECUENCIA SIMPLE DEL MARTILLO - 4 frases secuenciales
@@ -133,9 +135,8 @@ VIRTUAL_BIDDERS: [
         '🔥 ¡DESTRUYE EL CAMPO CON PRECISIÓN! ¡PUJA TOTAL!'
     ],
     fearMessages: [
-        '🚪 Squall deja el campo y se retira',
         '🚪 Squall abandona Balamb Garden',
-        '🚪 Squall se esconde tras el castillo'
+        '🚪 Squall se esconde tras las faldas de mamá Ede'
     ]
 },
 { 
@@ -162,7 +163,7 @@ VIRTUAL_BIDDERS: [
     fearMessages: [
         '🚪 Rinoa se esconde tras Angelo',
         '🚪 Rinoa abandona Timber',
-        '🚪 Rinoa se esconde tras el castillo'
+        '🚪 Rinoa abandona la Resistencia'
     ]
 },
 { 
@@ -187,8 +188,7 @@ VIRTUAL_BIDDERS: [
         '💥 ¡DEMUESTRA SU SUPERIORIDAD! ¡PUJA LETAL!'
     ],
     fearMessages: [
-        '🚪 Seifer suelta Fire Cross y se va',
-        '🚪 Seifer abandona la arena ardiente',
+        '🚪 Seifer se va - otro pez que se me escapa',
         '🚪 Seifer se retira con orgullo'
     ]
 },
@@ -216,7 +216,7 @@ VIRTUAL_BIDDERS: [
         '⚡ ¡DESEA EL TESORO ABSOLUTO! ¡PUJA EXTREMA!'
     ],
     fearMessages: [
-        '🚪 Zidane salta fuera de la subasta',
+        '🚪 Zidane se va - otro pez que se me escapa',
         '🚪 Zidane se esconde tras Tantalus',
         '🚪 Zidane abandona con rapidez'
     ]
@@ -300,7 +300,7 @@ VIRTUAL_BIDDERS: [
     ],
     fearMessages: [
         '🙏 Yuna se retira a rezar por Spira',
-        '🚪 Yuna se retira para invocar protección divina',
+        '🕊️ Yuna se retira - "mejor continuaré con el peregrinaje"',
         '🕊️ Yuna busca refugio en la oración'    ]
 },
 { 
@@ -352,9 +352,8 @@ VIRTUAL_BIDDERS: [
         '💥 ¡LA ISLA DE BESAID SE ELEVA EN GLORIA!'
     ],
     fearMessages: [
-        '🏐 Wakka deja el blitz y se aparta',
+        '🏐 Wakka se va a jugar al blitzball',
         '🌊 Wakka vuelve a Besaid a rezar',
-        '⚡ Wakka se retira entre juramentos'
     ]
 },
 { 
@@ -381,7 +380,6 @@ VIRTUAL_BIDDERS: [
     fearMessages: [
         '💨 Rikku huye riendo entre explosiones',
         '💥 Rikku se retira, la alquimia es demasiado poderosa',
-        '🚪 Rikku se retira, el campo es demasiado peligroso'
     ]
 },
 
@@ -465,7 +463,6 @@ VIRTUAL_BIDDERS: [
     ],
     fearMessages: [
         '♟️ Lelouch abandona el tablero y se retira',
-        '⚡ Lelouch se repliega, la estrategia manda',
         '💥 Lelouch se retira para replanear su Geass'
     ]
 },
@@ -521,8 +518,7 @@ VIRTUAL_BIDDERS: [
     ],
     fearMessages: [
         '🍜 Naruto se retira, el ramen es demasiado poderoso',
-        '🔥 Naruto se retira, la voluntad es demasiado fuerte',
-        '🚪 Naruto se retira, la aldea es demasiado peligrosa'
+        '🚪 Naruto se va -  Así no es el camino ninja'
     ]
 },
 { 

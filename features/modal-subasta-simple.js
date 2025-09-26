@@ -76,11 +76,17 @@ if (typeof SubastaConstantes === 'undefined') {
         
             console.log(`👥 Pujadores generados: ${activeBidders.map(b => b.name).join(', ')}`);
         };
-        
 
         // --- Turnos ---
         const processNextTurn = () => {
             if(!isAuctionActive) return;
+
+            // 🚨 PROTECCIÓN: Si no quedan pujadores activos, terminar subasta
+            if (activeBidders.length === 0) {
+                console.error('❌ ERROR: No quedan pujadores activos');
+                finishAuction();
+                return;
+            }
 
             const random = Math.random();
             const hammerChance = Math.min(SubastaConstantes.PROBABILITIES.HAMMER_CHANCE + hammerBonusChance, 0.35);
@@ -103,6 +109,13 @@ if (typeof SubastaConstantes === 'undefined') {
         };
 
         const executeBid = () => {
+            // 🚨 PROTECCIÓN: Verificar que hay pujadores antes de continuar
+            if (activeBidders.length === 0) {
+                console.error('❌ ERROR: No hay pujadores para executeBid()');
+                finishAuction();
+                return;
+            }
+
             let bidder, attempts = 0;
         
             // Elegir pujador aleatorio, evitando que sea el mismo que en la última puja si hay más de uno
@@ -122,18 +135,24 @@ if (typeof SubastaConstantes === 'undefined') {
                 increasePercent = min + Math.random() * (max - min);
                 console.log(`🔥 ¡PUJA EXTREMA! ${bidder.name} aumenta ${(increasePercent*100).toFixed(1)}%`);
             
+                // 1️⃣ PRIMERO: Mostrar el mensaje de la puja extrema y actualizar precio
+                const increase = Math.max(1, currentPrice * increasePercent);
+                currentPrice += increase;
+                lastBidder = bidder;
+                
+                const bidMessage = SubastaConstantes.getBidMessage(bidder, isExtremeBid);
+                addMessage(`${bidMessage} y puja +${Math.round(increase)} pts`, 'extreme-bid');
+                updatePriceDisplay();
+            
+                // 2️⃣ SEGUNDO: Procesar retiradas después del mensaje de puja
                 const removedBidders = [];
-                // Hacemos una copia para iterar, ya que modificaremos el array original
                 const potentialLeavers = [...activeBidders];
             
                 potentialLeavers.forEach(b => {
-                    // La salvaguarda: si solo quedan 2, nadie más se retira.
-                    if (activeBidders.length <= 2) return;
-            
-                    // El pujador que hizo la oferta no se retira a sí mismo.
+                    // El pujador que hizo la oferta extrema NUNCA se retira a sí mismo
                     if (b === bidder) return;
             
-                    // Obtener la probabilidad de retiro según la personalidad del pujador.
+                    // Obtener la probabilidad de retiro según la personalidad del pujador
                     const retreatChance = SubastaConstantes.PROBABILITIES.EXTREME_BID_RETREAT_CHANCES[b.personality] || 
                                           SubastaConstantes.PROBABILITIES.EXTREME_BID_RETREAT_CHANCES.default;
             
@@ -141,36 +160,37 @@ if (typeof SubastaConstantes === 'undefined') {
                     if (Math.random() < retreatChance) {
                         removedBidders.push(b);
             
-                        // Lo eliminamos de la lista de pujadores activos.
+                        // Lo eliminamos de la lista de pujadores activos
                         const index = activeBidders.findIndex(ab => ab === b);
                         if (index > -1) activeBidders.splice(index, 1);
                     }
                 });
             
-                // Función recursiva para mostrar mensajes de huida uno a uno
-                const showRetreatMessagesSequentially = (bidders) => {
-                    if (bidders.length === 0) return;
-                
-                    const [first, ...rest] = bidders;
-                
-                    // Delay aleatorio entre 1000ms y 4000ms
-                    const delay = 1000 + Math.random() * 4000;
-                
-                    setTimeout(() => {
-                        const msg = SubastaConstantes.getFearMessage(first);
-                        addMessage(msg, 'system');
-                        showRetreatMessagesSequentially(rest);
-                    }, delay);
-                };
-                
-            
+                // 3️⃣ TERCERO: Iniciar martillo Y mostrar retiradas simultáneamente
                 if (removedBidders.length > 0) {
                     console.log(`💨 Se retiraron por miedo: ${removedBidders.map(b => b.name).join(', ')}`);
-                    showRetreatMessagesSequentially(removedBidders);
+                    
+                    // 🔨 INICIAR MARTILLO INMEDIATAMENTE (dramático)
+                    setTimeout(() => {
+                        if (isAuctionActive) {
+                            console.log('🔨 Iniciando martillo mientras la gente huye...');
+                            processHammer();
+                        }
+                    }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500);
+                    
+                    // 💨 MOSTRAR RETIRADAS EN PARALELO (con delay ligeramente mayor)
+                    setTimeout(() => {
+                        showRetreatMessagesInBackground(removedBidders, bidder);
+                    }, (SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500) + 800);
+                    
+                } else {
+                    // Si nadie se retiró, continuar con martillo normalmente
+                    setTimeout(() => {
+                        if (isAuctionActive) processHammer();
+                    }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500);
                 }
                 
-            }
-             else {
+            } else {
                 // Puja normal según personalidad
                 switch(bidder.personality){
                     case 'aggressive': increasePercent = 0.08 + Math.random()*0.12; break;
@@ -180,8 +200,171 @@ if (typeof SubastaConstantes === 'undefined') {
                     case 'passionate': increasePercent = 0.06 + Math.random()*0.09; break;
                     default: increasePercent = 0.04 + Math.random()*0.08; break;
                 }
+                
+                // Procesar puja normal inmediatamente
+                const increase = Math.max(1, currentPrice * increasePercent);
+                currentPrice += increase;
+                lastBidder = bidder;
+            
+                // Mostrar mensaje de puja normal
+                const bidMessage = SubastaConstantes.getBidMessage(bidder, isExtremeBid);
+                addMessage(`${bidMessage} y puja +${Math.round(increase)} pts`, 'bid');
+                updatePriceDisplay();
+
+                // Continuar con siguiente turno
+                scheduleNextTurn();
+            }
+        };
+        
+        // 🎭 Función nueva: Mostrar mensajes de retirada en segundo plano (NO interfiere con martillo)
+        const showRetreatMessagesInBackground = (bidders, extremeBidder) => {
+            if (bidders.length === 0) return;
+            
+            console.log(`💨 Mostrando retiradas en background: ${bidders.map(b => b.name).join(', ')}`);
+            
+            const processRetreatMessage = (remainingBidders) => {
+                if (remainingBidders.length === 0) {
+                    console.log('✅ Todos los mensajes de retirada mostrados');
+                    // NO hacer nada más - el martillo ya está corriendo en paralelo
+                    return;
+                }
+                
+                const [first, ...rest] = remainingBidders;
+                
+                // Delay aleatorio entre mensajes (más espaciado para no saturar)
+                const delay = SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MIN + 
+                             Math.random() * (SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MAX - 
+                                             SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MIN);
+                
+                setTimeout(() => {
+                    // Solo mostrar si la subasta sigue activa
+                    if (isAuctionActive) {
+                        const msg = SubastaConstantes.getFearMessage(first);
+                        addMessage(msg, 'system');
+                        console.log(`💨 ${first.name} se retiró mientras suena el martillo`);
+                        processRetreatMessage(rest);
+                    }
+                }, delay);
+            };
+            
+            // Iniciar la secuencia de mensajes de miedo en background
+            processRetreatMessage(bidders);
+        };
+        
+        // 🔄 Función simplificada: Ya no maneja el flujo principal
+        const showRetreatMessagesSequentially = (bidders, extremeBidder) => {
+            if (bidders.length === 0) {
+                // 🏆 Después de mostrar todas las huidas, verificar si solo queda el pujador extremo
+                const extremeWinnerResult = checkForExtremeWinner(extremeBidder);
+                
+                // 🚨 Si no hubo victoria extrema, continuar con martillo
+                if (!extremeWinnerResult) {
+                    setTimeout(() => {
+                        if (isAuctionActive) processHammer();
+                    }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500);
+                }
+                return;
             }
         
+            const [first, ...rest] = bidders;
+            
+            // ⏱️ SIEMPRE usar delay aleatorio antes de mostrar cada mensaje
+            const delay = SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MIN + 
+                         Math.random() * (SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MAX - 
+                                         SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MIN);
+            
+            console.log(`⏰ Programando mensaje de miedo en ${delay}ms para ${first.name}`);
+            
+            setTimeout(() => {
+                if (!isAuctionActive) return;
+                
+                const msg = SubastaConstantes.getFearMessage(first);
+                addMessage(msg, 'system');
+                
+                // Continuar con el siguiente mensaje
+                showRetreatMessagesSequentially(rest, extremeBidder);
+                
+            }, delay);
+        };
+        
+        // 🏆 Función mejorada: Verificar si el pujador extremo ganó por quedarse solo
+        const checkForExtremeWinner = (extremeBidder) => {
+            // Verificar cuántos pujadores quedan activos
+            console.log(`🔍 Verificando ganador extremo. Pujadores activos: ${activeBidders.length}`);
+            console.log(`👥 Lista actual: ${activeBidders.map(b => b.name).join(', ')}`);
+            
+            // Si solo queda 1 pujador (que debe ser el del bid extremo), ¡Victoria inmediata!
+            if (activeBidders.length === 1 && activeBidders[0] === extremeBidder) {
+                setTimeout(() => {
+                    console.log(`🎯 ¡VICTORIA POR PUJA EXTREMA! ${extremeBidder.name} se quedó solo`);
+                    
+                    // Mensaje épico de victoria por intimidación
+                    const victoryMessages = [
+                        `😨 ¡${extremeBidder.name} intimidó a todos los competidores!`,
+                        `🔥 ¡Puja tan extrema que nadie se atrevió a competir!`,
+                        `👑 ${extremeBidder.name} domina la subasta por pura audacia!`,
+                        `💀 ¡La competencia huyó ante semejante oferta!`,
+                        `⚡ ${extremeBidder.name} gana sin rival que se atreva a enfrentarlo!`
+                    ];
+                    
+                    const randomVictoryMsg = victoryMessages[Math.floor(Math.random() * victoryMessages.length)];
+                    addMessage(randomVictoryMsg, 'victory');
+                    
+                    // Delay dramático antes del mensaje final
+                    setTimeout(() => {
+                        finishAuctionWithExtremeWinner(extremeBidder);
+                    }, 2000);
+                    
+                }, 1500); // Pequeño delay para que se vean todos los mensajes de huida
+                
+                return true; // Indica que la subasta terminó
+            }
+
+            // 🚨 PROTECCIÓN EXTRA: Si no quedan pujadores (caso edge), finalizar
+            if (activeBidders.length === 0) {
+                console.error('❌ ERROR CRÍTICO: No quedan pujadores después de puja extrema');
+                setTimeout(() => {
+                    finishAuction();
+                }, 1000);
+                return true;
+            }
+            
+            // Si quedan más pujadores, continuar normalmente
+            return false;
+        };
+        
+        // 🏆 Función: Finalizar subasta con ganador por puja extrema
+        const finishAuctionWithExtremeWinner = (winner) => {
+            isAuctionActive = false;
+            clearTimeout(auctionTimeout);
+            
+            const finalPrice = Math.round(currentPrice);
+            const epicWinMessages = [
+                `🎉 ¡${winner.name} CONQUISTA LA SUBASTA! ¡Victoria por intimidación total!`,
+                `👑 ¡EMPERADOR DE LA SUBASTA! ${winner.name} reina sin oposición!`,
+                `⚔️ ¡VICTORIA APLASTANTE! ${winner.name} eliminó toda competencia!`,
+                `🔥 ¡REY DE LAS PUJAS! ${winner.name} dominó con pura audacia!`
+            ];
+            
+            const finalMessage = epicWinMessages[Math.floor(Math.random() * epicWinMessages.length)];
+            addMessage(`${finalMessage} ¡${finalPrice} pts!`, 'victory');
+            
+            setTimeout(() => {
+                takeBtn.style.display = 'block';
+                takeBtn.textContent = `💰 ¡ACEPTAR ${finalPrice} pts!`;
+                takeBtn.classList.add('pulse-victory');
+            }, SubastaConstantes.TIMING_CONFIG.FINAL_DELAY);
+        };
+        
+        // 🔄 Función auxiliar mejorada: Procesar incremento y continuar
+        const processBidIncrementAndContinue = (bidder, increasePercent, isExtremeBid) => {
+            // 🚨 PROTECCIÓN: Verificar que aún hay pujadores
+            if (activeBidders.length === 0) {
+                console.error('❌ ERROR: No hay pujadores en processBidIncrementAndContinue');
+                finishAuction();
+                return;
+            }
+
             // Calcular incremento de precio y actualizar
             const increase = Math.max(1, currentPrice * increasePercent);
             currentPrice += increase;
@@ -202,13 +385,11 @@ if (typeof SubastaConstantes === 'undefined') {
                 scheduleNextTurn();
             }
         };
-        
-        
-        
 
         const processHammer = () => {
             // Incrementar probabilidad acumulada del martillo
             hammerBonusChance += SubastaConstantes.PROBABILITIES.HAMMER_BONUS_INCREMENT;
+            console.log('🔨 Iniciando secuencia del martillo (posiblemente mientras la gente huye)...');
         
             if (!isInHammerSequence) {
                 isInHammerSequence = true;
@@ -218,7 +399,7 @@ if (typeof SubastaConstantes === 'undefined') {
                 setTimeout(() => {
                     if (!isAuctionActive) return;
         
-                    addMessage(SubastaConstantes.getHammerMessage(hammerStep), 'hammer');
+                    addMessage(SubastaConstantes.getHammerMessage(hammerStep), 'system');
                     hammerStep++;
         
                     if (hammerStep >= SubastaConstantes.HAMMER_MESSAGES.length) {
@@ -227,9 +408,9 @@ if (typeof SubastaConstantes === 'undefined') {
                     }
         
                     continueHammer();
-                }, SubastaConstantes.TIMING_CONFIG.HAMMER_FIRST_DELAY || 3000); // Nueva constante
+                }, SubastaConstantes.TIMING_CONFIG.HAMMER_FIRST_DELAY || 3000);
             } else {
-                addMessage(SubastaConstantes.getHammerMessage(hammerStep), 'hammer');
+                addMessage(SubastaConstantes.getHammerMessage(hammerStep), 'system');
                 hammerStep++;
         
                 if (hammerStep >= SubastaConstantes.HAMMER_MESSAGES.length) {
@@ -244,28 +425,39 @@ if (typeof SubastaConstantes === 'undefined') {
         const continueHammer = () => {
             setTimeout(() => {
                 if (!isAuctionActive) return;
-                const resumeChance = hammerResumeChances[hammerStep - 1] || 0;
-                // 👀 DEBUG: mostrar las chances actuales de reanudación
+                
+                // 🚨 PROTECCIÓN: Verificar que hammerStep - 1 sea válido
+                const resumeIndex = hammerStep - 1;
+                if (resumeIndex < 0 || resumeIndex >= hammerResumeChances.length) {
+                    console.error(`❌ ERROR: hammerStep inválido: ${hammerStep}`);
+                    finishAuction();
+                    return;
+                }
+
+                const resumeChance = hammerResumeChances[resumeIndex] || 0;
+                
                 console.log(
                     `🔁 Fase ${hammerStep} -> resumeChance=${(resumeChance*100).toFixed(1)}% | Todas=${hammerResumeChances.map(c=> (c*100).toFixed(1)+'%').join(' / ')}`
                 );
+                
                 if (Math.random() < resumeChance) {
                     // Reducir probabilidad de reanudación de esta fase
-                    hammerResumeChances[hammerStep - 1] = Math.max(
+                    hammerResumeChances[resumeIndex] = Math.max(
                         0,
                         resumeChance - SubastaConstantes.PROBABILITIES.HAMMER_RESUME_DECREMENT
                     );
         
                     setTimeout(() => {
-                        isInHammerSequence = false;
-                        executeBid();
+                        if (isAuctionActive) {
+                            isInHammerSequence = false;
+                            executeBid();
+                        }
                     }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY);
                 } else {
                     processHammer();
                 }
             }, SubastaConstantes.TIMING_CONFIG.HAMMER_PAUSE);
         };
-        
 
         const scheduleNextTurn = () => {
             if(!isAuctionActive) return;
@@ -274,13 +466,19 @@ if (typeof SubastaConstantes === 'undefined') {
             auctionTimeout = setTimeout(processNextTurn, delay);
         };
 
-        // --- Finalizar subasta ---
+        // --- Finalizar subasta mejorada ---
         const finishAuction = () => {
-            isAuctionActive=false;
+            isAuctionActive = false;
             clearTimeout(auctionTimeout);
-            const winner = lastBidder || activeBidders[0] || {name:'Coleccionista VIP', emoji:'🏆'};
+            
+            // 🚨 PROTECCIÓN: Determinar ganador de forma robusta
+            const winner = lastBidder || 
+                          (activeBidders.length > 0 ? activeBidders[0] : null) || 
+                          {name:'Coleccionista VIP', emoji:'🏆'};
+            
             const finalPrice = Math.round(currentPrice);
             addMessage(`🎉 ¡${winner.name} GANÓ con ${finalPrice} pts! 🎉`,'victory');
+            
             setTimeout(()=>{
                 takeBtn.style.display='block';
                 takeBtn.textContent=`💰 ¡ACEPTAR ${finalPrice} pts!`;
@@ -303,6 +501,15 @@ if (typeof SubastaConstantes === 'undefined') {
 
             historyContainer.innerHTML='';
             generateBidders();
+            
+            // 🚨 PROTECCIÓN: Verificar que se generaron pujadores
+            if (activeBidders.length === 0) {
+                console.error('❌ ERROR CRÍTICO: No se pudieron generar pujadores');
+                addMessage('❌ Error al generar pujadores. Cerrando subasta.', 'system');
+                closeModal();
+                return;
+            }
+            
             addMessage(SubastaConstantes.getStartMessage(),'system');
 
             setTimeout(()=>{ if(isAuctionActive) scheduleNextTurn(); }, 1000);

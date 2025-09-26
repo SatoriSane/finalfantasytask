@@ -88,8 +88,7 @@ if (typeof SubastaConstantes === 'undefined') {
             if(isInHammerSequence){
                 isInHammerSequence=false;
                 hammerStep=0;
-                addMessage(SubastaConstantes.getResumeMessage(), 'resume');
-                setTimeout(()=>{ if(isAuctionActive) executeBid(); }, 800);
+                setTimeout(()=>{ if(isAuctionActive) executeBid(); }, 500);
                 return;
             }
             executeBid();
@@ -124,28 +123,52 @@ if (typeof SubastaConstantes === 'undefined') {
         const processHammer = () => {
             // Incrementar probabilidad acumulada del martillo
             hammerBonusChance += SubastaConstantes.PROBABILITIES.HAMMER_BONUS_INCREMENT;
-            if(!isInHammerSequence){
+        
+            if (!isInHammerSequence) {
                 isInHammerSequence = true;
                 hammerStep = 0;
+        
+                // Espera especial solo antes del primer mensaje
+                setTimeout(() => {
+                    if (!isAuctionActive) return;
+        
+                    addMessage(SubastaConstantes.getHammerMessage(hammerStep), 'hammer');
+                    hammerStep++;
+        
+                    if (hammerStep >= SubastaConstantes.HAMMER_MESSAGES.length) {
+                        finishAuction();
+                        return;
+                    }
+        
+                    continueHammer();
+                }, SubastaConstantes.TIMING_CONFIG.HAMMER_FIRST_DELAY || 3000); // Nueva constante
+            } else {
+                addMessage(SubastaConstantes.getHammerMessage(hammerStep), 'hammer');
+                hammerStep++;
+        
+                if (hammerStep >= SubastaConstantes.HAMMER_MESSAGES.length) {
+                    finishAuction();
+                    return;
+                }
+        
+                continueHammer();
             }
-
-            addMessage(SubastaConstantes.getHammerMessage(hammerStep), 'hammer');
-            hammerStep++;
-
-            if(hammerStep >= SubastaConstantes.HAMMER_MESSAGES.length){
-                finishAuction();
-                return;
-            }
-
-            setTimeout(()=>{
-                if(!isAuctionActive) return;
-                const resumeChance = hammerResumeChances[hammerStep-1] || 0;
-                if(Math.random() < resumeChance){
-                    addMessage(SubastaConstantes.getResumeMessage(),'resume');
+        };
+        
+        const continueHammer = () => {
+            setTimeout(() => {
+                if (!isAuctionActive) return;
+                const resumeChance = hammerResumeChances[hammerStep - 1] || 0;
+        
+                if (Math.random() < resumeChance) {
                     // Reducir probabilidad de reanudación de esta fase
-                    hammerResumeChances[hammerStep-1] = Math.max(0, resumeChance - SubastaConstantes.PROBABILITIES.HAMMER_RESUME_DECREMENT);
-                    setTimeout(()=>{
-                        isInHammerSequence=false;
+                    hammerResumeChances[hammerStep - 1] = Math.max(
+                        0,
+                        resumeChance - SubastaConstantes.PROBABILITIES.HAMMER_RESUME_DECREMENT
+                    );
+        
+                    setTimeout(() => {
+                        isInHammerSequence = false;
                         executeBid();
                     }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY);
                 } else {
@@ -153,6 +176,7 @@ if (typeof SubastaConstantes === 'undefined') {
                 }
             }, SubastaConstantes.TIMING_CONFIG.HAMMER_PAUSE);
         };
+        
 
         const scheduleNextTurn = () => {
             if(!isAuctionActive) return;

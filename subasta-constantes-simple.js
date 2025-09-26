@@ -5,27 +5,28 @@
     global.SubastaConstantes = {
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
-            MESSAGE_DELAY: 1500,              // Delay entre mensajes
+            MESSAGE_DELAY: 2500,              // Delay entre mensajes
             PRICE_ANIMATION_DURATION: 800,   // Duración animación precio
-            BID_INTERVAL_MIN: 1000,          // Intervalo mínimo entre pujas
-            BID_INTERVAL_MAX: 3000,          // Intervalo máximo entre pujas
-            HAMMER_PAUSE: 2500,              // Pausa en cada frase del hammer
-            FINAL_DELAY: 2000                // Delay antes de mostrar botón final
+            BID_INTERVAL_MIN: 1200,          // Intervalo mínimo entre pujas
+            BID_INTERVAL_MAX: 5500,          // Intervalo máximo entre pujas
+            HAMMER_PAUSE: 4000,              // Pausa en cada frase del hammer
+            FINAL_DELAY: 1000,                // Delay antes de mostrar botón final
+            HAMMER_FIRST_DELAY: 4000, // ⏳ Espera inicial extra antes del primer mensaje del martillo
         },
 
         // 🎲 PROBABILIDADES SIMPLES
         PROBABILITIES: {
-            HAMMER_CHANCE: 0.15,              // 20% probabilidad inicial de que inicie la secuencia del martillo en lugar de puja
-            HAMMER_RESUME_CHANCES: [0.25, 0.25, 0.3], //probabilidad de reanurarse para cada fase
+            HAMMER_CHANCE: 0.18,              // 20% probabilidad inicial de que inicie la secuencia del martillo en lugar de puja
+            HAMMER_RESUME_CHANCES: [0.20, 0.25, 0.3], //probabilidad de reanurarse para cada fase
             HAMMER_BONUS_INCREMENT: 0.05,        // incremento de la probabilidad acumulada del martillo cada vez que aparece
             HAMMER_RESUME_DECREMENT: 0.1       // decremento de la probabilidad de reanudación de esta fase después de que se reanuda
         },
 
         // 🔨 SECUENCIA SIMPLE DEL MARTILLO - 4 frases secuenciales
         HAMMER_MESSAGES: [
-            '🔨 A la una... ¿nadie se atreve?',
-            '🔨 A las dos... ¡última oportunidad!', 
-            '🔨 A las tres... ¡se cierra la subasta!',
+            '🔨 A la una... silencio en la sala...',
+            '🔨 A las dos... el martillo está en alto', 
+            '🔨 A las tres... ¡última oportunidad!',
             '🔨 ¡Adjudicado! ¡Subasta finalizada!'
         ],
 

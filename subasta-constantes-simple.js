@@ -16,8 +16,8 @@
         // 🎲 PROBABILIDADES SIMPLES
         PROBABILITIES: {
             HAMMER_CHANCE: 0.15,              // 20% probabilidad inicial de que inicie la secuencia del martillo en lugar de puja
-            HAMMER_RESUME_CHANCES: [0.3, 0.3, 0.3], //probabilidad de reanurarse para cada fase
-            HAMMER_BONUS_INCREMENT: 0.1,        // incremento de la probabilidad acumulada del martillo cada vez que aparece
+            HAMMER_RESUME_CHANCES: [0.25, 0.25, 0.3], //probabilidad de reanurarse para cada fase
+            HAMMER_BONUS_INCREMENT: 0.05,        // incremento de la probabilidad acumulada del martillo cada vez que aparece
             HAMMER_RESUME_DECREMENT: 0.1       // decremento de la probabilidad de reanudación de esta fase después de que se reanuda
         },
 

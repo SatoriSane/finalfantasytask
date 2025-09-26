@@ -3,7 +3,7 @@
     'use strict';
 
     global.SubastaConstantes = {
-        MIN_BIDDERS: 15,
+        MIN_BIDDERS: 5,
         MAX_BIDDERS: 15,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {

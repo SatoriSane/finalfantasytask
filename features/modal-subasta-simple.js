@@ -296,52 +296,57 @@ if (typeof SubastaConstantes === 'undefined') {
             }
         };
         
-        // 🎭 Función nueva: Mostrar mensajes de retirada en segundo plano (NO interfiere con martillo)
-        const showRetreatMessagesInBackground = (bidders, extremeBidder) => {
-            if (bidders.length === 0) return;
-            
-            console.log(`💨 Mostrando retiradas en background: ${bidders.map(b => b.name).join(', ')}`);
-            
-            const processRetreatMessage = (remainingBidders) => {
-                if (remainingBidders.length === 0) {
-                    console.log('✅ Todos los mensajes de retirada mostrados');
-                    // NO hacer nada más - el martillo ya está corriendo en paralelo
-                    return;
-                }
-                
-                const [first, ...rest] = remainingBidders;
-                
-                // Delay aleatorio entre mensajes (más espaciado para no saturar)
-                const delay = SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MIN + 
-                             Math.random() * (SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MAX - 
-                                             SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MIN);
-                
-                setTimeout(() => {
-                    // Solo mostrar si la subasta sigue activa
-                    if (isAuctionActive) {
-                        const msg = SubastaConstantes.getFearMessage(first);
-                        addMessage(msg, 'system');
-                        console.log(`💨 ${first.name} se retiró mientras suena el martillo`);
-                        
-                        // Remover avatar del participante que se retira
-                        removeParticipantAvatar(first);
-                        
-                        processRetreatMessage(rest);
-                    }
-                }, delay);
-            };
-            
-            // Iniciar la secuencia de mensajes de miedo en background
-            processRetreatMessage(bidders);
-        };
+// 🎭 Función nueva: Mostrar mensajes de retirada en segundo plano (NO interfiere con martillo)
+const showRetreatMessagesInBackground = (bidders, extremeBidder) => {
+    if (bidders.length === 0) return;
+
+    console.log(`💨 Mostrando retiradas en background: ${bidders.map(b => b.name).join(', ')}`);
+
+    const processRetreatMessage = (remainingBidders, isFirst = true) => {
+        if (remainingBidders.length === 0) {
+            console.log('✅ Todos los mensajes de retirada mostrados');
+            // 🏆 Revisar si solo queda uno
+            checkForSingleWinner();
+            return;
+        }
+
+        const [first, ...rest] = remainingBidders;
+        let delay;
+        if (isFirst) {
+            delay = 500 + Math.random() * 1000; // primer mensaje aleatorio entre 500 y 1500 ms
+        } else {
+            delay = SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MIN +
+                    Math.random() * (SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MAX -
+                                     SubastaConstantes.PROBABILITIES.FEAR_MESSAGE_DELAY_MIN);
+        }
+
+        setTimeout(() => {
+            if (isAuctionActive) {
+                const msg = SubastaConstantes.getFearMessage(first);
+                addMessage(msg, 'system');
+                console.log(`💨 ${first.name} se retiró mientras suena el martillo`);
+
+                removeParticipantAvatar(first);
+
+                processRetreatMessage(rest, false); // los siguientes no son el primero
+            }
+        }, delay);
+    };
+
+    // Iniciar la secuencia de mensajes de miedo en background
+    processRetreatMessage(bidders, true);
+};
+
         
         // 🔄 Función simplificada: Ya no maneja el flujo principal
         const showRetreatMessagesSequentially = (bidders, extremeBidder) => {
             if (bidders.length === 0) {
-                // 🏆 Después de mostrar todas las huidas, verificar si solo queda el pujador extremo
+                // 🏆 Primero revisar si solo queda 1
+                if (checkForSingleWinner()) return;
+            
+                // Si era puja extrema, revisar victoria por intimidación
                 const extremeWinnerResult = checkForExtremeWinner(extremeBidder);
                 
-                // 🚨 Si no hubo victoria extrema, continuar con martillo
                 if (!extremeWinnerResult) {
                     setTimeout(() => {
                         if (isAuctionActive) processHammer();
@@ -349,6 +354,7 @@ if (typeof SubastaConstantes === 'undefined') {
                 }
                 return;
             }
+            
         
             const [first, ...rest] = bidders;
             
@@ -373,7 +379,31 @@ if (typeof SubastaConstantes === 'undefined') {
                 
             }, delay);
         };
-        
+        // ✅ Verificar si queda un único pujador activo (victoria automática)
+const checkForSingleWinner = () => {
+    if (!isAuctionActive) return false;
+
+    if (activeBidders.length === 1) {
+        const soleWinner = activeBidders[0];
+        console.log(`👑 ${soleWinner.name} se quedó solo -> victoria automática`);
+
+        isAuctionActive = false;
+        clearTimeout(auctionTimeout);
+
+        const finalPrice = Math.round(currentPrice);
+        addMessage(`🎉 ¡${soleWinner.name} GANÓ automáticamente con ${finalPrice} pts! 🎉`, 'victory');
+
+        setTimeout(() => {
+            takeBtn.style.display = 'block';
+            takeBtn.textContent = `💰 ¡ACEPTAR ${finalPrice} pts!`;
+            takeBtn.classList.add('pulse-victory');
+        }, SubastaConstantes.TIMING_CONFIG.FINAL_DELAY);
+
+        return true;
+    }
+    return false;
+};
+
         // 🏆 Función mejorada: Verificar si el pujador extremo ganó por quedarse solo
         const checkForExtremeWinner = (extremeBidder) => {
             // Verificar cuántos pujadores quedan activos

@@ -3,8 +3,8 @@
     'use strict';
 
     global.SubastaConstantes = {
-        MIN_BIDDERS: 4,
-        MAX_BIDDERS: 12,
+        MIN_BIDDERS: 15,
+        MAX_BIDDERS: 15,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
             MESSAGE_DELAY: 3000,              // Delay entre mensajes
@@ -17,7 +17,7 @@
         },
         EXTREME_BID_RANGE: {
             min: 0.3,   // 30%
-            max: 1   // 100%
+            max: 0.6  // 100%
         },
         // 🎲 PROBABILIDADES SIMPLES
         PROBABILITIES: {
@@ -25,14 +25,14 @@
             HAMMER_BONUS_INCREMENT: 0.05,        // 5% de incremento de la probabilidad acumulada del martillo cada vez que aparece
             HAMMER_RESUME_CHANCES: [0.33, 0.33, 0.46], // 33%, 33% y 46% de probabilidad de reanurarse para cada fase
             HAMMER_RESUME_DECREMENT: 0.11,       // 11% de decremento de la probabilidad de reanudación de esta fase después de que se reanuda
-            EXTREME_BID_CHANCE: 0.5,           // 10% probabilidad de puja extrema (50-125% aumento)
+            EXTREME_BID_CHANCE: 0.33,           // 10% probabilidad de puja extrema (50-125% aumento)
             EXTREME_BID_RETREAT_CHANCES: {
-                strategic: 0.75,  // 75% de probabilidad de retirarse
-                calculated: 0.85, // 85%
-                impulsive: 0.50,
-                passionate: 0.50,
+                strategic: 0.7,  // 75% de probabilidad de retirarse
+                calculated: 0.7, // 85%
+                impulsive: 0.5,
+                passionate: 0.6,
                 aggressive: 0.50,
-                default: 0.50     // Para cualquier personalidad no definida
+                default: 0.6     // Para cualquier personalidad no definida
             },
             FEAR_MESSAGE_DELAY_MAX: 3500,  // Más espaciado para no interferir con martillo
             FEAR_MESSAGE_DELAY_MIN: 1200   // Delay mínimo más alto
@@ -272,7 +272,7 @@ VIRTUAL_BIDDERS: [
         '🔥 ¡ROMPE EL DESTINO DE SPIRA! ¡PUJA DEVASTADORA!'
     ],
     fearMessages: [
-        '🚪 Tidus deja el blitzball y se va',
+        '🚪 Tidus se retira: "¡Se me da mejor el Blitzball!',
         '🚪 Tidus se sumerge fuera de la sala',
         '🚪 Tidus se va a buscar su Zanarkand'
     ]

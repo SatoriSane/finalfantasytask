@@ -48,19 +48,21 @@
                 App.ui.general.showCustomAlert("Error al leer tus datos guardados. Se ha reiniciado la aplicación para evitar problemas. Tus datos anteriores podrían haberse perdido.");
             }
 
-            // --- ¡IMPORTANTE! REGISTRO DEL SERVICE WORKER CON RUTA ABSOLUTA CORREGIDA ---
-            if ('serviceWorker' in navigator) {
+            // --- REGISTRO DEL SERVICE WORKER (solo en HTTP/HTTPS) ---
+            if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.protocol === 'http:')) {
                 window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('service-worker.js') // ¡RUTA CORREGIDA AQUÍ!
+                    navigator.serviceWorker.register('service-worker.js')
                         .then(registration => {
-                            console.log('Service Worker registrado con éxito:', registration);
+                            console.log('✅ Service Worker registrado con éxito:', registration);
                         })
                         .catch(error => {
-                            console.error('Fallo en el registro del Service Worker:', error);
+                            console.error('❌ Fallo en el registro del Service Worker:', error);
                         });
                 });
+            } else if (location.protocol === 'file:') {
+                console.info('🔧 Modo desarrollo local (file://). Service Worker deshabilitado.');
             } else {
-                console.warn('El navegador no soporta Service Workers. La aplicación no será instalable como PWA.');
+                console.warn('⚠️ El navegador no soporta Service Workers. La aplicación no será instalable como PWA.');
             }
             // --- Fin del registro del Service Worker ---
 

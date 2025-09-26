@@ -3,7 +3,6 @@ if (typeof SubastaConstantes === 'undefined') {
 }
 
 (function(App) {
-    'use strict';
 
     if (!App.ui) App.ui = {};
     if (!App.ui.habits) App.ui.habits = {};
@@ -11,12 +10,15 @@ if (typeof SubastaConstantes === 'undefined') {
     function showSimpleAuction(challenge) {
         console.log('🎯 SUBASTA SIMPLE INICIADA:', challenge.name);
 
+        // --- Referencias DOM ---
         const modal = document.getElementById('auctionModal');
+        const historyContainer = document.getElementById('auctionHistory');
+        const priceDisplay = document.getElementById('auctionCurrentPrice');
         const startBtn = document.getElementById('startAuctionBtn');
         const takeBtn = document.getElementById('takePriceBtn');
-        const currentPriceDisplay = document.getElementById('auctionCurrentPrice');
-        const historyContainer = document.getElementById('auctionHistory');
-        const closeBtn = modal.querySelector('.modal-close-btn');
+        const closeBtn = document.querySelector('#auctionModal .modal-close-btn');
+        const participantsContainer = document.getElementById('auctionParticipants');
+        const avatarsContainer = document.getElementById('participantAvatars');
 
         // Limpiar eventos previos
         closeBtn.onclick = null;
@@ -43,7 +45,7 @@ if (typeof SubastaConstantes === 'undefined') {
 
         // --- Funciones auxiliares ---
         const updatePriceDisplay = () => {
-            currentPriceDisplay.textContent = `⭐${Math.round(currentPrice)} pts`;
+            priceDisplay.textContent = `⭐${Math.round(currentPrice)} pts`;
         };
 
         const addMessage = (msg, type='system') => {
@@ -57,6 +59,73 @@ if (typeof SubastaConstantes === 'undefined') {
 
             const historyWrapper = document.querySelector('.auction-history-container');
             if (historyWrapper) historyWrapper.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // --- Funciones de Avatares ---
+        const showParticipantAvatars = () => {
+            if (!avatarsContainer) return;
+            
+            avatarsContainer.innerHTML = '';
+            participantsContainer.style.display = 'block';
+            
+            activeBidders.forEach(bidder => {
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'participant-avatar';
+                avatarDiv.setAttribute('data-bidder-name', bidder.name);
+                
+                const emojiDiv = document.createElement('div');
+                emojiDiv.className = 'participant-emoji';
+                emojiDiv.textContent = bidder.emoji;
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'participant-name';
+                nameDiv.textContent = bidder.name;
+                
+                avatarDiv.appendChild(emojiDiv);
+                avatarDiv.appendChild(nameDiv);
+                avatarsContainer.appendChild(avatarDiv);
+            });
+            
+            console.log(`👥 Avatares mostrados: ${activeBidders.length} participantes`);
+        };
+
+        const highlightSpeakingAvatar = (bidder) => {
+            if (!avatarsContainer) return;
+            
+            // Remover highlight previo
+            const prevSpeaking = avatarsContainer.querySelector('.participant-avatar.speaking');
+            if (prevSpeaking) {
+                prevSpeaking.classList.remove('speaking');
+            }
+            
+            // Agregar highlight al que habla
+            const speakingAvatar = avatarsContainer.querySelector(`[data-bidder-name="${bidder.name}"]`);
+            if (speakingAvatar) {
+                speakingAvatar.classList.add('speaking');
+                
+                // Remover highlight después de la animación
+                setTimeout(() => {
+                    speakingAvatar.classList.remove('speaking');
+                }, 800);
+            }
+        };
+
+        const removeParticipantAvatar = (bidder) => {
+            if (!avatarsContainer) return;
+            
+            const avatarToRemove = avatarsContainer.querySelector(`[data-bidder-name="${bidder.name}"]`);
+            if (avatarToRemove) {
+                avatarToRemove.classList.add('leaving');
+                
+                // Remover del DOM después de la animación
+                setTimeout(() => {
+                    if (avatarToRemove.parentNode) {
+                        avatarToRemove.remove();
+                    }
+                }, 600);
+                
+                console.log(`💨 Avatar removido: ${bidder.name}`);
+            }
         };
 
         const generateBidders = () => {
@@ -75,6 +144,9 @@ if (typeof SubastaConstantes === 'undefined') {
             }
         
             console.log(`👥 Pujadores generados: ${activeBidders.map(b => b.name).join(', ')}`);
+            
+            // Mostrar avatares de los participantes
+            showParticipantAvatars();
         };
 
         // --- Turnos ---
@@ -129,6 +201,7 @@ if (typeof SubastaConstantes === 'undefined') {
         
             let increasePercent;
             if (isExtremeBid) {
+                
                 // 🔥 Puja extrema: usar rango definido en constantes
                 const min = SubastaConstantes.EXTREME_BID_RANGE.min;
                 const max = SubastaConstantes.EXTREME_BID_RANGE.max;
@@ -143,7 +216,11 @@ if (typeof SubastaConstantes === 'undefined') {
                 const bidMessage = SubastaConstantes.getBidMessage(bidder, isExtremeBid);
                 addMessage(`${bidMessage} y puja +${Math.round(increase)} pts`, 'extreme-bid');
                 updatePriceDisplay();
-            
+                
+                // Iluminar avatar del pujador
+                highlightSpeakingAvatar(bidder);
+                if(navigator.vibrate) navigator.vibrate([100,50,100,50,200]);
+
                 // 2️⃣ SEGUNDO: Procesar retiradas después del mensaje de puja
                 const removedBidders = [];
                 const potentialLeavers = [...activeBidders];
@@ -210,6 +287,9 @@ if (typeof SubastaConstantes === 'undefined') {
                 const bidMessage = SubastaConstantes.getBidMessage(bidder, isExtremeBid);
                 addMessage(`${bidMessage} y puja +${Math.round(increase)} pts`, 'bid');
                 updatePriceDisplay();
+                
+                // Iluminar avatar del pujador
+                highlightSpeakingAvatar(bidder);
 
                 // Continuar con siguiente turno
                 scheduleNextTurn();
@@ -242,6 +322,10 @@ if (typeof SubastaConstantes === 'undefined') {
                         const msg = SubastaConstantes.getFearMessage(first);
                         addMessage(msg, 'system');
                         console.log(`💨 ${first.name} se retiró mientras suena el martillo`);
+                        
+                        // Remover avatar del participante que se retira
+                        removeParticipantAvatar(first);
+                        
                         processRetreatMessage(rest);
                     }
                 }, delay);
@@ -280,6 +364,9 @@ if (typeof SubastaConstantes === 'undefined') {
                 
                 const msg = SubastaConstantes.getFearMessage(first);
                 addMessage(msg, 'system');
+                
+                // Remover avatar del participante que se retira
+                removeParticipantAvatar(first);
                 
                 // Continuar con el siguiente mensaje
                 showRetreatMessagesSequentially(rest, extremeBidder);
@@ -500,6 +587,11 @@ if (typeof SubastaConstantes === 'undefined') {
             closeBtn.disabled=true;
 
             historyContainer.innerHTML='';
+            
+            // Limpiar avatares previos
+            if (avatarsContainer) avatarsContainer.innerHTML = '';
+            if (participantsContainer) participantsContainer.style.display = 'none';
+            
             generateBidders();
             
             // 🚨 PROTECCIÓN: Verificar que se generaron pujadores
@@ -522,7 +614,6 @@ if (typeof SubastaConstantes === 'undefined') {
             closeModal();
             const victoryMsg = `🎉 ¡SUBASTA GANADA! Vendiste tu ticket por ${finalPrice} puntos!${bonusMsg}`;
             App.events.emit('showDiscreetMessage', victoryMsg);
-            if(navigator.vibrate) navigator.vibrate([100,50,100,50,200]);
         };
 
         const closeModal = () => {

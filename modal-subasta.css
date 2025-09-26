@@ -131,6 +131,80 @@
     animation: softPulse 2.5s ease-in-out infinite;
 }
 
+/* -------------------- Avatares de Participantes -------------------- */
+.auction-participants {
+    background: rgba(20, 30, 40, 0.6);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.participants-label {
+    font-size: 0.8rem;
+    color: var(--text-gold);
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.participant-avatars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.participant-avatar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    transition: all 0.3s ease;
+    min-width: 60px;
+    opacity: 1;
+    transform: scale(1);
+}
+
+.participant-avatar.speaking {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: var(--auction-gold);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    transform: scale(1.05);
+    animation: speakingPulse 0.8s ease-in-out;
+}
+
+.participant-avatar.leaving {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+    filter: grayscale(100%);
+    transition: all 0.6s ease-out;
+}
+
+.participant-emoji {
+    font-size: 1.8rem;
+    margin-bottom: 0.3rem;
+    line-height: 1;
+}
+
+.participant-name {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.1;
+    max-width: 50px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .price-label {
     font-size: 0.8rem;
     color: var(--text-gold);
@@ -394,6 +468,12 @@
 @keyframes extremeGlow {
     0%, 100% { box-shadow: 0 0 12px rgba(255, 71, 87, 0.3); }
     50% { box-shadow: 0 0 18px rgba(255, 71, 87, 0.5); }
+}
+
+@keyframes speakingPulse {
+    0% { transform: scale(1.05); box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+    50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); }
+    100% { transform: scale(1.05); box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
 }
 
 /* -------------------- Responsive mejorado -------------------- */

@@ -4,39 +4,40 @@
 
     global.SubastaConstantes = {
         MIN_BIDDERS: 4,
-        MAX_BIDDERS: 12,
+        MAX_BIDDERS: 40,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
-            MESSAGE_DELAY: 4000,              // Delay entre mensajes
+            MESSAGE_DELAY: 3500,              // Delay entre mensajes
             PRICE_ANIMATION_DURATION: 1200,   // Duración animación precio
-            BID_INTERVAL_MIN: 4000,          // Intervalo mínimo entre pujas
-            BID_INTERVAL_MAX: 6600,          // Intervalo máximo entre pujas
-            HAMMER_PAUSE: 6000,              // Pausa en cada frase del hammer
+            BID_INTERVAL_MIN: 3000,          // Intervalo mínimo entre pujas
+            BID_INTERVAL_MAX: 6400,          // Intervalo máximo entre pujas
+            HAMMER_PAUSE: 5500,              // Pausa en cada frase del hammer
             FINAL_DELAY: 2000,                // Delay antes de mostrar botón final
             HAMMER_FIRST_DELAY: 4500, // ⏳ Espera inicial extra antes del primer mensaje del martillo
         },
         EXTREME_BID_RANGE: {
             min: 0.2,   // 30%
-            max: 0.6  // 100%
+            max: 0.5  // 100%
         },
         // 🎲 PROBABILIDADES SIMPLES
         PROBABILITIES: {
-            HAMMER_CHANCE: 0.1,              // 15% probabilidad inicial de que inicie la secuencia del martillo en lugar de puja
-            HAMMER_BONUS_INCREMENT: 0.05,        // 5% de incremento de la probabilidad acumulada del martillo cada vez que aparece
+            HAMMER_CHANCE: 0.05,              // 15% probabilidad inicial de que inicie la secuencia del martillo en lugar de puja
+            HAMMER_BONUS_INCREMENT: 0.1,        // 10% de incremento de la probabilidad acumulada del martillo cada vez que aparece
             HAMMER_RESUME_CHANCES: [0.33, 0.33, 0.46], // 33%, 33% y 46% de probabilidad de reanurarse para cada fase
-            HAMMER_RESUME_DECREMENT: 0.11,       // 11% de decremento de la probabilidad de reanudación de esta fase después de que se reanuda
-            EXTREME_BID_CHANCE: 0.15,           // 10% probabilidad de puja extrema (50-125% aumento)
+            HAMMER_RESUME_DECREMENT: 0.13,       // 13% de decremento de la probabilidad de reanudación de esta fase después de que se reanuda
+            EXTREME_BID_CHANCE: 0.1,           // 10% probabilidad de puja extrema (50-125% aumento)
             EXTREME_BID_RETREAT_CHANCES: {
-                strategic: 0.6,
-                calculated: 0.7,
-                impulsive: 0.8,
+                strategic: 0.7,
+                calculated: 0.8,
+                impulsive: 0.6,
                 passionate: 0.5,
-                aggressive: 0.4,
+                aggressive: 0.5,
                 default: 0.6
             },
             FEAR_MESSAGE_DELAY_MAX: 5000,  
             FEAR_MESSAGE_DELAY_MIN: 2000   
         },
+
 
         // 🔨 SECUENCIA SIMPLE DEL MARTILLO - 4 frases secuenciales
         HAMMER_MESSAGES: [

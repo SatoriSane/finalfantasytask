@@ -181,10 +181,10 @@ if (typeof SubastaConstantes === 'undefined') {
         };
         // Ajusta la probabilidad de retirarse según la cantidad de jugadores activos
         function getRetreatMultiplier(activeCount) {
-            if (activeCount >= 10) return 0.15;
-            if (activeCount >= 8) return 0.2;
-            if (activeCount >= 6) return 0.3;
-            if (activeCount >= 4) return 0.7;
+            if (activeCount >= 10) return 0.3;
+            if (activeCount >= 8) return 0.4;
+            if (activeCount >= 6) return 0.6;
+            if (activeCount >= 4) return 0.8;
             if (activeCount >= 2) return 1.0; // normal
             return 1.0;
         }

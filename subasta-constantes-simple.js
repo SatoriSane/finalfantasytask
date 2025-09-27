@@ -9,33 +9,33 @@
         TIMING_CONFIG: {
             MESSAGE_DELAY: 4000,              // Delay entre mensajes
             PRICE_ANIMATION_DURATION: 1200,   // Duración animación precio
-            BID_INTERVAL_MIN: 3500,          // Intervalo mínimo entre pujas
-            BID_INTERVAL_MAX: 6500,          // Intervalo máximo entre pujas
-            HAMMER_PAUSE: 5000,              // Pausa en cada frase del hammer
+            BID_INTERVAL_MIN: 4000,          // Intervalo mínimo entre pujas
+            BID_INTERVAL_MAX: 6600,          // Intervalo máximo entre pujas
+            HAMMER_PAUSE: 6000,              // Pausa en cada frase del hammer
             FINAL_DELAY: 2000,                // Delay antes de mostrar botón final
-            HAMMER_FIRST_DELAY: 5000, // ⏳ Espera inicial extra antes del primer mensaje del martillo
+            HAMMER_FIRST_DELAY: 4500, // ⏳ Espera inicial extra antes del primer mensaje del martillo
         },
         EXTREME_BID_RANGE: {
-            min: 0.3,   // 30%
+            min: 0.2,   // 30%
             max: 0.6  // 100%
         },
         // 🎲 PROBABILIDADES SIMPLES
         PROBABILITIES: {
-            HAMMER_CHANCE: 0.15,              // 15% probabilidad inicial de que inicie la secuencia del martillo en lugar de puja
+            HAMMER_CHANCE: 0.1,              // 15% probabilidad inicial de que inicie la secuencia del martillo en lugar de puja
             HAMMER_BONUS_INCREMENT: 0.05,        // 5% de incremento de la probabilidad acumulada del martillo cada vez que aparece
             HAMMER_RESUME_CHANCES: [0.33, 0.33, 0.46], // 33%, 33% y 46% de probabilidad de reanurarse para cada fase
             HAMMER_RESUME_DECREMENT: 0.11,       // 11% de decremento de la probabilidad de reanudación de esta fase después de que se reanuda
-            EXTREME_BID_CHANCE: 0.33,           // 10% probabilidad de puja extrema (50-125% aumento)
+            EXTREME_BID_CHANCE: 0.15,           // 10% probabilidad de puja extrema (50-125% aumento)
             EXTREME_BID_RETREAT_CHANCES: {
-                strategic: 0.7,  // 75% de probabilidad de retirarse
-                calculated: 0.7, // 85%
-                impulsive: 0.5,
-                passionate: 0.6,
-                aggressive: 0.50,
-                default: 0.6     // Para cualquier personalidad no definida
+                strategic: 0.6,
+                calculated: 0.7,
+                impulsive: 0.8,
+                passionate: 0.5,
+                aggressive: 0.4,
+                default: 0.6
             },
-            FEAR_MESSAGE_DELAY_MAX: 5000,  // Más espaciado para no interferir con martillo
-            FEAR_MESSAGE_DELAY_MIN: 2000   // Delay mínimo más alto
+            FEAR_MESSAGE_DELAY_MAX: 5000,  
+            FEAR_MESSAGE_DELAY_MIN: 2000   
         },
 
         // 🔨 SECUENCIA SIMPLE DEL MARTILLO - 4 frases secuenciales

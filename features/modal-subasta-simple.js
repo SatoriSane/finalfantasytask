@@ -286,12 +286,12 @@ if (typeof SubastaConstantes === 'undefined') {
             } else {
                 // Puja normal según personalidad
                 switch(bidder.personality){
-                    case 'aggressive': increasePercent = 0.08 + Math.random()*0.7; break;
-                    case 'impulsive': increasePercent = 0.05 + Math.random()*0.6; break;
-                    case 'strategic': increasePercent = 0.03 + Math.random()*0.04; break;
+                    case 'aggressive': increasePercent = 0.04 + Math.random()*0.05; break;
+                    case 'impulsive': increasePercent = 0.02 + Math.random()*0.07; break;
+                    case 'strategic': increasePercent = 0.02 + Math.random()*0.04; break;
                     case 'calculated': increasePercent = 0.02 + Math.random()*0.03; break;
-                    case 'passionate': increasePercent = 0.06 + Math.random()*0.05; break;
-                    default: increasePercent = 0.03 + Math.random()*0.07; break;
+                    case 'passionate': increasePercent = 0.02 + Math.random()*0.05; break;
+                    default: increasePercent = 0.02 + Math.random()*0.05; break;
                 }
                 
                 // Procesar puja normal inmediatamente

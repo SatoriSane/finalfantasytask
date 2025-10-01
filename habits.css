@@ -30,7 +30,7 @@
 /* --- TARJETA DE RETO SIMPLIFICADA --- */
 .abstinence-card {
     background: var(--ff-bg-light);
-    border: 2px solid var(--ff-border);
+    border: 1px solid var(--ff-border);
     border-radius: var(--border-radius-md);
     padding: 0;
     transition: all var(--transition-speed);
@@ -53,7 +53,7 @@
 }
 
 .abstinence-card.waiting {
-    border-color: #bdc3c7;
+    border-color: var(--ff-border);
 }
 
 .abstinence-card.available {

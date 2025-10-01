@@ -12,7 +12,7 @@
             BID_INTERVAL_MIN: 2500,          // Intervalo mínimo entre pujas
             BID_INTERVAL_MAX: 5000,          // Intervalo máximo entre pujas
             HAMMER_PAUSE: 3000,              // Pausa en cada frase del hammer
-            FINAL_DELAY: 2000,                // Delay antes de mostrar botón final
+            FINAL_DELAY: 500,                // Delay antes de mostrar botón final
             HAMMER_FIRST_DELAY: 4500, // ⏳ Espera inicial extra antes del primer mensaje del martillo
         },
         EXTREME_BID_RANGE: {

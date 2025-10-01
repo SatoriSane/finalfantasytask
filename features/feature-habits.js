@@ -272,7 +272,12 @@
         
         // Verificar si es momento de generar un nuevo ticket
         if (now.getTime() >= nextTicketTime.getTime()) {
-            App.state.addAvailableTicket(challenge.id);
+            App.state.addTicket(challenge.id);
+            // Forzar actualización inmediata del challenge después de agregar ticket
+            const updatedChallenge = App.state.getAbstinenceChallengeById(challenge.id);
+            if (updatedChallenge) {
+                Object.assign(challenge, updatedChallenge);
+            }
         }
 
         // Verificar si el reto debe completarse
@@ -316,12 +321,25 @@
             // Actualizar timer del próximo ticket
             const nextTicketTime = new Date(challenge.nextTicketTime);
             const timeRemaining = nextTicketTime.getTime() - now.getTime();
-            const nextTicketElement = card.querySelector('.next-ticket-time');
-            if (nextTicketElement) nextTicketElement.textContent = formatTimeRemaining(timeRemaining);
+            const nextTicketElement = card.querySelector('.next-ticket');
+            if (nextTicketElement) {
+                nextTicketElement.textContent = `Próximo: ${formatTimeRemaining(timeRemaining)}`;
+            }
             
-            // Actualizar contador de tickets
-            const ticketsElement = card.querySelector('.tickets-count');
-            if (ticketsElement) ticketsElement.textContent = challenge.availableTickets;
+            // Actualizar contador de tickets con límite
+            const ticketsElement = card.querySelector('.tickets-available');
+            if (ticketsElement) {
+                const dailyLimit = App.state.getDailyTicketLimit(challengeId);
+                ticketsElement.textContent = `${challenge.availableTickets}/${dailyLimit} tickets`;
+                
+                // Actualizar clases de estado
+                ticketsElement.className = 'tickets-available';
+                if (challenge.availableTickets >= dailyLimit) {
+                    ticketsElement.classList.add('at-limit');
+                } else if (challenge.availableTickets >= dailyLimit - 1) {
+                    ticketsElement.classList.add('near-limit');
+                }
+            }
             
             // Actualizar gráfico solo si la abstinencia actual ha cambiado significativamente
             // (cada 5 segundos para evitar saturar la app)
@@ -488,9 +506,13 @@
                         ${isActive ? `
                         <div class="tickets-info">
                             <div class="tickets-summary">
-                                <span class="tickets-available">${availableTickets} tickets</span>
+                                <span class="tickets-available ${(() => {
+                                    const dailyLimit = App.state.getDailyTicketLimit(id);
+                                    if (availableTickets >= dailyLimit) return 'at-limit';
+                                    if (availableTickets >= dailyLimit - 1) return 'near-limit';
+                                    return '';
+                                })()}">${availableTickets}/${(() => App.state.getDailyTicketLimit(id))()} tickets</span>
                                 <span class="next-ticket">Próximo: ${formatTimeRemaining(timeRemaining)}</span>
-                                ${canAuction ? `<span class="bonus-indicator">🚀 Subasta</span>` : ''}
                             </div>
                         </div>
                         ` : ''}
@@ -598,14 +620,23 @@
             if (!habitsContainer) return;
 
             App.events.on('habitsUpdated', () => {
-                this.render();
-                // Forzar actualización de gráficos después de cambios importantes
-                setTimeout(() => {
-                    const chartContainers = document.querySelectorAll('.chart-container');
-                    chartContainers.forEach(container => {
-                        container.dataset.lastUpdate = '0'; // Forzar actualización
-                    });
-                }, 100);
+                // Solo re-renderizar si hay cambios estructurales importantes
+                const currentChallenges = App.state.get().habits.challenges;
+                const currentCards = document.querySelectorAll('.abstinence-card');
+                
+                // Re-renderizar solo si el número de retos cambió o hay retos nuevos/eliminados
+                if (currentCards.length !== currentChallenges.length) {
+                    this.render();
+                    setTimeout(() => {
+                        const chartContainers = document.querySelectorAll('.chart-container');
+                        chartContainers.forEach(container => {
+                            container.dataset.lastUpdate = '0';
+                        });
+                    }, 100);
+                } else {
+                    // Solo actualizar los timers sin re-renderizar todo
+                    updateAbstinenceTimers();
+                }
             });
             App.events.on('stateRefreshed', () => this.render());
 
@@ -649,7 +680,6 @@
         },
         showSimpleAuction: function(challenge) {
             // Esta función será implementada por modal-subasta-simple.js
-            console.log(' Iniciando subasta para:', challenge.name);
         }
     };
 })(window.App = window.App || {});

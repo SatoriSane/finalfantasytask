@@ -4,21 +4,19 @@
 (function() {
     'use strict';
 
-    // Aseguramos que el espacio de nombres (namespace) exista
     window.App = window.App || {};
     window.App.ui = window.App.ui || {};
     window.App.ui.habits = window.App.ui.habits || {};
 
     /**
-     * Calcula el tiempo promedio inicial entre consumos basado en la frecuencia semanal
-     * @param {number} weeklyFrequency - Número de veces por semana
-     * @returns {number} - Tiempo en milisegundos entre consumos
+     * Calcula el intervalo inicial entre consumos basado en la frecuencia semanal.
+     * Mantiene consistencia con app-state-habits.js
      */
-    function calculateInitialInterval(weeklyFrequency) {
+    const calculateInitialInterval = (weeklyFrequency) => {
         if (weeklyFrequency <= 0) return 0;
-        const msPerWeek = 7 * 24 * 60 * 60 * 1000; // milisegundos en una semana
+        const msPerWeek = 7 * 24 * 60 * 60 * 1000;
         return Math.floor(msPerWeek / weeklyFrequency);
-    }
+    };
 
     /**
      * Formatea una duración en milisegundos a un string legible
@@ -56,6 +54,7 @@
         const intervalMs = calculateInitialInterval(weeklyFrequency);
         const formattedInterval = formatDuration(intervalMs);
         const dailyTickets = Math.round((24 * 60 * 60 * 1000) / intervalMs * 10) / 10;
+        const dailyLimit = Math.max(1, Math.ceil(weeklyFrequency / 7));
         
         const unitNames = {
             'hours': successValue === 1 ? 'hora' : 'horas',
@@ -80,6 +79,10 @@
                         <span class="stat-label">Tickets estimados:</span>
                         <span class="stat-value">~${dailyTickets}/día</span>
                     </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Límite de acumulación:</span>
+                        <span class="stat-value">${dailyLimit} tickets máx</span>
+                    </div>
                     <div class="stat-item success-goal">
                         <span class="stat-label">Meta de éxito:</span>
                         <span class="stat-value">${successValue} ${unitNames[successUnit]}</span>
@@ -91,7 +94,7 @@
                 </div>
                 
                 <div class="info-links">
-                    <button type="button" class="info-link" onclick="showBonusExplanation()">🚀 ¿Cómo funciona el Bonus x2?</button>
+                    <button type="button" class="info-link" onclick="showBonusExplanation()">🚀 ¿Cómo desbloquear subastas?</button>
                     <button type="button" class="info-link" onclick="showHowItWorks()">🎮 ¿Cómo funciona el sistema?</button>
                 </div>
             </div>
@@ -319,7 +322,7 @@
     }
 
     /**
-     * Muestra la explicación del bonus x2
+     * Muestra la explicación de cómo desbloquear subastas
      */
     function showBonusExplanation() {
         const successValue = parseFloat(document.getElementById('successValue').value) || 30;
@@ -338,14 +341,16 @@
         
         document.getElementById('previewContent').innerHTML = `
             <div class="info-detail">
-                <h3>🚀 Bonus x2 Explicado</h3>
+                <h3>🚀 ¿Cómo Desbloquear Subastas?</h3>
                 <p>El sistema compara tu progreso en dos períodos de <strong>${successValue} ${unitNames[successUnit]}</strong>:</p>
                 <ul>
                     <li><strong>Período anterior:</strong> De ${successValue * 2} a ${successValue} ${unitNames[successUnit]} atrás</li>
                     <li><strong>Período actual:</strong> Últimos ${successValue} ${unitNames[successUnit]} (incluye abstinencia en curso)</li>
                 </ul>
-                <p>Si tu tiempo promedio entre consumos mejora ≥1%, obtienes <strong>bonus x2</strong> en subastas.</p>
-                <p><strong>Ejemplo:</strong> Si antes consumías cada ${formattedInterval} y ahora cada ${formatDuration(intervalMs * 1.05)} (+5%), ¡bonus activado!</p>
+                <p>Si tu tiempo promedio entre consumos mejora, <strong>desbloqueas las subastas</strong> donde puedes ganar muchos más puntos.</p>
+                <p><strong>Ejemplo:</strong> Si antes consumías cada ${formattedInterval} y ahora cada ${formatDuration(intervalMs * 1.05)} (+5%), ¡subastas desbloqueadas!</p>
+                <p><strong>💡 Sin mejora:</strong> Solo puedes vender tickets al precio base (${document.querySelector('#baseTicketPoints')?.value || 10} puntos)</p>
+                <p><strong>🚀 Con mejora:</strong> Puedes subastar y ganar hasta 3-4x más puntos</p>
                 
                 <button type="button" class="secondary" onclick="showPreview()">← Volver a la previsualización</button>
             </div>
@@ -359,10 +364,15 @@
         document.getElementById('previewContent').innerHTML = `
             <div class="info-detail">
                 <h3>🎮 ¿Cómo funciona?</h3>
-                <p><strong>🎫 Tickets:</strong> Recibes tickets automáticamente según tu frecuencia. Puedes gastarlo (registrar consumo) o subastarlo por puntos.</p>
-                <p><strong>🚀 Bonus x2:</strong> Si mejoras tu tiempo entre consumos ≥1% comparando períodos, tus tickets valen el doble en subastas.</p>
+                <p><strong>🎫 Tickets:</strong> Recibes tickets automáticamente según tu frecuencia. Puedes gastarlo (registrar consumo) o monetizarlo por puntos.</p>
+                <p><strong>💰 Venta vs Subasta:</strong></p>
+                <ul>
+                    <li><strong>Sin mejora:</strong> Solo puedes "Vender ticket" al precio base</li>
+                    <li><strong>Con mejora ≥1%:</strong> Desbloqueas "Subastar ticket" por muchos más puntos</li>
+                </ul>
                 <p><strong>📈 Estadísticas:</strong> El sistema muestra tu progreso con gráficos y métricas en tiempo real.</p>
-                <p><strong>🎯 Objetivo:</strong> Cada vez que resistes la tentación, ganas puntos. Cada vez que cedes, pierdes un ticket pero registras tu progreso.</p>
+                <p><strong>🎯 Objetivo:</strong> Mejora tu tiempo entre consumos para desbloquear subastas y maximizar tus puntos.</p>
+                <p><strong>🏆 Estrategia:</strong> Cada vez que resistes la tentación, no solo ganas puntos sino que mejoras tu capacidad de ganar más en el futuro.</p>
                 
                 <button type="button" class="secondary" onclick="showPreview()">← Volver a la previsualización</button>
             </div>

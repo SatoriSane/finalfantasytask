@@ -16,6 +16,17 @@
     };
 
     /**
+     * Calcula el límite máximo de tickets que se pueden acumular en un día
+     * basado en la frecuencia de consumo del usuario
+     */
+    const calculateDailyTicketLimit = (weeklyFrequency) => {
+        if (weeklyFrequency <= 0) return 1;
+        const dailyFrequency = weeklyFrequency / 7;
+        // Redondear hacia arriba para ser generoso, mínimo 1 ticket
+        return Math.max(1, Math.ceil(dailyFrequency));
+    };
+
+    /**
      * ✅ ORIGINAL: Calcula promedio total SIN abstinencia actual
      * Se usa para calcular el nextTicketTime
      */
@@ -115,6 +126,7 @@
     // --- Métodos principales ---
     Object.assign(App.state, {
         createAbstinenceChallenge: function(habitName, weeklyFrequency, successDays, baseTicketPoints = 10) {
+            const currentState = App.state.get();
             
             const now = new Date();
             const initialInterval = calculateInitialInterval(weeklyFrequency);
@@ -148,7 +160,8 @@
                 baseTicketPoints: baseTicketPoints
             };
 
-            App.state.get().habits.challenges.push(newChallenge);
+            currentState.habits.challenges.push(newChallenge);
+            
             _saveStateToLocalStorage();
 
             App.events.emit("habitsUpdated");
@@ -219,10 +232,26 @@
             App.events.emit("habitsUpdated");
         },
 
-        addAvailableTicket: function(challengeId) {
+        addTicket: function(challengeId) {
             const state = App.state.get();
             const challenge = state.habits.challenges.find(c => c.id === challengeId);
             if (!challenge || !challenge.isActive) return;
+            
+            // Calcular límite diario de tickets
+            const dailyLimit = calculateDailyTicketLimit(challenge.weeklyFrequency);
+            
+            // Solo agregar ticket si no se ha alcanzado el límite
+            if (challenge.availableTickets >= dailyLimit) {
+                // Programar el próximo intento para más tarde
+                const totalAverage = calculateTotalAverage(challenge.consumptionHistory, challenge.initialInterval);
+                const now = new Date();
+                challenge.nextTicketTime = new Date(now.getTime() + totalAverage).toISOString();
+                
+                App.events.emit("showDiscreetMessage", `🚫 Límite de tickets alcanzado (${dailyLimit}/día). Usa los que tienes.`);
+                _saveStateToLocalStorage();
+                App.events.emit("habitsUpdated");
+                return;
+            }
 
             challenge.availableTickets++;
             
@@ -231,7 +260,12 @@
             const now = new Date();
             challenge.nextTicketTime = new Date(now.getTime() + totalAverage).toISOString();
 
-            App.events.emit("showDiscreetMessage", `¡Nuevo ticket disponible! 🎫`);
+            const isNearLimit = challenge.availableTickets >= dailyLimit - 1;
+            const message = isNearLimit 
+                ? `🎫 Ticket disponible! (${challenge.availableTickets}/${dailyLimit} - cerca del límite)`
+                : `¡Nuevo ticket disponible! 🎫 (${challenge.availableTickets}/${dailyLimit})`;
+                
+            App.events.emit("showDiscreetMessage", message);
             _saveStateToLocalStorage();
             App.events.emit("habitsUpdated");
         },
@@ -267,6 +301,12 @@
 
         getAbstinenceChallengeById: function(challengeId) {
             return App.state.get().habits.challenges.find(c => c.id === challengeId);
+        },
+
+        getDailyTicketLimit: function(challengeId) {
+            const challenge = this.getAbstinenceChallengeById(challengeId);
+            if (!challenge) return 1;
+            return calculateDailyTicketLimit(challenge.weeklyFrequency);
         },
 
         /**

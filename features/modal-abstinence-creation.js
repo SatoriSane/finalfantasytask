@@ -181,6 +181,7 @@
         const previewBtn = document.getElementById('previewChallengeBtn');
         const backBtn = document.getElementById('backToConfigBtn');
         const createBtn = document.getElementById('createChallengeBtn');
+        const backToPreviewBtn = document.getElementById('backToPreviewBtn');
 
         const closeModal = () => modal.remove();
         closeBtn.addEventListener('click', closeModal);
@@ -223,12 +224,21 @@
             document.getElementById('configPhase').style.display = 'none';
             document.getElementById('previewPhase').style.display = 'block';
             document.getElementById('previewContent').innerHTML = generatePreviewContent();
+            
+            // Mostrar botones de previsualización
+            document.getElementById('previewActions').style.display = 'flex';
+            document.getElementById('backToPreviewActions').style.display = 'none';
         });
 
-        // Botón Volver
+        // Botón Volver a configuración
         backBtn.addEventListener('click', () => {
             document.getElementById('previewPhase').style.display = 'none';
             document.getElementById('configPhase').style.display = 'block';
+        });
+
+        // Botón Volver a previsualización
+        backToPreviewBtn.addEventListener('click', () => {
+            showPreview();
         });
 
         // Botón Crear Reto
@@ -309,9 +319,15 @@
                         
                         <div id="previewContent" class="preview-content"></div>
                         
-                        <div class="form-actions">
+                        <!-- Botones para vista de previsualización -->
+                        <div id="previewActions" class="form-actions">
                             <button type="button" class="secondary" id="backToConfigBtn">← Volver</button>
                             <button type="button" class="primary" id="createChallengeBtn">🚀 Crear Reto</button>
+                        </div>
+                        
+                        <!-- Botón para vista de explicaciones -->
+                        <div id="backToPreviewActions" class="form-actions" style="display: none;">
+                            <button type="button" class="secondary" id="backToPreviewBtn">← Volver a la previsualización</button>
                         </div>
                     </div>
                 </div>
@@ -339,6 +355,10 @@
         const intervalMs = calculateInitialInterval(weeklyFrequency);
         const formattedInterval = formatDuration(intervalMs);
         
+        // Ocultar botones de previsualización y mostrar botón de volver
+        document.getElementById('previewActions').style.display = 'none';
+        document.getElementById('backToPreviewActions').style.display = 'flex';
+        
         document.getElementById('previewContent').innerHTML = `
             <div class="info-detail">
                 <h3>🚀 ¿Cómo Desbloquear Subastas?</h3>
@@ -351,8 +371,6 @@
                 <p><strong>Ejemplo:</strong> Si antes consumías cada ${formattedInterval} y ahora cada ${formatDuration(intervalMs * 1.05)} (+5%), ¡subastas desbloqueadas!</p>
                 <p><strong>💡 Sin mejora:</strong> Solo puedes vender tickets al precio base (${document.querySelector('#baseTicketPoints')?.value || 10} puntos)</p>
                 <p><strong>🚀 Con mejora:</strong> Puedes subastar y ganar hasta 3-4x más puntos</p>
-                
-                <button type="button" class="secondary" onclick="showPreview()">← Volver a la previsualización</button>
             </div>
         `;
     }
@@ -361,6 +379,10 @@
      * Muestra cómo funciona el sistema
      */
     function showHowItWorks() {
+        // Ocultar botones de previsualización y mostrar botón de volver
+        document.getElementById('previewActions').style.display = 'none';
+        document.getElementById('backToPreviewActions').style.display = 'flex';
+        
         document.getElementById('previewContent').innerHTML = `
             <div class="info-detail">
                 <h3>🎮 ¿Cómo funciona?</h3>
@@ -373,8 +395,6 @@
                 <p><strong>📈 Estadísticas:</strong> El sistema muestra tu progreso con gráficos y métricas en tiempo real.</p>
                 <p><strong>🎯 Objetivo:</strong> Mejora tu tiempo entre consumos para desbloquear subastas y maximizar tus puntos.</p>
                 <p><strong>🏆 Estrategia:</strong> Cada vez que resistes la tentación, no solo ganas puntos sino que mejoras tu capacidad de ganar más en el futuro.</p>
-                
-                <button type="button" class="secondary" onclick="showPreview()">← Volver a la previsualización</button>
             </div>
         `;
     }
@@ -383,6 +403,10 @@
      * Vuelve a mostrar la previsualización principal
      */
     function showPreview() {
+        // Mostrar botones de previsualización y ocultar botón de volver
+        document.getElementById('previewActions').style.display = 'flex';
+        document.getElementById('backToPreviewActions').style.display = 'none';
+        
         document.getElementById('previewContent').innerHTML = generatePreviewContent();
     }
 

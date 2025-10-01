@@ -496,7 +496,7 @@
                                 })()}
                             </div>
                             <div class="chart-legend">
-                                <span class="legend-item"><span class="legend-color consumption"></span>Intervalos entre consumos</span>
+                                <span class="legend-item"><span class="legend-color consumption"></span>Tiempos entre consumos</span>
                                 <span class="legend-item"><span class="legend-color current"></span>Abstinencia actual</span>
                             </div>
                         </div>

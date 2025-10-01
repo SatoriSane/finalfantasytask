@@ -503,7 +503,7 @@
 .auction-btn {
     background-color: transparent;
     color: var(--positive-color);
-    border: 1px solid var(--positive-color);
+    border: 2px solid var(--positive-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -515,6 +515,22 @@
     background-color: var(--positive-color);
     color: var(--ff-bg-dark);
     box-shadow: 0 0 15px rgba(88, 228, 120, 0.6);
+}
+
+/* Botón vender ticket */
+.sell-btn {
+    background-color: transparent;
+    color: var(--ff-primary-color);
+    border: 2px solid var(--ff-primary-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sell-btn:hover {
+    background-color: var(--ff-primary-color);
+    color: var(--ff-bg-dark);
 }
 
 

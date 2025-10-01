@@ -371,7 +371,7 @@
     
             // Actualizar botones
             const spendBtn = card.querySelector('.spend-btn');
-            const sellBtn = card.querySelector('.sell-btn');
+            const auctionBtn = card.querySelector('.auction-btn, .sell-btn');
             
             if (challenge.availableTickets > 0) {
                 if (spendBtn) {
@@ -379,10 +379,10 @@
                     spendBtn.classList.add('available');
                     spendBtn.classList.remove('waiting');
                 }
-                const auctionBtn = card.querySelector('.auction-btn');
                 if (auctionBtn) {
-                    const bonusHtml = stats.hasX2Bonus ? ` <span class="bonus-multiplier">x2</span>` : '';
-                    auctionBtn.innerHTML = `Subastar ticket${bonusHtml}`;
+                    const canAuction = stats.hasX2Bonus;
+                    auctionBtn.textContent = canAuction ? 'Subastar ticket' : 'Vender ticket';
+                    auctionBtn.className = canAuction ? 'auction-btn available' : 'sell-btn available';
                     auctionBtn.style.display = 'flex';
                 }
             } else {
@@ -391,7 +391,6 @@
                     spendBtn.classList.add('waiting');
                     spendBtn.classList.remove('available');
                 }
-                const auctionBtn = card.querySelector('.auction-btn');
                 if (auctionBtn) {
                     auctionBtn.style.display = 'none';
                 }
@@ -423,10 +422,11 @@
             const nextTicket = new Date(nextTicketTime);
             const timeRemaining = nextTicket.getTime() - now.getTime();
             
-            // Calcular puntos de venta con bonus
-            let sellPoints = challenge.baseTicketPoints;
-            const bonusHtml = stats.hasX2Bonus ? ` <span class="bonus-multiplier">x2</span>` : '';
-            if (stats.hasX2Bonus) sellPoints *= 2;
+            // Determinar si puede subastar o solo vender
+            const canAuction = stats.hasX2Bonus;
+            const sellPoints = challenge.baseTicketPoints;
+            const buttonText = canAuction ? 'Subastar ticket' : 'Vender ticket';
+            const buttonClass = canAuction ? 'auction-btn' : 'sell-btn';
             return `
                 <div class="abstinence-card ${statusClass}" data-id="${id}">
                     <button class="delete-btn" data-challenge-id="${id}" title="Eliminar reto">🗑️</button>
@@ -490,7 +490,7 @@
                             <div class="tickets-summary">
                                 <span class="tickets-available">${availableTickets} tickets</span>
                                 <span class="next-ticket">Próximo: ${formatTimeRemaining(timeRemaining)}</span>
-                                ${stats.hasX2Bonus ? `<span class="bonus-indicator">🚀 x2</span>` : ''}
+                                ${canAuction ? `<span class="bonus-indicator">🚀 Subasta</span>` : ''}
                             </div>
                         </div>
                         ` : ''}
@@ -502,16 +502,20 @@
                             <button class="spend-btn ${availableTickets > 0 ? 'available' : 'waiting'}" data-challenge-id="${id}">
                                 ${availableTickets > 0 ? 'Gastar ticket' : 'Esperando ticket...'}
                             </button>
-                            <button class="auction-btn ${availableTickets > 0 ? 'available' : 'disabled'}" 
+                            <button class="${buttonClass} ${availableTickets > 0 ? 'available' : 'disabled'}" 
                                     style="display: flex;" data-challenge-id="${id}"
                                     ${availableTickets === 0 ? 'disabled' : ''}>
-                                Subastar${bonusHtml}
+                                ${buttonText}
                             </button>
                         </div>
                         
-                        ${!stats.hasX2Bonus && availableTickets > 0 ? `
+                        ${!canAuction && availableTickets > 0 ? `
                             <div class="footer-hint">
-                                💡 Mejora tu tiempo promedio para activar bonus x2 en subastas
+                                💡 Mejora tu tiempo promedio para desbloquear subastas
+                            </div>
+                        ` : canAuction && availableTickets > 0 ? `
+                            <div class="footer-hint">
+                                🚀 ¡Tiempo mejorado! Puedes subastar por más puntos
                             </div>
                         ` : ''}
                     </div>
@@ -529,36 +533,35 @@
         }
     }
 
-    function handleAuctionTicket(challengeId) {
+    function handleAuctionOrSellTicket(challengeId) {
         const challenge = App.state.getAbstinenceChallengeById(challengeId);
         if (!challenge) return;
 
         if (challenge.availableTickets > 0) {
-            // Calcular precio inicial con bonus x2 si aplica
             const stats = App.state.getChallengeStats(challengeId);
-            let basePrice = challenge.baseTicketPoints;
+            const canAuction = stats && stats.hasX2Bonus;
+            const basePrice = challenge.baseTicketPoints;
             
-            
-            if (stats && stats.hasX2Bonus) {
-                basePrice *= 2; // Doble precio inicial si tiene bonus x2
-                console.log('🚀 Bonus x2 aplicado, nuevo precio:', basePrice);
-            }
-            
-            // Crear un objeto challenge compatible con el modal de subasta
-            const auctionChallenge = {
-                ...challenge,
-                firstLevelPoints: basePrice,
-                currentLevel: 1,
-                incrementPercent: 0,
-                bestStreak: challenge.bestAbstinenceTime || 0
-            };
-            
-            // Mostrar modal de subasta
-            if (App.ui.habits && App.ui.habits.showSimpleAuction) {
-                App.ui.habits.showSimpleAuction(auctionChallenge);
+            if (canAuction) {
+                // Ejecutar subasta
+                const auctionChallenge = {
+                    ...challenge,
+                    firstLevelPoints: basePrice,
+                    currentLevel: 1,
+                    incrementPercent: 0,
+                    bestStreak: challenge.bestAbstinenceTime || 0
+                };
+                
+                // Mostrar modal de subasta
+                if (App.ui.habits && App.ui.habits.showSimpleAuction) {
+                    App.ui.habits.showSimpleAuction(auctionChallenge);
+                } else {
+                    console.error('❌ Modal de subasta no disponible');
+                    // Fallback: vender directamente
+                    App.state.sellTicket(challengeId);
+                }
             } else {
-                console.error('❌ Modal de subasta no disponible');
-                // Fallback: vender directamente
+                // Venta directa al precio base
                 App.state.sellTicket(challengeId);
             }
         }
@@ -621,10 +624,10 @@
                     return;
                 }
                 
-                const auctionBtn = target.closest('.auction-btn');
+                const auctionBtn = target.closest('.auction-btn, .sell-btn');
                 if (auctionBtn) {
                     const challengeId = auctionBtn.dataset.challengeId;
-                    if (challengeId) handleAuctionTicket(challengeId);
+                    if (challengeId) handleAuctionOrSellTicket(challengeId);
                     return;
                 }
 

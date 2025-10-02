@@ -242,10 +242,9 @@
             
             // Solo agregar ticket si no se ha alcanzado el límite
             if (challenge.availableTickets >= dailyLimit) {
-                // Programar el próximo intento para más tarde
-                const totalAverage = calculateTotalAverage(challenge.consumptionHistory, challenge.initialInterval);
+                // ✅ SIMPLIFICADO: Usar SIEMPRE el intervalo inicial (constante)
                 const now = new Date();
-                challenge.nextTicketTime = new Date(now.getTime() + totalAverage).toISOString();
+                challenge.nextTicketTime = new Date(now.getTime() + challenge.initialInterval).toISOString();
                 
                 App.events.emit("showDiscreetMessage", `🚫 Límite de tickets alcanzado (${dailyLimit}/día). Usa los que tienes.`);
                 _saveStateToLocalStorage();
@@ -255,10 +254,9 @@
 
             challenge.availableTickets++;
             
-            // ✅ Usa calculateTotalAverage (SIN abstinencia actual)
-            const totalAverage = calculateTotalAverage(challenge.consumptionHistory, challenge.initialInterval);
+            // ✅ SIMPLIFICADO: Usar SIEMPRE el intervalo inicial (constante)
             const now = new Date();
-            challenge.nextTicketTime = new Date(now.getTime() + totalAverage).toISOString();
+            challenge.nextTicketTime = new Date(now.getTime() + challenge.initialInterval).toISOString();
 
             const isNearLimit = challenge.availableTickets >= dailyLimit - 1;
             const message = isNearLimit 
@@ -268,6 +266,33 @@
             App.events.emit("showDiscreetMessage", message);
             _saveStateToLocalStorage();
             App.events.emit("habitsUpdated");
+        },
+
+        addMultipleTickets: function(challengeId, ticketsToAdd) {
+            const state = App.state.get();
+            const challenge = state.habits.challenges.find(c => c.id === challengeId);
+            if (!challenge || !challenge.isActive || ticketsToAdd <= 0) return;
+            
+            const dailyLimit = calculateDailyTicketLimit(challenge.weeklyFrequency);
+            const maxTicketsToAdd = Math.max(0, dailyLimit - challenge.availableTickets);
+            const actualTicketsAdded = Math.min(ticketsToAdd, maxTicketsToAdd);
+            
+            if (actualTicketsAdded > 0) {
+                challenge.availableTickets += actualTicketsAdded;
+                
+                // ✅ SIMPLIFICADO: Usar SIEMPRE el intervalo inicial (constante)
+                const now = new Date();
+                challenge.nextTicketTime = new Date(now.getTime() + challenge.initialInterval).toISOString();
+                
+                // Mensaje apropiado según la cantidad
+                const message = actualTicketsAdded === 1 
+                    ? `¡Nuevo ticket disponible! 🎫 (${challenge.availableTickets}/${dailyLimit})`
+                    : `¡${actualTicketsAdded} tickets generados durante tu ausencia! 🎫 (${challenge.availableTickets}/${dailyLimit})`;
+                
+                App.events.emit("showDiscreetMessage", message);
+                _saveStateToLocalStorage();
+                App.events.emit("habitsUpdated");
+            }
         },
 
         updateAbstinenceChallenge: function(updatedChallenge) {
@@ -309,9 +334,148 @@
             return calculateDailyTicketLimit(challenge.weeklyFrequency);
         },
 
+        getTotalAverage: function(challengeId) {
+            const challenge = this.getAbstinenceChallengeById(challengeId);
+            if (!challenge) return 0;
+            // ✅ NOTA: Esta función solo se usa para estadísticas, NO para generación de tickets
+            return calculateTotalAverage(challenge.consumptionHistory, challenge.initialInterval);
+        },
+
+        getTicketInterval: function(challengeId) {
+            const challenge = this.getAbstinenceChallengeById(challengeId);
+            if (!challenge) return 0;
+            // ✅ NUEVO: Función clara para obtener el intervalo CONSTANTE de tickets
+            return challenge.initialInterval;
+        },
+
+        processAllChallengesOnLoad: function() {
+            const state = App.state.get();
+            if (!state.habits || !state.habits.challenges) {
+                console.log("No abstinence challenges found to process");
+                return;
+            }
+            
+            const now = new Date();
+            let totalTicketsGenerated = 0;
+            console.log(`Processing ${state.habits.challenges.length} abstinence challenges at ${now.toLocaleString()}`);
+            
+            state.habits.challenges.forEach(challenge => {
+                console.log(`Challenge "${challenge.name}": Active=${challenge.isActive}, Available tickets=${challenge.availableTickets}, Next ticket time=${challenge.nextTicketTime}`);
+            });
+            
+            state.habits.challenges.forEach(challenge => {
+                if (!challenge.isActive) return;
+                
+                const nextTicketTime = new Date(challenge.nextTicketTime);
+                
+                // Si es momento de generar tickets
+                if (now.getTime() >= nextTicketTime.getTime()) {
+                    // ✅ SIMPLIFICADO: Usar SIEMPRE el intervalo inicial (constante)
+                    const intervalConstante = challenge.initialInterval;
+                    
+                    if (intervalConstante > 0) {
+                        // Calcular el tiempo transcurrido desde que debería haberse generado el primer ticket
+                        const timePassed = now.getTime() - nextTicketTime.getTime();
+                        
+                        // Calcular cuántos intervalos completos han pasado + 1 (el ticket que ya era debido)
+                        let ticketsToAdd = 1 + Math.floor(timePassed / intervalConstante);
+                        
+                        const dailyLimit = calculateDailyTicketLimit(challenge.weeklyFrequency);
+                        const maxTicketsToAdd = Math.max(0, dailyLimit - challenge.availableTickets);
+                        ticketsToAdd = Math.min(ticketsToAdd, maxTicketsToAdd);
+                        
+                        if (ticketsToAdd > 0) {
+                            challenge.availableTickets += ticketsToAdd;
+                            
+                            // Calcular el tiempo restante correctamente
+                            // timePassed = tiempo total transcurrido desde que debía generarse el primer ticket
+                            // ticketsToAdd = número de tickets generados
+                            // Tiempo usado para generar tickets = (ticketsToAdd - 1) * intervalConstante
+                            // (restamos 1 porque el primer ticket era el que ya estaba debido)
+                            const timeUsedForTickets = (ticketsToAdd - 1) * intervalConstante;
+                            const remainingTime = timePassed - timeUsedForTickets;
+                            const timeUntilNextTicket = intervalConstante - remainingTime;
+                            
+                            challenge.nextTicketTime = new Date(now.getTime() + timeUntilNextTicket).toISOString();
+                            totalTicketsGenerated += ticketsToAdd;
+                            
+                            console.log(`Challenge ${challenge.name}:`);
+                            console.log(`  - Generated ${ticketsToAdd} tickets`);
+                            console.log(`  - Time passed: ${Math.round(timePassed / 1000 / 60)} minutes`);
+                            console.log(`  - Interval: ${Math.round(intervalConstante / 1000 / 60)} minutes`);
+                            console.log(`  - Time used for tickets: ${Math.round(timeUsedForTickets / 1000 / 60)} minutes`);
+                            console.log(`  - Remaining time from passed: ${Math.round(remainingTime / 1000 / 60)} minutes`);
+                            console.log(`  - Next ticket in: ${Math.round(timeUntilNextTicket / 1000 / 60)} minutes`);
+                        }
+                    }
+                }
+                
+                // Verificar si el reto debe completarse
+                const lastConsumption = new Date(challenge.lastConsumptionTime);
+                const daysSinceLastConsumption = Math.floor((now.getTime() - lastConsumption.getTime()) / (24 * 60 * 60 * 1000));
+                
+                if (daysSinceLastConsumption >= challenge.successDays) {
+                    challenge.isActive = false;
+                }
+            });
+            
+            if (totalTicketsGenerated > 0) {
+                _saveStateToLocalStorage();
+                const message = totalTicketsGenerated === 1 
+                    ? "¡Bienvenido de vuelta! Se generó 1 ticket durante tu ausencia 🎫"
+                    : `¡Bienvenido de vuelta! Se generaron ${totalTicketsGenerated} tickets durante tu ausencia 🎫`;
+                
+                // Mostrar mensaje después de un pequeño delay para que la UI esté lista
+                setTimeout(() => {
+                    App.events.emit("showDiscreetMessage", message);
+                    App.events.emit("habitsUpdated");
+                }, 500);
+            }
+        },
+
         /**
          * ✅ ACTUALIZADO: Usa calculateRecentAverageWithCurrent para estadísticas dinámicas
          */
+        // 🧪 FUNCIÓN DE PRUEBA TEMPORAL - Simula el ejemplo del usuario
+        testTicketCalculation: function() {
+            console.log("🧪 TESTING TICKET CALCULATION WITH USER EXAMPLE:");
+            console.log("Scenario: 10-minute intervals, user left with 1 minute remaining, returns after 36 minutes");
+            
+            const intervalMs = 10 * 60 * 1000; // 10 minutos en ms
+            const userLeftWithRemaining = 1 * 60 * 1000; // 1 minuto restante
+            const totalAbsenceTime = 36 * 60 * 1000; // 36 minutos ausente
+            
+            // Simular nextTicketTime cuando se fue (1 minuto en el futuro)
+            const whenUserLeft = new Date();
+            const nextTicketTimeWhenLeft = new Date(whenUserLeft.getTime() + userLeftWithRemaining);
+            
+            // Simular cuando regresa
+            const whenUserReturns = new Date(whenUserLeft.getTime() + totalAbsenceTime);
+            
+            // Calcular usando la misma lógica que processAllChallengesOnLoad
+            const timePassed = whenUserReturns.getTime() - nextTicketTimeWhenLeft.getTime();
+            const ticketsToAdd = 1 + Math.floor(timePassed / intervalMs);
+            
+            const timeUsedForTickets = (ticketsToAdd - 1) * intervalMs;
+            const remainingTime = timePassed - timeUsedForTickets;
+            const timeUntilNextTicket = intervalMs - remainingTime;
+            
+            console.log(`Expected results:`);
+            console.log(`  - Should generate: 4 tickets`);
+            console.log(`  - Should have 5 minutes until next ticket`);
+            console.log(`Actual results:`);
+            console.log(`  - Generated: ${ticketsToAdd} tickets`);
+            console.log(`  - Time passed: ${Math.round(timePassed / 1000 / 60)} minutes`);
+            console.log(`  - Time used for tickets: ${Math.round(timeUsedForTickets / 1000 / 60)} minutes`);
+            console.log(`  - Remaining time: ${Math.round(remainingTime / 1000 / 60)} minutes`);
+            console.log(`  - Next ticket in: ${Math.round(timeUntilNextTicket / 1000 / 60)} minutes`);
+            
+            const isCorrect = ticketsToAdd === 4 && Math.round(timeUntilNextTicket / 1000 / 60) === 5;
+            console.log(`✅ Test ${isCorrect ? 'PASSED' : 'FAILED'}!`);
+            
+            return { ticketsToAdd, timeUntilNextTicket: Math.round(timeUntilNextTicket / 1000 / 60) };
+        },
+
         getChallengeStats: function(challengeId) {
             const challenge = this.getAbstinenceChallengeById(challengeId);
             if (!challenge) return null;

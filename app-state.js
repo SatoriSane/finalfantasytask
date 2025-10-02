@@ -395,8 +395,5 @@
             }
         },
 
-        startChallengeProcessor: function() {
-            setInterval(() => this.processChallengeStreaks(), 5000);
-        }
     };
 })(window.App = window.App || {});

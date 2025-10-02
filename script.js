@@ -24,6 +24,11 @@
             const loadSuccessful = App.state.load();
 
             if (loadSuccessful) {
+                // Procesar retos de abstinencia al cargar (manejar ausencias)
+                if (App.state.processAllChallengesOnLoad) {
+                    App.state.processAllChallengesOnLoad();
+                }
+                
                 // Inicia procesos de fondo
                 if (App.state.startAbstinenceProcessor) {
                     App.state.startAbstinenceProcessor();

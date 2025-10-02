@@ -266,7 +266,7 @@
      */
     const updateChallengeState = (challenge) => {
         if (!challenge || !challenge.isActive) return;
-
+    
         const now = new Date();
         const nextTicketTime = new Date(challenge.nextTicketTime);
         
@@ -279,9 +279,8 @@
                 Object.assign(challenge, updatedChallenge);
             }
         }
-
+    
         // Verificar si el reto debe completarse
-        const createdAt = new Date(challenge.createdAt);
         const lastConsumption = new Date(challenge.lastConsumptionTime);
         const daysSinceLastConsumption = Math.floor((now.getTime() - lastConsumption.getTime()) / (24 * 60 * 60 * 1000));
         
@@ -342,10 +341,10 @@
             }
             
             // Actualizar gráfico solo si la abstinencia actual ha cambiado significativamente
-            // (cada 5 segundos para evitar saturar la app)
+            // (cada 2 segundos para evitar saturar la app)
             const chartContainer = card.querySelector('.chart-container');
             if (chartContainer) {
-                const currentMinute = Math.floor(now.getTime() / (5 * 1000));
+                const currentMinute = Math.floor(now.getTime() / (2 * 1000));
                 const lastUpdate = parseInt(chartContainer.dataset.lastUpdate || '0');
                 
                 if (currentMinute !== lastUpdate) {

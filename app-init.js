@@ -10,20 +10,15 @@
     window.App.utils = window.App.utils || {}; // Asegura que App.utils exista
 
     // ------------------- Service Worker & actualización -------------------
-    // ------------------- Service Worker & actualización -------------------
     // Procesar misiones programadas para hoy al iniciar
     document.addEventListener('DOMContentLoaded', () => {
         if (window.App && App.state && App.state.processScheduledMissionsForToday) {
             App.state.processScheduledMissionsForToday();
         }
+        
+        // NOTA: processAllChallengesOnLoad ahora se llama desde script.js después de cargar el estado
     });
 
-    // Iniciar el procesador de retos en segundo plano
-    setInterval(() => {
-        if (window.App && App.state && App.state.processChallengeStreaks) {
-            App.state.processChallengeStreaks();
-        }
-    }, 1000); // Revisa cada segundo
 
 
     // ------------------- Service Worker & actualización -------------------

@@ -40,14 +40,13 @@
     function generatePreviewContent() {
         const habitName = document.getElementById('habitName').value.trim();
         const weeklyFrequency = parseInt(document.getElementById('weeklyFrequency').value) || 0;
-        const successValue = parseFloat(document.getElementById('successValue').value) || 0;
-        const successUnit = document.getElementById('successUnit').value;
+        const successDays = parseInt(document.getElementById('successDays').value) || 0;
         
         // Usar el mismo selector robusto
         const baseTicketPointsElement = document.querySelector('#abstinenceChallengeModal #baseTicketPoints');
         const baseTicketPoints = baseTicketPointsElement ? parseInt(baseTicketPointsElement.value) || 10 : 10;
         
-        if (!habitName || weeklyFrequency <= 0 || successValue <= 0 || baseTicketPoints <= 0) {
+        if (!habitName || weeklyFrequency <= 0 || successDays <= 0 || baseTicketPoints <= 0) {
             return '<p style="color: #f44336;">Por favor completa todos los campos correctamente.</p>';
         }
         
@@ -56,12 +55,7 @@
         const dailyTickets = Math.round((24 * 60 * 60 * 1000) / intervalMs * 10) / 10;
         const dailyLimit = Math.max(1, Math.ceil(weeklyFrequency / 7));
         
-        const unitNames = {
-            'hours': successValue === 1 ? 'hora' : 'horas',
-            'days': successValue === 1 ? 'día' : 'días',
-            'weeks': successValue === 1 ? 'semana' : 'semanas',
-            'months': successValue === 1 ? 'mes' : 'meses'
-        };
+        const dayText = successDays === 1 ? 'día' : 'días';
         
         return `
             <div class="preview-summary">
@@ -85,7 +79,7 @@
                     </div>
                     <div class="stat-item success-goal">
                         <span class="stat-label">Meta de éxito:</span>
-                        <span class="stat-value">${successValue} ${unitNames[successUnit]}</span>
+                        <span class="stat-value">${successDays} ${dayText}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Valor por ticket:</span>
@@ -101,18 +95,6 @@
         `;
     }
 
-    /**
-     * Convierte el período de éxito a días
-     */
-    function convertSuccessPeriodToDays(value, unit) {
-        const conversions = {
-            'hours': value / 24,
-            'days': value,
-            'weeks': value * 7,
-            'months': value * 30
-        };
-        return conversions[unit] || value;
-    }
 
     /**
      * Maneja el envío del formulario de creación del reto.
@@ -134,8 +116,13 @@
             return showError('La frecuencia semanal debe ser un número entre 1 y 9999.');
         }
 
-        const successValue = parseFloat(document.getElementById('successValue').value);
-        const successUnit = document.getElementById('successUnit').value;
+        const successDays = parseInt(document.getElementById('successDays').value);
+        if (isNaN(successDays) || successDays < 1) {
+            return showError('Los días de éxito deben ser un número mayor a 0.');
+        }
+        if (successDays > 365) {
+            return showError('El período máximo es 365 días.');
+        }
         
         // Buscar el elemento de manera más robusta
         const baseTicketPointsElement = document.querySelector('#abstinenceChallengeModal #baseTicketPoints');
@@ -143,27 +130,9 @@
             return showError('Error: No se pudo encontrar el campo de puntos.');
         }
         
-        // Forzar la lectura del valor actual del DOM
-        const rawValue = baseTicketPointsElement.value;
-        const baseTicketPoints = parseInt(rawValue);
-        
-        
-        
-        if (isNaN(successValue) || successValue <= 0) {
-            return showError('El período de éxito debe ser un número mayor a 0.');
-        }
-
+        const baseTicketPoints = parseInt(baseTicketPointsElement.value);
         if (isNaN(baseTicketPoints) || baseTicketPoints < 1 || baseTicketPoints > 1000) {
             return showError('Los puntos por ticket deben ser un número entre 1 y 1000.');
-        }
-
-        // Convertir a días para validación
-        const successDays = convertSuccessPeriodToDays(successValue, successUnit);
-        if (successDays < 0.04) { // Mínimo 1 hora
-            return showError('El período mínimo es 1 hora.');
-        }
-        if (successDays > 365) {
-            return showError('El período máximo es 365 días.');
         }
 
         // Llama a la función global de estado para crear el reto
@@ -205,16 +174,9 @@
                 return showError('La frecuencia semanal debe ser un número entre 1 y 9999.');
             }
 
-            const successValue = parseFloat(document.getElementById('successValue').value);
-            const successUnit = document.getElementById('successUnit').value;
-            
-            if (isNaN(successValue) || successValue <= 0) {
-                return showError('El período de éxito debe ser un número mayor a 0.');
-            }
-
-            const successDays = convertSuccessPeriodToDays(successValue, successUnit);
-            if (successDays < 0.04) {
-                return showError('El período mínimo es 1 hora.');
+            const successDays = parseInt(document.getElementById('successDays').value);
+            if (isNaN(successDays) || successDays < 1) {
+                return showError('Los días de éxito deben ser un número mayor a 0.');
             }
             if (successDays > 365) {
                 return showError('El período máximo es 365 días.');
@@ -245,9 +207,7 @@
         createBtn.addEventListener('click', () => {
             const habitName = document.getElementById('habitName').value.trim();
             const weeklyFrequency = parseInt(document.getElementById('weeklyFrequency').value);
-            const successValue = parseFloat(document.getElementById('successValue').value);
-            const successUnit = document.getElementById('successUnit').value;
-            const successDays = convertSuccessPeriodToDays(successValue, successUnit);
+            const successDays = parseInt(document.getElementById('successDays').value);
             
             // Leer el valor de puntos base
             const baseTicketPointsElement = document.querySelector('#abstinenceChallengeModal #baseTicketPoints');
@@ -287,16 +247,9 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="successValue">¿Cuánto tiempo sin el hábito consideras un éxito?</label>
-                                <div class="input-group">
-                                    <input id="successValue" type="number" min="0.1" step="0.1" value="30" required />
-                                    <select id="successUnit" required>
-                                        <option value="hours">Horas</option>
-                                        <option value="days" selected>Días</option>
-                                        <option value="weeks">Semanas</option>
-                                        <option value="months">Meses</option>
-                                    </select>
-                                </div>
+                                <label for="successDays">¿Cuántos días sin el hábito consideras un éxito?</label>
+                                <input id="successDays" type="number" min="1" step="1" value="14" required />
+                                <small class="form-hint">Número de días consecutivos sin el hábito para completar el reto</small>
                             </div>
 
                             <div class="form-group">
@@ -341,16 +294,10 @@
      * Muestra la explicación de cómo desbloquear subastas
      */
     function showBonusExplanation() {
-        const successValue = parseFloat(document.getElementById('successValue').value) || 30;
-        const successUnit = document.getElementById('successUnit').value;
+        const successDays = parseInt(document.getElementById('successDays').value) || 30;
         const weeklyFrequency = parseInt(document.getElementById('weeklyFrequency').value) || 50;
         
-        const unitNames = {
-            'hours': successValue === 1 ? 'hora' : 'horas',
-            'days': successValue === 1 ? 'día' : 'días',
-            'weeks': successValue === 1 ? 'semana' : 'semanas',
-            'months': successValue === 1 ? 'mes' : 'meses'
-        };
+        const dayText = successDays === 1 ? 'día' : 'días';
         
         const intervalMs = calculateInitialInterval(weeklyFrequency);
         const formattedInterval = formatDuration(intervalMs);
@@ -362,10 +309,10 @@
         document.getElementById('previewContent').innerHTML = `
             <div class="info-detail">
                 <h3>🚀 ¿Cómo Desbloquear Subastas?</h3>
-                <p>El sistema compara tu progreso en dos períodos de <strong>${successValue} ${unitNames[successUnit]}</strong>:</p>
+                <p>El sistema compara tu progreso en dos períodos de <strong>${successDays} ${dayText}</strong>:</p>
                 <ul>
-                    <li><strong>Período anterior:</strong> De ${successValue * 2} a ${successValue} ${unitNames[successUnit]} atrás</li>
-                    <li><strong>Período actual:</strong> Últimos ${successValue} ${unitNames[successUnit]} (incluye abstinencia en curso)</li>
+                    <li><strong>Período anterior:</strong> De ${successDays * 2} a ${successDays} ${dayText} atrás</li>
+                    <li><strong>Período actual:</strong> Últimos ${successDays} ${dayText} (incluye abstinencia en curso)</li>
                 </ul>
                 <p>Si tu tiempo promedio entre consumos mejora, <strong>desbloqueas las subastas</strong> donde puedes ganar muchos más puntos.</p>
                 <p><strong>Ejemplo:</strong> Si antes consumías cada ${formattedInterval} y ahora cada ${formatDuration(intervalMs * 1.05)} (+5%), ¡subastas desbloqueadas!</p>

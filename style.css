@@ -1,11 +1,13 @@
 /* style.css - Archivo principal que importa otros módulos CSS */
 
 @import 'base.css';
+@import 'agenda/agenda.css';
 @import 'layout.css';
 @import 'forms-modals.css';
 @import 'sections.css';
 @import 'components.css'; 
-@import 'today.css';    
-@import 'shop.css';     
-@import 'habits.css';   
-@import 'modal-subasta.css';
+@import "tab-missions/tab-missions.css";
+@import 'tab-today/today.css';    
+@import 'tab-shop/shop.css';     
+@import 'tab-habits/habits.css';   
+@import 'modal-subasta/modal-subasta.css';

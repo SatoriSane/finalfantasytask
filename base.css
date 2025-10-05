@@ -201,33 +201,6 @@ button.secondary:hover,
 }
 
 .discreet-btn .icon { font-size: 1.1rem; }
-/* Estilo para el ícono de edición de categoría */
-.edit-category-icon {
-    opacity: 0.4;
-    transition: opacity 0.2s ease-in-out;
-    cursor: pointer;
-    margin-left: 0.5em; /* Espacio entre el nombre y el ícono */
-    vertical-align: middle;
-}
-
-.edit-category-icon:hover {
-    opacity: 0.8;
-}
-
-/* Estilo para el campo de entrada de edición */
-.edit-category-input {
-    background: transparent;
-    border: none;
-    font-size: 1.5em;
-    font-weight: bold;
-    color: var(--ff-text-light); /* O el color que uses para el nombre */
-    padding: 0;
-    margin: 0;
-    width: 100%; /* Para que ocupe todo el espacio disponible */
-    border-bottom: 2px solid var(--ff-primary-color);
-    outline: none;
-    box-shadow: none;
-}
 
 .mission-points-actions {
     display: flex; 

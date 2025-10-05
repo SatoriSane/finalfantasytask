@@ -33,59 +33,7 @@
     line-height: 1.4;
 }
 
-/* ===================== BOTONES ICON-ICON ===================== */
-.icon-btn.schedule-btn {
-    background-color: #3A4767;
-    color: var(--ff-accent);
-    border: 1px solid var(--ff-border);
-}
 
-.icon-btn.schedule-btn:hover {
-    background-color: var(--ff-accent);
-    color: var(--ff-bg-dark);
-    transform: scale(1.15);
-    box-shadow: var(--shadow-sm);
-}
-
-
-
-/* Para task-card o mission-card que contiene barra */
-.task-card:has(.repetition-progress-bar),
-.mission-card:has(.repetition-progress-bar) {
-    background-color: var(--ff-bg-dark) !important;
-    border: 1px solid var(--ff-accent);
-}
-
-/* Contador de repeticiones encima de la barra */
-.repetition-counter {
-    font-size: 0.9em;
-    color: var(--ff-text-dark);
-    font-weight: 600;
-    white-space: nowrap;
-    position: relative;
-    z-index: 1;
-}
-
-/* ===================== TARJETAS DE MISIÓN PROGRAMADA ===================== */
-.mission-card.is-scheduled-in-book {
-    border: 2px solid var(--ff-primary-color);
-    box-shadow: 0 0 8px rgba(var(--ff-primary-dark-rgb), 0.3);
-}
-
-.scheduled-mission-name .icon-scheduled {
-    margin-right: 8px;
-    font-size: 1.2em;
-    color: var(--ff-accent);
-}
-
-.recurrence-info {
-    font-size: 0.85rem;
-    color: var(--ff-text-dark);
-    margin-left: 0.5rem;
-    font-style: italic;
-    white-space: normal;
-    text-align: right;
-}
 
 /* ===================== BOTONES ELIMINAR ===================== */
 .task-card .delete-btn,
@@ -113,48 +61,6 @@
     visibility: hidden;
     transform: scale(0.8);
     transition: all 0.3s ease-in-out;
-}
-/* Make the entire category header a flex container */
-.cat-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* Style for the category name wrapper */
-.category-name-wrapper {
-    display: flex;
-    align-items: center;
-}
-
-/* Style for the edit icon */
-.edit-category-icon {
-    /* Set a low opacity by default to make it subtle or invisible */
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out; /* Add a smooth fade-in/out effect */
-    cursor: pointer;
-    margin-left: 0.5em;
-    vertical-align: middle;
-}
-
-/* Make the icon fully visible on hover over the entire category header */
-.cat-header:hover .edit-category-icon {
-    opacity: 0.7; /* Use a value like 0.7 for a subtle yet clear effect */
-}
-
-/* Style for the edit input field */
-.edit-category-input {
-    background: transparent;
-    border: none;
-    font-size: 1.5em;
-    font-weight: bold;
-    color: var(--ff-text-light); /* Or your primary text color */
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    border-bottom: 2px solid var(--ff-primary-color);
-    outline: none;
-    box-shadow: none;
 }
 .show-delete .delete-btn {
     opacity: 1;
@@ -315,29 +221,9 @@
     box-sizing: border-box;
 }
 
-/* ===================== COMPONENTES ESPECÍFICOS DE MISIÓN ===================== */
-.mission-card .points-and-action {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.mission-card .mission-name {
-    font-weight: 600;
-    flex-grow: 1;
-    font-size: 1.1rem;
-    padding-left: 20px;
-}
-
-.mission-card .mission-points {
-    font-weight: 700;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.2rem;
-    color: var(--positive-color);
-    white-space: nowrap;
-}
 
 /* ===================== COMPONENTES DE TIENDA ===================== */
+
 
 /* ===================== ANIMACIONES DE HÁBITOS ===================== */
 .habit-item.completed-visual-feedback {

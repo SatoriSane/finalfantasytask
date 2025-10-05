@@ -1,0 +1,44 @@
+
+/* ===================== MISIÓN PROGRAMADA ===================== */
+
+#scheduledMissionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#scheduledMissionsList .date-group-header {
+    background: var(--ff-bg-dark);
+    padding: 0.8rem 1.2rem;
+    border-radius: var(--border-radius-sm);
+    margin-top: 1.5rem;
+    font-size: 1.0rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+    border: 1px solid var(--ff-border);
+    text-align: center;
+}
+
+#scheduledMissionsList .scheduled-mission-card {
+    background: var(--ff-bg-light);
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--ff-border);
+    transition: all var(--transition-speed);
+}
+
+#scheduledMissionsList .scheduled-mission-card:hover {
+    background-color: var(--ff-bg-medium);
+    border-color: var(--ff-accent);
+    transform: translateY(-3px);
+}
+
+#scheduledMissionsList .scheduled-mission-name {
+    font-weight: 600;
+    flex-grow: 1;
+    font-size: 1.1rem;
+}

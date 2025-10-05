@@ -242,7 +242,7 @@
                 buttonsWrapper.style.gap = '0.5rem';
 
                 const showFormBtn = document.createElement("button");
-                showFormBtn.className = "discreet-btn";
+                showFormBtn.className = "add-mission-btn";
                 showFormBtn.innerHTML = `<span class="icon">⚔️</span> `;
                 showFormBtn.onclick = (e) => {
                     e.stopPropagation();

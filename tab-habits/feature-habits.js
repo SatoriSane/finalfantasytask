@@ -270,10 +270,20 @@
         const now = new Date();
         const nextTicketTime = new Date(challenge.nextTicketTime);
         
-        // Verificar si es momento de generar un nuevo ticket
+        // Verificar si es momento de generar tickets
         if (now.getTime() >= nextTicketTime.getTime()) {
-            App.state.addTicket(challenge.id);
-            // Forzar actualización inmediata del challenge después de agregar ticket
+            // Calcular cuántos tickets deberían generarse
+            const timePassed = now.getTime() - nextTicketTime.getTime();
+            const ticketsToAdd = 1 + Math.floor(timePassed / challenge.initialInterval);
+            
+            // Generar múltiples tickets si es necesario
+            if (ticketsToAdd > 1) {
+                App.state.addMultipleTickets(challenge.id, ticketsToAdd);
+            } else {
+                App.state.addTicket(challenge.id);
+            }
+            
+            // Actualizar challenge
             const updatedChallenge = App.state.getAbstinenceChallengeById(challenge.id);
             if (updatedChallenge) {
                 Object.assign(challenge, updatedChallenge);

@@ -231,9 +231,6 @@
                 });
             }
         },
-
-        // --- FUNCIÓN ANTIGUA ELIMINADA ---
-        // reorderTodayTask: function(draggedId, targetId) { ... }
         
         getTodayTasks: function() {
             return _get().tasksByDate[App.utils.getFormattedDate()] || [];

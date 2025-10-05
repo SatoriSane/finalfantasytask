@@ -16,6 +16,11 @@
             App.state.processScheduledMissionsForToday();
         }
         
+        // Mover tareas incompletas del día anterior a hoy
+        if (window.App && App.state && App.state.rolloverUncompletedTasks) {
+            App.state.rolloverUncompletedTasks();
+        }
+        
         // NOTA: processAllChallengesOnLoad ahora se llama desde script.js después de cargar el estado
     });
 

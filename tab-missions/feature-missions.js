@@ -347,29 +347,34 @@
                 form.setAttribute("aria-label", "Agregar nueva misión");
                 form.innerHTML = `
                     <input type="text" name="missionName" placeholder="Nombre de la misión" required />
-                    <input type="number" name="missionPoints" placeholder="Puntos por repetición" required />
+                    <input type="number" name="missionPoints" placeholder="Puntos por repetición" />
                     <button type="submit" class="primary">➕</button>`;
-                form.onsubmit = (e) => {
-                    e.preventDefault();
-                    const nameInput = form.querySelector("input[name='missionName']");
-                    const pointsInput = form.querySelector("input[name='missionPoints']");
-
-                    const name = nameInput ? nameInput.value.trim() : '';
-                    const points = pointsInput ? parseInt(pointsInput.value.trim(), 10) : NaN;
-
-                    if (!name) {
-                        App.events.emit('showAlert', "El nombre de la misión es requerido.");
-                        return;
-                    }
-                    if (isNaN(points)) {
-                        App.events.emit('showAlert', "Los puntos deben ser un número.");
-                        return;
-                    }
-
-                    App.state.addMission(name, points, cat.id);
-                    if (nameInput) nameInput.value = '';
-                    if (pointsInput) pointsInput.value = '';
-                };
+                    form.onsubmit = (e) => {
+                        e.preventDefault();
+                        const nameInput = form.querySelector("input[name='missionName']");
+                        const pointsInput = form.querySelector("input[name='missionPoints']");
+                    
+                        const name = nameInput ? nameInput.value.trim() : '';
+                        // Si el usuario no introduce nada, usamos 1 por defecto
+                        const points = pointsInput && pointsInput.value.trim() !== '' 
+                            ? parseInt(pointsInput.value.trim(), 10) 
+                            : 1;
+                    
+                        if (!name) {
+                            App.events.emit('showAlert', "El nombre de la misión es requerido.");
+                            return;
+                        }
+                        if (isNaN(points)) {
+                            App.events.emit('showAlert', "Los puntos deben ser un número.");
+                            return;
+                        }
+                    
+                        App.state.addMission(name, points, cat.id);
+                    
+                        if (nameInput) nameInput.value = '';
+                        if (pointsInput) pointsInput.value = '';
+                    };
+                    
                 addMissionFormContainer.appendChild(form);
                 container.appendChild(categoryWrapper);
             });

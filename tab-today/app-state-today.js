@@ -176,6 +176,13 @@
                 if (task.missionId) {
                     App.state.trackMissionCompletion(task.missionId);
                 }
+                
+                // Auto-eliminar misiones de un solo día que han sido completadas
+                if (App.state.autoDeleteCompletedSingleDayMissions) {
+                    setTimeout(() => {
+                        App.state.autoDeleteCompletedSingleDayMissions();
+                    }, 100); // Pequeño delay para asegurar que el estado se haya guardado
+                }
             } else {
                 App.events.emit('showDiscreetMessage', `¡${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})! +${pointsAwarded}`);
             }

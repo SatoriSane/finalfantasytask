@@ -39,11 +39,10 @@
                 if (missionIndex !== -1) {
                     state.missions.splice(missionIndex, 1);
                     state.scheduledMissions = state.scheduledMissions.filter(sm => sm.missionId !== missionId);
-                    const today = App.utils.getFormattedDate();
-                    if (state.tasksByDate[today]) {
-                        state.tasksByDate[today] = state.tasksByDate[today].filter(t => t.missionId !== missionId);
-                    }
-
+                    
+                    // NO eliminar tareas de hoy - las tareas de hoy deben persistir
+                    // incluso si se elimina la misión del libro de misiones
+                    
                     _save();
                     App.events.emit('missionsUpdated');
                     App.events.emit('todayTasksUpdated');
@@ -238,6 +237,63 @@
                     }
                 });
             }
+        },
+
+        // Función para verificar si una misión fue programada solo para un día específico
+        isSingleDayMission: function(missionId, targetDate) {
+            const state = _get();
+            const scheduledMissions = state.scheduledMissions.filter(sm => sm.missionId === missionId);
+            
+            if (scheduledMissions.length === 0) return false;
+            
+            // Si hay múltiples programaciones, no es de un solo día
+            if (scheduledMissions.length > 1) return false;
+            
+            const scheduled = scheduledMissions[0];
+            
+            // Si es recurrente, no es de un solo día
+            if (scheduled.isRecurring) return false;
+            
+            // Verificar si la fecha programada coincide con la fecha objetivo
+            return scheduled.scheduledDate === targetDate;
+        },
+        
+        // Función para auto-eliminar misiones de un solo día que han sido completadas
+        autoDeleteCompletedSingleDayMissions: function() {
+            const state = _get();
+            const today = App.utils.getFormattedDate();
+            const todayTasks = state.tasksByDate[today] || [];
+            
+            // Buscar tareas completadas que correspondan a misiones de un solo día
+            const completedTasks = todayTasks.filter(task => 
+                task.completed && 
+                task.missionId && 
+                this.isSingleDayMission(task.missionId, today)
+            );
+            
+            let deletedCount = 0;
+            completedTasks.forEach(task => {
+                const mission = state.missions.find(m => m.id === task.missionId);
+                if (mission) {
+                    // Eliminar la misión del libro de misiones
+                    const missionIndex = state.missions.findIndex(m => m.id === task.missionId);
+                    if (missionIndex !== -1) {
+                        state.missions.splice(missionIndex, 1);
+                        // También eliminar la programación
+                        state.scheduledMissions = state.scheduledMissions.filter(sm => sm.missionId !== task.missionId);
+                        deletedCount++;
+                        console.log(`Auto-eliminada misión de un día completada: "${mission.name}"`);
+                    }
+                }
+            });
+            
+            if (deletedCount > 0) {
+                _save();
+                App.events.emit('missionsUpdated');
+                App.events.emit('scheduledMissionsUpdated');
+            }
+            
+            return deletedCount;
         },
 
         getMissionById: (id) => _get().missions.find(m => m.id === id),

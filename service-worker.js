@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v1'; // Incremented version
+const CACHE_NAME = 'final-fantasy-tasks-cache-v2'; // Incremented version
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear
@@ -8,37 +8,55 @@ const APP_FILES = [
     'offline.html',
     'manifest.json',
     
-    // Scripts JS principales
+    // Scripts JS principales (raíz)
     'app-events.js',
     'app-init.js',
     'app-state.js',
-    'app-state-habits.js',
-    'app-state-missions.js',
-    'app-state-shop.js',
-    'app-state-today.js',
     'script.js',
     'utils.js',
+    'feature-data.js',
+    'feature-ui.js',
 
-    // Scripts de features
-    'features/feature-habits.js',
-    'features/feature-history.js',
-    'features/feature-missions.js',
-    'features/feature-scheduled.js',
-    'features/feature-shop.js',
-    'features/feature-today.js',
-    'features/feature-ui.js',
-    'features/feature-data.js',
+    // Tab TODAY
+    'tab-today/app-state-today.js',
+    'tab-today/feature-today.js',
+    'tab-today/today.css',
+
+    // Tab HABITS
+    'tab-habits/app-state-habits.js',
+    'tab-habits/feature-habits.js',
+    'tab-habits/habits.css',
+    'tab-habits/modal-abstinence-creation.js',
+
+    // Tab MISSIONS
+    'tab-missions/app-state-missions.js',
+    'tab-missions/feature-missions.js',
+    'tab-missions/tab-missions.css',
+
+    // Tab SHOP
+    'tab-shop/app-state-shop.js',
+    'tab-shop/feature-shop.js',
+    'tab-shop/shop.css',
+
+    // Tab HISTORY
+    'tab-history/feature-history.js',
+
+    // Agenda (Scheduled)
+    'agenda/feature-scheduled.js',
+    'agenda/agenda.css',
+
+    // Modal Subasta
+    'modal-subasta/modal-subasta-simple.js',
+    'modal-subasta/subasta-constantes-simple.js',
+    'modal-subasta/modal-subasta.css',
     
-    // Estilos CSS
+    // Estilos CSS globales
     'base.css',
     'components.css',
     'forms-modals.css',
-    'habits.css',
     'layout.css',
     'sections.css',
-    'shop.css',
-    'style.css',
-    'today.css'
+    'style.css'
 ];
 
 // ------------------- Install -------------------

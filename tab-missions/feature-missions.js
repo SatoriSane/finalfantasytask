@@ -117,7 +117,7 @@
             const missions = App.state.getMissions();
 
             if (categories.length === 0 && missions.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">No hay propósitos. Agrega una nueva para empezar.</p>`;
+                container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">No hay propósitos. Agrega uno nuevo para empezar.</p>`;
                 return;
             }
             categories.forEach(cat => {

@@ -92,6 +92,8 @@
     color: var(--positive-color);
     text-align: center;
     padding: 1.5rem;
+}
+
 /* ===================== MISIÓN ===================== */
 
 
@@ -176,3 +178,4 @@ tr.history-details-container {
 #tab-today h2 + .net-points-summary {
     margin-top: -0.5rem;
 }
+

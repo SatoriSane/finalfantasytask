@@ -510,7 +510,7 @@
                             </div>
                         </div>
                         
-                        ` : `<div class="completed-message">¡Reto completado con éxito! 🏆</div>`}
+                        ` : `<div class="habit-completed">¡Reto completado con éxito! 🏆</div>`}
                         
                         ${isActive ? `
                         <div class="tickets-info">

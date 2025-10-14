@@ -1,0 +1,274 @@
+/* base.css - Estilos globales, variables y tipografía base */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+/* 🎨 Variables CSS */
+:root {
+    --ff-primary-dark: #0A1128;
+    --ff-primary-dark-rgb: 10, 17, 40; /* Versión RGB para transparencia */
+    
+    --ff-secondary-light: #ecf0f1;
+    --ff-secondary-light-rgb: 236, 240, 241;
+
+    --ff-bg-dark: #0A1128;
+    --ff-bg-medium: #121A33;
+    --ff-bg-light: #182240;
+    --ff-bg-light-rgb: 24, 34, 64; /* ⭐ CRUCIAL: Versión RGB para transparencia de bg-light */
+    
+    --ff-accent: #00E4FF;
+    --ff-accent-rgb: 0, 228, 255; /* ⭐ CRUCIAL: Definido para uso en RGBA en la barra de progreso */
+    --ff-primary-color: #00E4FF; /* Usado para bordes, etc., igual que accent */
+
+    --ff-text-light: #E9F1FF;
+    --ff-text-dark: #8C99B2;
+    
+    --positive-color: #58E478; /* Color para puntos positivos */
+    --negative-color: #FF5A5F; /* Color para puntos negativos */
+    --ff-success-color: #58E478; /* Color para botones de éxito (ej. completar tarea) */
+    --positive-gradient: linear-gradient(90deg, #58E478, var(--ff-accent));
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 10px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.4), 0 6px 12px rgba(0,0,0,0.3);
+    
+    --border-radius-sm: 6px;
+    --border-radius-md: 10px;
+    
+    --transition-speed: 0.2s ease-in-out;
+    --fab-size: 56px;
+    --ff-border: #2A3C6B; /* Color para bordes de contenedores */
+
+    --ff-green: var(--positive-color);
+    --ff-orange: #FF9500;
+    --ff-red: var(--negative-color);
+}
+
+/* 🔄 Resets y Estilos Generales */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--ff-bg-dark);
+    color: var(--ff-text-light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.6;
+    padding: 0;
+    overflow-x: hidden; /* Evita el scroll horizontal */
+}
+
+/* 🚫 Utilidades */
+.no-seleccionable {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.positive { color: var(--positive-color); font-weight: 700; }
+.negative { color: var(--negative-color); font-weight: 700; }
+
+
+/* 🖋️ Tipografía */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--ff-accent);
+    text-shadow: 0 0 5px rgba(0, 228, 255, 0.4);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+h1 {
+    font-size: 1.8rem;
+    letter-spacing: 1.5px;
+}
+
+h2 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid var(--ff-accent);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* 🔘 Botones Generales */
+button {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    user-select: none;
+    font-family: 'Orbitron', sans-serif;
+}
+
+button.primary {
+    background-color: var(--ff-accent);
+    color: var(--ff-bg-dark);
+    box-shadow: var(--shadow-sm);
+}
+
+button.primary:hover {
+    background-color: #72faff;
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+button.secondary {
+    background-color: transparent;
+    color: var(--ff-accent);
+    border: 2px solid var(--ff-accent);
+}
+
+button.secondary:hover,
+.button-cancel:hover {
+    background-color: var(--ff-accent);
+    color: var(--ff-bg-dark);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.button-primary {
+    background-color: var(--ff-accent);
+    color: var(--ff-bg-dark);
+    box-shadow: var(--shadow-sm);
+}
+
+.button-primary:hover {
+    background-color: #72faff;
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.button-cancel {
+    background-color: transparent;
+    color: var(--ff-accent);
+    border: 2px solid var(--ff-accent);
+}
+
+
+.fab {
+    position: fixed;
+    bottom: calc(60px + 1.5rem);
+    right: 1.5rem;
+    background-color: var(--ff-bg-medium);
+    color: var(--ff-accent);
+    border-radius: 50%;
+    width: var(--fab-size);
+    height: var(--fab-size);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed), color var(--transition-speed);
+    z-index: 990;
+    border: 3px solid var(--ff-border);
+}
+
+.fab:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-lg);
+    background-color: var(--ff-accent);
+    color: var(--ff-bg-dark);
+}
+
+.discreet-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    background: var(--ff-bg-light);
+    color: var(--ff-text-light);
+    border: 1px solid var(--ff-border);
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-speed);
+}
+
+.discreet-btn:hover {
+    background: var(--ff-bg-dark);
+    border-color: var(--ff-accent);
+    color: var(--ff-accent);
+}
+
+.discreet-btn .icon { font-size: 1.1rem; }
+
+.mission-points-actions {
+    display: flex; 
+    align-items: center; 
+    gap: 1.2rem; 
+}
+.icon-btn {
+    background: var(--ff-bg-dark);
+    color: var(--ff-accent);
+    border: 1px solid var(--ff-border);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-speed);
+    user-select: none;
+}
+
+.icon-btn:hover {
+    color: var(--ff-bg-dark);
+    background-color: var(--ff-accent);
+    transform: scale(1.15);
+    box-shadow: var(--shadow-sm);
+}
+
+.icon-btn.discreet {
+    background: none;
+    border: none;
+    width: auto;
+    height: auto;
+    font-size: 1.2rem;
+}
+
+.icon-btn.discreet:hover {
+    color: var(--negative-color);
+    background-color: transparent;
+    transform: scale(1.2);
+}
+.github-connection-status {
+    margin: 0.5rem 0 1rem;
+    text-align: center;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    transition: all 0.3s ease;
+  }
+  
+  .github-connection-status.connected {
+    color: #00c851;
+    background: rgba(0, 200, 81, 0.1);
+  }
+  
+  .github-connection-status.disconnected {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+  }
+  /* ===================== CONTENEDOR DE MENSAJES ===================== */
+#notifyMessagesContainer {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+    pointer-events: none; /* evita interferir con clics en la UI */
+}

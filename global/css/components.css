@@ -1,0 +1,272 @@
+/* components.css - Estilos para componentes reutilizables */
+
+/* ===================== EXPLICACIÓN DE BONUS ===================== */
+.bonus-explanation {
+    background: var(--ff-bg-medium);
+    border: 1px solid var(--ff-border);
+    border-radius: var(--border-radius-sm);
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.bonus-explanation h4 {
+    color: var(--ff-accent);
+    margin: 0 0 0.8rem 0;
+    font-size: 1rem;
+}
+
+.bonus-explanation ul {
+    margin: 0.5rem 0;
+    padding-left: 1.2rem;
+}
+
+.bonus-explanation li {
+    margin-bottom: 0.3rem;
+    color: var(--ff-text-light);
+    font-size: 0.9rem;
+}
+
+.bonus-explanation p {
+    margin: 0.5rem 0;
+    color: var(--ff-text-light);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+
+
+/* ===================== BOTONES ELIMINAR ===================== */
+.task-card .delete-btn,
+.mission-card .delete-btn,
+.cat-header .delete-btn,
+.shop-card .delete-btn,
+.scheduled-mission-card .delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: transparent;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    border: 2px solid #cc3536;
+    z-index: 10;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+    transition: all 0.3s ease-in-out;
+}
+.show-delete .delete-btn {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+.delete-btn:hover {
+    transform: scale(1.1);
+}
+
+/* ===================== MENSAJES DE MOTIVACIÓN / CELEBRACIÓN ===================== */
+#motivationMessagesContainer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1020;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 90%;
+    max-width: 400px;
+}
+
+.motivation-message {
+    background: linear-gradient(45deg, var(--ff-accent), #72faff);
+    color: var(--ff-bg-dark);
+    padding: 0.8rem 1.5rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    white-space: normal;
+    word-break: break-word;
+    opacity: 0;
+    animation: popInAndFadeOut 4s forwards ease-out;
+    text-align: center;
+    border: 2px solid white;
+    transform: scale(0.8);
+    width: 100%;
+}
+
+@keyframes popInAndFadeOut {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) translateY(50px);
+    }
+    10% {
+        opacity: 1;
+        transform: scale(1.1) translateY(-10px);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    90% {
+        opacity: 1;
+        transform: scale(1) translateY(-20px);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8) translateY(-50px);
+    }
+}
+
+/* ===================== DRAG & DROP ===================== */
+.is-dragging {
+    opacity: 0.5;
+    border: 2px dashed var(--ff-accent) !important;
+}
+
+.drag-over {
+    box-shadow: 0 0 10px 3px var(--ff-accent) !important;
+    transform: scale(1.02);
+}
+
+
+
+/* ===================== BOTÓN PROGRAMAR MISIÓN (NO ICON-BTN) ===================== */
+.schedule-btn:not(.icon-btn) {
+    background-color: rgba(var(--ff-bg-medium-rgb), 0.8);
+    border: 3px solid rgba(var(--ff-border-rgb), 1);
+    border-radius: 50%;
+    color: var(--ff-accent);
+    font-size: 1.5em;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.schedule-btn:not(.icon-btn):hover {
+    background-color: rgba(var(--ff-bg-medium-rgb), 0.5);
+    border-color: var(--ff-accent);
+    color: #72faff;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+/* ===================== INPUTS DE REPETICIÓN DIARIA ===================== */
+.daily-reps-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.daily-reps-inputs label {
+    font-size: 0.9em;
+    color: var(--ff-text-dark);
+    text-align: left;
+    margin-bottom: 2px;
+}
+
+.daily-reps-inputs input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--ff-border);
+    border-radius: var(--border-radius-sm);
+    text-align: left;
+    box-sizing: border-box;
+}
+
+
+/* ===================== COMPONENTES DE TIENDA ===================== */
+
+
+/* ===================== ANIMACIONES DE HÁBITOS ===================== */
+.habit-item.completed-visual-feedback {
+    animation: habitCompleted 0.8s ease-out forwards;
+}
+
+@keyframes habitCompleted {
+    0% {
+        background-color: var(--ff-bg-dark);
+        box-shadow: none;
+        transform: scale(1);
+    }
+    50% {
+        background-color: rgba(var(--positive-color-rgb), 0.2);
+        box-shadow: 0 0 12px rgba(var(--positive-color-rgb), 0.5);
+        transform: scale(1.03);
+    }
+    100% {
+        background-color: var(--ff-bg-dark);
+        box-shadow: none;
+        transform: scale(1);
+    }
+}
+
+.habit-item.challenge-reset-feedback {
+    animation: challengeReset 0.8s ease-in-out forwards;
+}
+
+@keyframes challengeReset {
+    0%, 100% {
+        transform: translateX(0);
+        background-color: var(--ff-bg-dark);
+        box-shadow: none;
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-3px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(3px);
+    }
+    50% {
+         background-color: rgba(var(--negative-color-rgb), 0.15);
+         box-shadow: 0 0 10px rgba(var(--negative-color-rgb), 0.4);
+    }
+}
+
+/* ===================== BONUS MULTIPLIER (x2) ===================== */
+.bonus-multiplier {
+    font-size: 0.8em;
+    font-weight: 700;
+    color: var(--ff-bg-dark);
+    background-color: var(--ff-accent);
+    padding: 2px 6px;
+    border-radius: var(--border-radius-sm);
+    margin-left: 5px;
+    animation: pulse 1.5s infinite;
+    display: inline-block;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--ff-accent-rgb), 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(var(--ff-accent-rgb), 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(var(--ff-accent-rgb), 0);
+    }
+}

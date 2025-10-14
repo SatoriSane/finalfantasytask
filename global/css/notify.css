@@ -1,0 +1,64 @@
+.notify-message {
+    position: fixed;
+    top: 5rem;               /* Fijo cerca de la parte superior */
+    left: 50%;                  /* Centrado horizontal */
+    transform: translateX(-50%) translateY(-20px); /* Animación inicial arriba */
+    opacity: 0;
+    pointer-events: auto;
+    max-width: 240vw;
+    min-width: 220px;
+    text-align: center;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius-md);
+    background: rgba(var(--ff-bg-light-rgb), 0.95); /* Fondo más brillante */
+    color: var(--ff-text-light);
+    border: 1px solid var(--ff-accent); /* Borde sutil para destacarlo */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.45); /* Sombra más marcada */
+    backdrop-filter: blur(10px); /* Efecto vidrio */
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem; /* Espacio para icono */
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    z-index: 9999;
+}
+
+/* Icono opcional */
+.notify-message .icon {
+    font-size: 1.3rem;
+}
+
+/* Mostrar notificación con efecto pop */
+.notify-message.show {
+    transform: translateX(-50%) translateY(0); /* Subida desde arriba */
+    opacity: 1;
+}
+
+/* Animación de salida */
+.notify-message:not(.show) {
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+}
+
+/* Variantes de color para diferenciar tipos */
+.notify-message.success {
+    background: rgba(var(--positive-color-rgb), 0.95);
+    color: var(--ff-bg-dark);
+    border-color: var(--positive-color);
+}
+.notify-message.error {
+    background: rgba(var(--negative-color-rgb), 0.95);
+    color: var(--ff-bg-dark);
+    border-color: var(--negative-color);
+}
+.notify-message.info {
+    background: rgba(var(--ff-accent-rgb), 0.95);
+    color: var(--ff-bg-dark);
+    border-color: var(--ff-accent);
+}
+.notify-message.warning {
+    background: rgba(241, 196, 15, 0.95);
+    color: var(--ff-bg-dark);
+    border-color: #f1c40f;
+}

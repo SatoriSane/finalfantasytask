@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFTask</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="github-sync/github-sync.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0A1128">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FF Task">
+    <!-- Icono de Apple Touch eliminado para esta prueba, ya se manejará con los iconos genéricos del manifest -->
+</head>
+<body class="no-seleccionable">
+
+    <header class="navbar" role="banner">
+        <h1 id="appName" aria-label="Nombre de la aplicación">FFTask</h1>
+        <button id="githubSyncBtn" class="sync-status-btn disconnected" aria-label="Sincronización con GitHub">
+            <span class="sync-icon">☁️</span>
+            <span class="sync-text">Sin conectar</span>
+        </button>
+        <button id="totalPointsBtn" aria-live="polite" aria-label="Ver estadísticas de puntos">
+            <span class="points-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z" />
+                </svg>
+            </span>
+            <span id="pointsValue">0</span>
+        </button>
+    </header>
+    <div id="notifyMessagesContainer" aria-live="polite"></div>
+    <main>
+        <section id="tab-today" role="tabpanel" tabindex="0" aria-labelledby="navToday" class="active"
+            aria-hidden="false">
+            <div class="today-header">
+                <h2 id="todayTitle">Misiones de Hoy</h2>
+            
+                <!-- Barra de puntos con icono y contador -->
+                <div class="today-points-bar-wrapper">
+                    <!-- Icono SVG a la izquierda -->
+                    <span class="points-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path>
+                        </svg>
+                    </span>
+            
+                    <!-- Barra de progreso central -->
+                    <div class="net-points-bar">
+                        <div class="points-progress"></div>
+                    </div>
+            
+                    <!-- Número de puntos a la derecha -->
+                    <span class="net-points-value" id="todayPointsValue">0</span>
+                </div>
+            </div>
+            
+            
+            
+            <!-- Formulario de agregar tarea rápida -->
+            <div id="quickAddFormContainer" class="form-container">
+                <form id="quickAddForm" aria-label="Agregar tarea rápida a Hoy">
+                    <input id="quickAddNameInput" type="text" placeholder="Nombre de la tarea" autocomplete="off" required />
+                    <input id="quickAddPointsInput" type="number" placeholder="Puntos" min="1" value="1" autocomplete="off" required />
+                    <button type="submit" class="primary">➕</button>
+                </form>
+            </div>
+            
+            <div id="todayTasksList" role="list" aria-live="polite" aria-label="Lista de tareas para hoy"></div>
+            
+        </section>
+
+        <section id="tab-missions" role="tabpanel" tabindex="0" aria-labelledby="navMissions" aria-hidden="true">
+            <h2 id="missionsTitle">Libro de Misiones</h2>
+            <div class="actions-header">
+                <button id="showAddCategoryBtn" class="discreet-btn" aria-expanded="false"
+                aria-controls="addCategoryFormContainer">
+                <span class="icon">🧭</span> Nuevo Propósito
+            </button>
+            
+                <button id="toggleAgendaBtn" class="discreet-btn" aria-expanded="false" aria-controls="scheduledMissionsContainer">
+                    <span class="icon">🗓️</span> Agenda
+                </button>
+            </div>
+            <div id="addCategoryFormContainer" class="form-container">
+                <form id="addCategoryForm" aria-label="Formulario para agregar categoría">
+                    <input id="categoryInput" type="text" placeholder="Nombre del propósito" autocomplete="off"
+                        required />
+                    <button type="submit" class="primary">➕</button>
+                </form>
+            </div>
+            <div id="scheduledMissionsContainer" class="scheduled-missions-container" style="display: none;">
+                <div id="scheduledMissionsList" aria-live="polite" aria-label="Listado de misiones programadas">
+                </div>
+            </div>
+            <div id="missionsGrid" aria-live="polite" aria-label="Listado de categorías y misiones"></div>
+        </section>
+
+        <section id="tab-shop" role="tabpanel" tabindex="0" aria-labelledby="navShop" aria-hidden="true">
+            <h2 id="shopTitle">Tienda</h2>
+            <div class="form-toggle-btn">
+                <button id="showAddShopItemBtn" class="discreet-btn" aria-expanded="false"
+                    aria-controls="addShopItemFormContainer">
+                    <span class="icon">🛒</span> Agregar Producto
+                </button>
+            </div>
+            <div id="addShopItemFormContainer" class="form-container">
+                <form id="addShopItemForm" aria-label="Agregar nuevo gasto">
+                    <input id="shopItemName" type="text" placeholder="Nombre gasto" autocomplete="off" required />
+                    <input id="shopItemCost" type="number" placeholder="Costo en puntos" min="1" required />
+                    <button type="submit" class="primary">➕</button>
+                </form>
+            </div>
+            <div id="shopList" aria-live="polite" aria-label="Listado de gastos"></div>
+        </section>
+
+        <section id="tab-history" role="tabpanel" tabindex="0" aria-labelledby="navHistory" aria-hidden="true">
+            <div class="history-header">
+                <h2 id="historyTitle">Historial de Puntos</h2>
+            </div>
+            <table aria-label="Historial de puntos diarios">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Gané</th>
+                        <th>Gasté</th>
+                        <th>Neto</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </section>
+
+        <section id="tab-habits" role="tabpanel" tabindex="0" aria-labelledby="navHabits" aria-hidden="true">
+            <h2 id="habitsTitle">Seguimiento de Hábitos</h2>
+            <!-- El contenido dinámico de los hábitos se insertará aquí -->
+        </section>
+    </main>
+
+    <div id="statsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="statsTitle"
+        aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeStatsModal" aria-label="Cerrar estadísticas">&times;</button>
+            <h2 id="statsTitle">Estadísticas de Hoy</h2>
+            <div class="stats-row" aria-label="Estadísticas de puntos ganados, gastados y netos hoy">
+                <div>
+                    <span class="stats-label">Ganados</span>
+                    <span id="pointsEarned" class="stats-value">0</span>
+                </div>
+                <div>
+                    <span class="stats-label">Neto Hoy</span>
+                    <span id="pointsNet" class="stats-value">0</span>
+                </div>
+                <div>
+                    <span class="stats-label">Gastos</span>
+                    <span id="pointsSpent" class="stats-value">0</span>
+                </div>
+            </div>
+            <button id="openResetOptionsBtn" class="icon-btn settings-icon" aria-label="Opciones de reinicio" title="Opciones de reinicio">⚙️</button>
+        </div>
+    </div>
+    <div id="auctionModal" class="modal-overlay">
+        <div class="modal-content auction-content">
+            <button class="modal-close-btn">&times;</button>
+            
+            <!-- Partículas de fondo -->
+            <div class="auction-particles"></div>
+            
+            <!-- Título épico compacto -->
+            <div class="auction-header">
+                <h2 class="auction-title">🏆 SUBASTA ÉPICA 🏆</h2>
+            </div>
+            
+            <!-- Display del precio con efectos -->
+            <div class="auction-price-container">
+                <div class="price-label">Precio Inicial</div>
+                <div id="auctionCurrentPrice" class="current-price">⚡0 pts</div>
+            </div>
+            
+            <!-- Avatares de participantes -->
+            <div id="auctionParticipants" class="auction-participants" style="display: none;">
+                <div class="participants-label">Participantes</div>
+                <div id="participantAvatars" class="participant-avatars">
+                    <!-- Los avatares aparecerán aquí dinámicamente -->
+                </div>
+            </div>
+            
+            <!-- Historial animado de subasta -->
+            <div class="auction-history-container">
+                <div id="auctionHistory" class="auction-history">
+                    <!-- Los mensajes aparecerán aquí dinámicamente -->
+                </div>
+                <div id="auctionProgress" class="auction-progress" style="display: none;">
+                </div>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="auction-actions">
+                <button id="startAuctionBtn" class="auction-btn start-btn">
+                    <span class="btn-icon">🚀</span>
+                    <span class="btn-text">¡INICIAR SUBASTA!</span>
+                </button>
+                <button id="takePriceBtn" class="auction-btn take-btn" style="display: none;">
+                    <span class="btn-icon">⭐</span>
+                    <span class="btn-text">¡ACEPTAR OFERTA!</span>
+                </button>
+            </div>
+            
+            <!-- Efectos de celebración -->
+            <div id="celebrationEffects" class="celebration-effects" style="display: none;">
+                <div class="fireworks"></div>
+                <div class="confetti"></div>
+                <div class="victory-message">¡SUBASTA GANADA! 🎉</div>
+            </div>
+        </div>
+    </div>
+    <div id="resetConfirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="resetConfirmTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeResetConfirmModal" aria-label="Cerrar opciones de reinicio">&times;</button>
+            <h2 id="resetConfirmTitle">Opciones de Reinicio</h2>
+            <p style="margin-bottom: 1.5rem; text-align: center; color: var(--ff-text-light);">Elige cómo deseas reiniciar la aplicación. ¡Estas acciones son irreversibles!</p>
+            <div class="reset-options-container">
+                <button id="exportDataBtn" class="secondary reset-option-btn" aria-label="Exportar datos de la aplicación" title="Guardar una copia de seguridad de tus datos">
+                    <span class="icon">💾</span> Exportar Datos
+                </button>
+                <button id="importDataBtn" class="secondary reset-option-btn" aria-label="Importar datos a la aplicación" title="Cargar datos desde una copia de seguridad">
+                    <span class="icon">📂</span> Importar Datos
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+
+                <button id="resetHistoryBtn" class="secondary reset-option-btn" aria-label="Reiniciar solo historial" title="Reiniciar solo historial">
+                    <span class="icon">🧹</span> Reiniciar Historial
+                </button>
+                <button id="resetAppBtn" class="primary reset-option-btn" aria-label="Reiniciar aplicación (eliminar todos los datos)" title="Reiniciar aplicación (eliminar todos los datos)">
+                    <span class="icon">🗑️</span> Reiniciar TODO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editTemporaryTaskModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="editTemporaryTaskTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" aria-label="Cerrar editor de tarea">&times;</button>
+            <h2 id="editTemporaryTaskTitle">Editar Tarea Rápida</h2>
+            <form id="editTemporaryTaskForm">
+                <input type="hidden" id="editTemporaryTaskId">
+                <div class="form-group">
+                    <label for="editTemporaryTaskName">Nombre de la Tarea:</label>
+                    <input type="text" id="editTemporaryTaskName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editTemporaryTaskPoints">Puntos:</label>
+                    <input type="number" id="editTemporaryTaskPoints">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="scheduleMissionModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="scheduleMissionTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeScheduleMissionModal" aria-label="Cerrar programador de misión">&times;</button>
+            <div class="modal-header-content">
+                <h2 id="scheduleMissionModalTitle">Programar Misión</h2>
+            </div>
+            <input type="hidden" id="missionToScheduleId">
+
+            <div id="advancedScheduleOptions" class="active-schedule-section">
+                <div class="date-navigation-wrapper">
+                    <button id="prevDayBtn" class="nav-day-btn" aria-label="Día anterior"><span class="arrow-icon left"></span></button>
+                    <p class="modal-instruction"><strong id="scheduleDateDisplay"></strong></p>
+                    <button id="nextDayBtn" class="nav-day-btn" aria-label="Día siguiente"><span class="arrow-icon right"></span></button>
+                    <button id="unscheduleMissionBtn" class="icon-btn notify" style="display: none;" aria-label="Desprogramar Misión">🗑️</button>
+                </div>
+                
+                <!-- Toggle Switch para Repetir Misión (Nuevo diseño con una sola etiqueta) -->
+                <div class="toggle-container">
+                    <div class="toggle-switch" id="repeatMissionToggle" role="switch" aria-checked="false" tabindex="0">
+                        <div class="toggle-slider"></div>
+                    </div>
+                    <span class="toggle-label" id="repeatMissionStateLabel">No repetir</span>
+                </div>
+
+                <div id="repeatOptionsContainer">
+                    <div class="days-toggle" id="daysToggleContainer">
+                        <div class="day-btn" data-day="1">L</div>
+                        <div class="day-btn" data-day="2">M</div>
+                        <div class="day-btn" data-day="3">X</div>
+                        <div class="day-btn" data-day="4">J</div>
+                        <div class="day-btn" data-day="5">V</div>
+                        <div class="day-btn" data-day="6">S</div>
+                        <div class="day-btn" data-day="0">D</div>
+                    </div>
+                    <div class="repeat-input-group">
+                        <label for="repeatInterval">Cada</label>
+                        <input type="number" id="repeatInterval" min="1" value="1">
+                        <select id="repeatUnit">
+                            <option value="day">Día(s)</option>
+                            <option value="week">Semana(s)</option>
+                            <option value="month">Mes(es)</option>
+                        </select>
+                    </div>
+                    <div class="repeat-input-group" id="repeatEndDateGroup">
+                        <label for="repeatEndDate">Hasta (opcional):</label>
+                        <input type="date" id="repeatEndDate" min="">
+                    </div>
+                </div>
+
+                
+                <div class="modal-actions">
+                    <div class="main-actions">
+                        <button id="cancelAdvancedScheduleBtn" class="secondary">Cancelar</button>
+                        <button id="confirmScheduleBtn" class="primary">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="customAlertDialog" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="customAlertTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeAlertDialog" aria-label="Cerrar aviso">&times;</button>
+            <h2 id="customAlertTitle">Aviso</h2>
+            <p id="customAlertMessage" style="margin-bottom: 1.5rem; text-align: center; color: var(--ff-text-light);"></p>
+            <button class="primary" id="customAlertCloseBtn" style="width: 100%;">Aceptar</button>
+        </div>
+    </div>
+
+    <div id="customConfirmDialog" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="customConfirmTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeConfirmDialog" aria-label="Cerrar confirmación">&times;</button>
+            <h2 id="customConfirmTitle">Confirmación</h2>
+            <p id="customConfirmMessage" style="margin-bottom: 1.5rem; text-align: center; color: var(--ff-text-light);"></p>
+            <div class="modal-actions">
+                <button class="secondary" id="customConfirmNoBtn">Cancelar</button>
+                <button class="primary" id="customConfirmYesBtn">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Sincronización con GitHub -->
+    <div id="githubSyncModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="githubSyncTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeGithubSyncModal" aria-label="Cerrar sincronización">&times;</button>
+            <div id="githubSyncModalContent">
+                <!-- El contenido se renderizará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+
+
+    <div id="editMissionModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="editMissionTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeEditMissionModal" aria-label="Cerrar editor de misión">&times;</button>
+            <form id="editMissionForm">
+                <input type="hidden" id="editMissionId">
+                <input type="text" id="editMissionName" class="editable-title" placeholder="Título de la Misión" required>
+                <div class="form-group form-group-description">
+                    <textarea id="editMissionDescription" placeholder="Añade una descripción..."></textarea>
+                </div>
+                <div class="form-group-inline">
+                    <div class="form-group">
+                        <label for="editMissionDailyReps">Repeticiones máximas:</label>
+                        <input type="number" id="editMissionDailyReps" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="editMissionPoints">Puntos por repetición:</label>
+                        <input type="number" id="editMissionPoints" min="1" value="10">
+                    </div>
+                </div>
+                <button type="button" id="deleteMissionBtn" class="button-delete-icon button-corner-top-left">🗑️</button>
+                <div class="modal-actions">
+                    <button type="button" id="cancelEditMissionBtn" class="button-cancel">Cancelar</button>
+                    <button type="button" id="saveMissionChanges" class="button-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editShopItemModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="editShopItemTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeEditShopItemModal" aria-label="Cerrar editor de producto">&times;</button>
+            <h2 id="editShopItemTitle">Editar Producto</h2>
+            <form id="editShopItemForm" class="modal-form" style="display: block;">
+                <input type="hidden" id="editShopItemId">
+                <div class="form-group">
+                    <label for="editShopItemName">Nombre:</label>
+                    <input type="text" id="editShopItemName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editShopItemCost">Costo:</label>
+                    <input type="number" id="editShopItemCost" min="1" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="deleteShopItemBtn" class="button-cancel">Eliminar</button>
+                    <button type="button" id="saveShopItemChanges" class="button-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="motivationMessagesContainer" aria-live="polite"></div>
+
+    <div id="temptationModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <h2>🧘‍♀️ Momento de Pausa</h2>
+            <p>Detectamos que quieres consumir antes de tiempo. Te invitamos a tomar un momento para reflexionar:</p>
+            
+            <div id="temptationActions" class="modal-actions">
+                <button id="breatheBtn" class="primary">🌬️ Respirar (10 veces)</button>
+                <button id="giveInBtn" class="secondary">Ceder a la tentación</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Respiración Zen (Pantalla Completa) -->
+    <div id="zenBreathingModal" class="zen-fullscreen-modal">
+        <div class="zen-container">
+            <button class="zen-close-btn" id="zenCloseBtn">&times;</button>
+            
+            <div class="zen-content">
+                <h1 class="zen-title">Respiración Consciente</h1>
+                <div class="zen-subtitle">Tómate un momento para ti</div>
+                
+                <div class="breathing-circle-container">
+                    <div class="breathing-circle">
+                        <div class="breathing-inner-circle"></div>
+                    </div>
+                </div>
+                
+                <div class="breathing-instructions">
+                    <div class="breathing-phase" id="breathingPhase">Prepárate...</div>
+                    <div class="breathing-counter">
+                        <span id="zenBreathingCount">10</span> respiraciones restantes
+                    </div>
+                </div>
+                
+                <div class="zen-progress">
+                    <div class="zen-progress-bar">
+                        <div class="zen-progress-fill" id="zenProgressFill"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pantalla de Completado -->
+            <div class="zen-completion" id="zenCompletion" style="display: none;">
+                <div class="completion-icon">✨</div>
+                <h2 class="completion-title">¡Excelente trabajo!</h2>
+                <p class="completion-message">Has completado tu ejercicio de respiración consciente</p>
+                <div class="completion-reward">+1 punto por resistir la tentación 💪</div>
+                <button class="zen-complete-btn" id="zenCompleteBtn">Gracias</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón flotante para agregar tarea rápida -->
+    <button id="showQuickAddBtn" class="floating-add-btn" aria-expanded="false" aria-controls="quickAddFormContainer" title="Agregar Tarea Rápida">
+        <span class="icon">➕</span>
+    </button>
+
+    <nav class="tabs" role="tablist" aria-label="Pestañas principales">
+        <button id="navToday" role="tab" aria-selected="true" aria-controls="tab-today" tabindex="0" class="active">
+            <span class="icon">📜</span> Hoy
+        </button>
+        <button id="navMissions" role="tab" aria-selected="false" aria-controls="tab-missions" tabindex="-1">
+            <span class="icon">🧭</span> Propósitos
+        </button>
+        <button id="navShop" role="tab" aria-selected="false" aria-controls="tab-shop" tabindex="-1">
+            <span class="icon">🛒</span> Tienda
+        </button>
+        <button id="navHistory" role="tab" aria-selected="false" aria-controls="tab-history" tabindex="-1">
+            <span class="icon">📈</span> Historial
+        </button>
+        <button id="navHabits" role="tab" aria-selected="false" aria-controls="tab-habits" tabindex="-1">
+            <span class="icon">⚡</span> Hábitos
+        </button>
+    </nav>
+    <script src="global/js/app-init.js"></script>
+    <script src="global/js/app-events.js"></script>
+    <script src="global/js/feature-ui.js"></script>
+    <script src="global/js/utils.js"></script>
+    <script src="agenda/feature-scheduled.js"></script>
+    <script src="global/js/app-state.js"></script>
+    <script src="global/js/feature-data.js"></script>
+    <script src="modal-subasta/subasta-constantes-simple.js"></script>
+    <script src="modal-subasta/modal-subasta-simple.js"></script>
+    <script src="tab-habits/app-state-habits.js"></script>
+    <script src="tab-missions/app-state-missions.js"></script>
+    <script src="tab-today/app-state-today.js"></script>
+    <script src="tab-shop/app-state-shop.js"></script>
+    <script src="tab-today/feature-today.js"></script>
+    <script src="tab-missions/feature-missions.js"></script>
+    <script src="tab-shop/feature-shop.js"></script>
+    <script src="tab-history/feature-history.js"></script>
+    <script src="tab-habits/feature-habits.js"></script>
+    <script src="tab-habits/modal-abstinence-creation.js"></script>
+    <script src="global/js/script.js"></script>
+    
+    <!-- GitHub Sync Scripts -->
+    <script src="github-sync/github-sync-state.js"></script>
+    <script src="github-sync/github-sync-ui.js"></script>
+    <script src="github-sync/github-sync-events.js"></script>
+
+    <!-- Registro del Service Worker     -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado con éxito:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Fallo el registro del Service Worker:', error);
+                    });
+            });
+        } else {
+            console.log('El navegador no soporta Service Workers. La aplicación no será instalable como PWA.');
+        }
+    </script>
+
+</body>
+</html>

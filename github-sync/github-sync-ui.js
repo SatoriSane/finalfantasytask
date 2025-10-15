@@ -1,60 +1,95 @@
 /* ===================================
-   github-sync-ui.js - INTERFAZ SIMPLIFICADA
-   Solo actualiza el botón y contador
+   github-sync-ui.js - INTERFAZ MEJORADA
+   Maneja el modal y el botón con barra de progreso.
    =================================== */
 
    (function() {
     'use strict';
 
+    // Cache de elementos del DOM
+    let syncButton, syncIcon, syncText, syncProgressBar;
+
+    const TIMING = {
+        CHECK_INTERVAL_S: 30, // Debe coincidir con el de github-sync-state.js
+    };
+
+    /**
+     * Busca y prepara los elementos del DOM una vez.
+     */
+    function initializeDOMElements() {
+        syncButton = document.getElementById('githubSyncBtn');
+        if (syncButton) {
+            syncIcon = syncButton.querySelector('.sync-icon');
+            syncText = syncButton.querySelector('.sync-text');
+            // Crear y añadir la barra de progreso si no existe
+            if (!syncButton.querySelector('.sync-progress-bar')) {
+                syncProgressBar = document.createElement('div');
+                syncProgressBar.className = 'sync-progress-bar';
+                syncButton.appendChild(syncProgressBar);
+            } else {
+                syncProgressBar = syncButton.querySelector('.sync-progress-bar');
+            }
+        }
+    }
+    
+    // Ejecutar al cargar el DOM
+    document.addEventListener('DOMContentLoaded', initializeDOMElements);
+
     window.GitHubSyncUI = {
         /**
-         * Actualiza el botón de sincronización
+         * Actualiza el botón de sincronización con la nueva barra de progreso.
          */
         updateButton() {
-            const btn = document.getElementById('githubSyncBtn');
-            if (!btn) return;
+            if (!syncButton) {
+                initializeDOMElements(); // Intenta inicializar de nuevo si falló
+                if (!syncButton) return;
+            }
 
             const status = window.GitHubSync.getStatus();
-            const icon = btn.querySelector('.sync-icon');
-            const text = btn.querySelector('.sync-text');
+            
+            syncButton.className = 'sync-btn'; // Limpiar clases
 
-            // Limpiar clases
-            btn.className = 'sync-btn';
-
-            // Determinar estado
             if (status.isSyncing) {
-                btn.classList.add('syncing');
-                
+                syncButton.classList.add('syncing');
+                syncProgressBar.style.width = '0%'; // Ocultar barra durante la acción
+
                 if (status.syncAction === 'export') {
-                    btn.classList.add('uploading');
-                    icon.textContent = '☁️↑';
-                    text.textContent = 'Exportando...';
+                    syncButton.classList.add('uploading');
+                    syncIcon.textContent = '📤';
+                    syncText.textContent = 'Exportando';
                 } else if (status.syncAction === 'import') {
-                    btn.classList.add('downloading');
-                    icon.textContent = '☁️↓';
-                    text.textContent = 'Importando...';
+                    syncButton.classList.add('downloading');
+                    syncIcon.textContent = '📥';
+                    syncText.textContent = 'Importando';
                 } else if (status.syncAction === 'check') {
-                    btn.classList.add('checking');
-                    icon.textContent = '🔍';
-                    text.textContent = 'Verificando...';
+                    syncButton.classList.add('checking');
+                    syncIcon.textContent = '🔍';
+                    syncText.textContent = 'Verificando';
                 }
             } else if (status.isConnected) {
-                btn.classList.add('connected');
-                icon.textContent = status.hasChanges ? '☁️●' : '☁️';
-                text.textContent = status.hasChanges ? 'Pendiente' : `${status.nextCheckIn}s`;
-                btn.title = status.hasChanges 
+                syncButton.classList.add('connected');
+                syncIcon.textContent = status.hasChanges ? '●' : '✓';
+                syncText.textContent = status.hasChanges ? 'Pendiente' : 'Sincronizado';
+                
+                // --- LÓGICA DE LA BARRA DE PROGRESO ---
+                const progressPercentage = (status.nextCheckIn / TIMING.CHECK_INTERVAL_S) * 100;
+                syncProgressBar.style.width = `${Math.max(0, progressPercentage)}%`;
+                
+                syncButton.title = status.hasChanges 
                     ? 'Cambios pendientes de exportar' 
                     : `Próxima verificación en ${status.nextCheckIn}s`;
+
             } else {
-                btn.classList.add('disconnected');
-                icon.textContent = '☁️';
-                text.textContent = 'Sin conectar';
-                btn.title = 'Haz clic para conectar con GitHub';
+                syncButton.classList.add('disconnected');
+                syncIcon.textContent = '🔗';
+                syncText.textContent = 'Conectar';
+                syncProgressBar.style.width = '0%'; // Ocultar si no está conectado
+                syncButton.title = 'Haz clic para conectar con GitHub';
             }
         },
 
         /**
-         * Renderiza el modal de conexión
+         * Renderiza el contenido del modal de conexión
          */
         renderModal() {
             const container = document.getElementById('githubSyncModalContent');
@@ -69,9 +104,6 @@
             }
         },
 
-        /**
-         * Vista de conexión
-         */
         getDisconnectedView() {
             return `
                 <div class="sync-modal-header">
@@ -80,44 +112,25 @@
                         <span>⚠️ No conectado</span>
                     </div>
                 </div>
-
                 <div class="sync-info-box">
-                    <p>La sincronización automática:</p>
-                    <ul>
-                        <li>✅ Exporta tus cambios automáticamente</li>
-                        <li>✅ Importa cambios de otros dispositivos</li>
-                        <li>✅ Verifica cada 30 segundos</li>
-                        <li>✅ Se activa cuando vuelves después de inactividad</li>
-                    </ul>
+                    <p>Guarda tus datos de forma segura y sincroniza entre dispositivos usando un Gist privado de GitHub.</p>
                 </div>
-
                 <form class="sync-connect-form" id="githubConnectForm">
                     <div class="sync-form-group">
-                        <label for="githubTokenInput">Token de GitHub</label>
-                        <input 
-                            type="password" 
-                            id="githubTokenInput" 
-                            placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                            required
-                        />
+                        <label for="githubTokenInput">Personal Access Token de GitHub</label>
+                        <input type="password" id="githubTokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" required />
                         <div class="help-text">
-                            Necesitas un Personal Access Token con permisos de <strong>gist</strong>.
-                            <br>
+                            Necesitas un token con permisos de <strong>gist</strong>.
                             <a href="https://github.com/settings/tokens/new?scopes=gist&description=FFTask%20Sync" target="_blank" rel="noopener">
                                 Crear token aquí →
                             </a>
                         </div>
                     </div>
-                    <button type="submit" class="primary" style="width: 100%;">
-                        🔗 Conectar y Activar Auto-Sync
-                    </button>
+                    <button type="submit" class="primary" style="width: 100%;">🔗 Conectar y Activar</button>
                 </form>
             `;
         },
 
-        /**
-         * Vista conectada
-         */
         getConnectedView(status) {
             return `
                 <div class="sync-modal-header">
@@ -126,11 +139,10 @@
                         <span>✅ Activa</span>
                     </div>
                 </div>
-
                 <div class="sync-status-info">
                     <div class="info-row">
                         <span class="info-label">Estado:</span>
-                        <span class="info-value">${status.isSyncing ? '🔄 Sincronizando...' : '✅ Activo'}</span>
+                        <span class="info-value">${status.isSyncing ? '🔄 Sincronizando...' : 'Activo'}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Próxima verificación:</span>
@@ -140,48 +152,32 @@
                     <div class="info-row">
                         <span class="info-label">Cambios pendientes:</span>
                         <span class="info-value" style="color: #f59e0b;">⚠️ Se exportarán pronto</span>
-                    </div>
-                    ` : ''}
+                    </div>` : ''}
                 </div>
-
                 <div class="sync-info-box">
                     <h3>¿Cómo funciona?</h3>
                     <ul>
-                        <li><strong>Exportación:</strong> Automática después de cada cambio</li>
-                        <li><strong>Importación:</strong> Automática al detectar cambios remotos</li>
-                        <li><strong>Verificación:</strong> Cada 30 segundos (si la app está visible)</li>
-                        <li><strong>Después de inactividad:</strong> Verifica al volver</li>
+                        <li><strong>Exportación:</strong> Automática 2s después de cada cambio.</li>
+                        <li><strong>Importación:</strong> Al detectar cambios de otro dispositivo.</li>
+                        <li><strong>Verificación:</strong> Cada 30s y al volver a la app.</li>
                     </ul>
                 </div>
-
                 <button class="sync-option-btn danger" id="disconnectGithubBtn">
                     <span class="option-icon">🔌</span>
                     <div class="option-content">
                         <span class="option-title">Desconectar</span>
-                        <span class="option-description">Desactivar sincronización automática</span>
+                        <span class="option-description">Desactivar la sincronización automática.</span>
                     </div>
                 </button>
             `;
         },
 
-        /**
-         * Muestra estado de carga
-         */
         showLoading(message = 'Procesando...') {
             const container = document.getElementById('githubSyncModalContent');
             if (!container) return;
-
-            container.innerHTML = `
-                <div class="sync-loading">
-                    <div class="spinner"></div>
-                    <span>${message}</span>
-                </div>
-            `;
+            container.innerHTML = `<div class="sync-loading"><div class="spinner"></div><span>${message}</span></div>`;
         },
 
-        /**
-         * Muestra mensaje
-         */
         showMessage(message, type = 'success') {
             const container = document.getElementById('githubSyncModalContent');
             if (!container) return;
@@ -189,36 +185,28 @@
             const icon = type === 'success' ? '✅' : '❌';
             const messageDiv = document.createElement('div');
             messageDiv.className = `sync-message ${type}`;
-            messageDiv.innerHTML = `
-                <span class="message-icon">${icon}</span>
-                <span>${message}</span>
-            `;
+            messageDiv.innerHTML = `<span class="message-icon">${icon}</span><span>${message}</span>`;
 
             container.insertBefore(messageDiv, container.firstChild);
             setTimeout(() => messageDiv.remove(), 5000);
         },
 
-        /**
-         * Abre el modal
-         */
         openModal() {
             const modal = document.getElementById('githubSyncModal');
-            if (!modal) return;
-
-            this.renderModal();
-            modal.classList.add('visible');
-            modal.setAttribute('aria-hidden', 'false');
+            if (modal) {
+                this.renderModal();
+                modal.classList.add('visible');
+                modal.setAttribute('aria-hidden', 'false');
+            }
         },
 
-        /**
-         * Cierra el modal
-         */
         closeModal() {
             const modal = document.getElementById('githubSyncModal');
-            if (!modal) return;
-
-            modal.classList.remove('visible');
-            modal.setAttribute('aria-hidden', 'true');
+            if (modal) {
+                modal.classList.remove('visible');
+                modal.setAttribute('aria-hidden', 'true');
+            }
         }
     };
 })();
+

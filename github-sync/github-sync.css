@@ -1,16 +1,16 @@
 /* ===================================
-   github-sync.css - ESTILOS SIMPLIFICADOS
-   Solo botón con contador y modal básico
+   github-sync.css - ESTILOS CON BARRA DE PROGRESO
    =================================== */
 
 /* ========== BOTÓN DE SINCRONIZACIÓN ========== */
 .sync-btn {
+    position: relative; /* Clave para posicionar la barra de progreso */
+    overflow: hidden;   /* Evita que la barra se salga del borde redondeado */
     display: flex;
     align-items: center;
     gap: 0.4rem;
     padding: 0.5rem 0.75rem;
     background: var(--ff-bg-medium, #1a2332);
-    border: 1px solid var(--ff-border, #2a3f5f);
     border-radius: var(--border-radius-sm, 8px);
     color: var(--ff-text-light, #e0e6ed);
     font-size: 0.85rem;
@@ -32,6 +32,19 @@
     line-height: 1;
 }
 
+/* === NUEVO: BARRA DE PROGRESO SUTIL === */
+.sync-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--ff-primary, #4a9eff);
+    width: 0%; /* Inicia oculta */
+    border-radius: 0 0 8px 8px;
+    opacity: 0.4;
+    transition: width 1s linear, background-color 0.3s ease; 
+}
+
 /* Estados */
 .sync-btn.connected {
     border-color: #4ade80;
@@ -40,6 +53,11 @@
 .sync-btn.connected .sync-icon {
     color: #4ade80;
 }
+
+.sync-btn.connected .sync-progress-bar {
+    background-color: #4ade80;
+}
+
 
 .sync-btn.disconnected .sync-icon {
     color: #94a3b8;
@@ -56,7 +74,6 @@
 
 .sync-btn.uploading .sync-icon {
     color: #f59e0b;
-    animation: bounce 0.6s ease-in-out infinite;
 }
 
 .sync-btn.downloading {
@@ -66,7 +83,6 @@
 
 .sync-btn.downloading .sync-icon {
     color: #3b82f6;
-    animation: bounce 0.6s ease-in-out infinite;
 }
 
 .sync-btn.checking {
@@ -82,23 +98,18 @@
 /* ========== ANIMACIONES ========== */
 @keyframes pulse {
     0%, 100% {
-        box-shadow: 0 0 0 0 currentColor;
-        opacity: 0.4;
+        box-shadow: 0 0 0 0 rgba(148, 163, 184, 0.2);
     }
     50% {
-        box-shadow: 0 0 0 8px currentColor;
-        opacity: 0;
+        box-shadow: 0 0 0 6px rgba(148, 163, 184, 0);
     }
 }
 
 @keyframes bounce {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
+    50% { transform: translateY(-1px); }
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
 
 @keyframes slideIn {
     from {
@@ -111,7 +122,7 @@
     }
 }
 
-/* ========== MODAL ========== */
+/* ========== MODAL (sin cambios) ========== */
 #githubSyncModal .modal-content {
     max-width: 500px;
     width: 90%;
@@ -149,7 +160,7 @@
     border: 1px solid rgba(148, 163, 184, 0.3);
 }
 
-/* ========== FORMULARIO ========== */
+/* ========== FORMULARIO (sin cambios) ========== */
 .sync-connect-form {
     display: flex;
     flex-direction: column;
@@ -197,7 +208,7 @@
     text-decoration: underline;
 }
 
-/* ========== INFO BOX ========== */
+/* ========== INFO BOX (sin cambios) ========== */
 .sync-info-box {
     padding: 1rem;
     background: rgba(74, 158, 255, 0.1);
@@ -232,7 +243,7 @@
     line-height: 1.4;
 }
 
-/* ========== STATUS INFO ========== */
+/* ========== STATUS INFO (sin cambios) ========== */
 .sync-status-info {
     padding: 1rem;
     background: rgba(74, 158, 255, 0.1);
@@ -260,7 +271,7 @@
     font-weight: 600;
 }
 
-/* ========== BOTONES DE OPCIONES ========== */
+/* ========== BOTONES DE OPCIONES (sin cambios) ========== */
 .sync-option-btn {
     display: flex;
     align-items: center;
@@ -313,7 +324,7 @@
     opacity: 0.8;
 }
 
-/* ========== LOADING Y MENSAJES ========== */
+/* ========== LOADING Y MENSAJES (sin cambios) ========== */
 .sync-loading {
     display: flex;
     align-items: center;
@@ -329,7 +340,6 @@
     border: 2px solid rgba(74, 158, 255, 0.3);
     border-top-color: var(--ff-primary, #4a9eff);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
 }
 
 .sync-message {
@@ -359,7 +369,7 @@
     font-size: 1.5rem;
 }
 
-/* ========== RESPONSIVE ========== */
+/* ========== RESPONSIVE (sin cambios) ========== */
 @media (max-width: 768px) {
     .sync-btn {
         padding: 0.4rem 0.6rem;
@@ -383,3 +393,4 @@
         font-size: 0.85rem;
     }
 }
+

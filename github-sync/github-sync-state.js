@@ -43,7 +43,7 @@
         nextCheckIn: TIMING.CHECK_INTERVAL_S,
     
         /**
-         * Inicializa el sistema. Ahora es llamado explícitamente por app-init.js
+         * Inicializa el sistema
          */
         async init() {
             log('▶ init() → Iniciando sistema de sincronización...');
@@ -190,16 +190,19 @@
         startActivityMonitoring() {
             log('👀 Iniciando monitoreo de actividad...');
             
+            // Detecta cuando el usuario vuelve a la pestaña
             document.addEventListener('visibilitychange', () => {
                 this.isPageVisible = !document.hidden;
                 
                 if (this.isPageVisible) {
+                    // ✅ LLAMADA SIMPLE: Programa la verificación para 2 segundos al volver.
                     log('👋 Usuario volvió a la página. Programando verificación en 2s...');
                     this.scheduleImmediateCheck();
                     this.lastActivity = Date.now();
                 }
             });
         
+            // Actualiza timestamp de actividad
             const updateActivity = () => {
                 this.lastActivity = Date.now();
             };
@@ -210,23 +213,27 @@
     
         /**
          * Inicia verificación automática (Mecanismo Unificado)
+         * El contador visual ahora también es el disparador del check.
          */
         startAutoCheck() {
             log(`⏱ Iniciando verificación unificada (periódica: ${TIMING.CHECK_INTERVAL_S}s)...`);
             
-            if (this.counterInterval) return;
+            if (this.counterInterval) return; // Ya iniciado
 
+            // Contador y disparador de verificación (Unificado)
             this.counterInterval = setInterval(async () => {
                 if (this.isPageVisible && !this.isSyncing) {
                     this.nextCheckIn--;
                     
                     if (this.nextCheckIn <= 0) {
+                        // El contador llegó a cero (por 2s inmediato o 30s periódico)
                         if (!this.skipNextCheck) {
                            await this.checkAndImport();
                         } else {
                            log('⏭ Check saltado por bandera skipNextCheck.');
                         }
                         
+                        // Se reinicia a 30 segundos
                         this.nextCheckIn = TIMING.CHECK_INTERVAL_S;
                     }
                     
@@ -237,12 +244,15 @@
 
         /**
          * Programa una verificación para ejecutarse en 2 segundos.
+         * Reemplaza la lógica compleja de forceCheckAndImport.
          */
         scheduleImmediateCheck() {
             if (!this.isConnected || !this.gistId) {
                 return;
             }
             
+            // Forzar el contador a 2s si no hay una sincronización en curso
+            // o si el contador está en su estado normal (30s).
             if (!this.isSyncing) {
                 log(`🚀 Verificación programada para ${TIMING.IMMEDIATE_CHECK_S}s.`);
                 this.nextCheckIn = TIMING.IMMEDIATE_CHECK_S;
@@ -256,8 +266,11 @@
          * Verifica cambios remotos e importa automáticamente
          */
         async checkAndImport() {
+            // Usa el guardián de concurrencia normal
             if (!this.isConnected || !this.gistId || this.isSyncing) {
-                if (this.isSyncing) log('⏳ Ya hay una sincronización en curso, omitiendo...');
+                if (this.isSyncing) {
+                    log('⏳ Ya hay una sincronización en curso, omitiendo...');
+                }
                 return;
             }
     
@@ -292,7 +305,11 @@
                 const isNewer = new Date(backup.timestamp) > new Date(this.lastImport || 0);
     
                 if (isDifferentDevice && isNewer) {
-                    log('📥 Cambios detectados desde otro dispositivo.');
+                    log('📥 Cambios detectados desde otro dispositivo:');
+                    log('   - Device remoto:', backup.deviceId);
+                    log('   - Device local:', this.deviceId);
+                    log('   - Timestamp remoto:', backup.timestamp);
+                    log('   - Última importación:', this.lastImport || 'nunca');
                     await this.importData(backup);
                 } else {
                     log('✅ No hay cambios nuevos.');
@@ -321,6 +338,7 @@
             log('⬇️ Importando datos desde Gist...');
             const keepKeys = Object.values(STORAGE);
     
+            // Limpiar localStorage excepto datos de sincronización
             for (let i = localStorage.length - 1; i >= 0; i--) {
                 const key = localStorage.key(i);
                 if (!keepKeys.includes(key)) {
@@ -328,10 +346,12 @@
                 }
             }
     
+            // Importar nuevos datos
             Object.entries(backup.data).forEach(([key, value]) => {
                 localStorage.setItem(key, value);
             });
     
+            // Actualizar timestamp de importación
             const now = new Date().toISOString();
             this.lastImport = now;
             localStorage.setItem(STORAGE.LAST_IMPORT, now);
@@ -341,7 +361,7 @@
         },
     
         /**
-         * Marca que el usuario hizo cambios y programa una exportación
+         * Marca que el usuario hizo cambios
          */
         markUserChanges() {
             this.hasUserChanges = true;
@@ -368,6 +388,7 @@
     
                 log('📤 Exportando datos actualizados al Gist...');
                 const data = this.collectAppData();
+                data.deviceId = this.deviceId;
     
                 const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
                     method: 'PATCH',
@@ -392,8 +413,10 @@
                     this.hasUserChanges = false;
                     this.skipNextCheck = true;
                     
+                    // Asegurar que el próximo check periódico sea en 30s
                     this.nextCheckIn = TIMING.CHECK_INTERVAL_S;
                     
+                    // Desactivar el salto del check después de la pausa
                     setTimeout(() => {
                         this.skipNextCheck = false;
                         log('▶ Pausa post-exportación finalizada. Próximo check normal habilitado.');
@@ -413,7 +436,7 @@
         },
     
         /**
-         * Recopila datos de la app para el backup
+         * Recopila datos de la app
          */
         collectAppData() {
             const excludeKeys = Object.values(STORAGE);
@@ -444,20 +467,30 @@
                 'missionsUpdated',
                 'habitsUpdated',
                 'shopItemsUpdated',
-                'pointsUpdated',
-                'habitsAutoUpdated' // Escuchar también este
+                'pointsUpdated'
             ];
             events.forEach(event => {
                 window.App?.events?.on(event, (data) => {
         
-                    if (event === 'habitsAutoUpdated' || 
-                       (event === 'pointsUpdated' && data?.source === 'autoTicket') ||
-                       (event === 'habitsUpdated' && data?.autoGenerated === true)) {
-                        log(`🎟 Ignorado evento automático: ${event}.`);
+                    // 🚫 Ignorar generación automática de tickets
+                    if (event === 'habitsAutoUpdated') {
+                        log('🎟 Ignorado: generación automática de tickets.');
                         return;
                     }
         
-                    log(`📢 Cambio detectado por usuario: ${event}`);
+                    // 🚫 Ignorar actualizaciones automáticas de puntos
+                    if (event === 'pointsUpdated' && data?.source === 'autoTicket') {
+                        log('🎟 Ignorado: actualización automática de puntos.');
+                        return;
+                    }
+        
+                    // 🚫 Ignorar actualizaciones automáticas de hábitos
+                    if (event === 'habitsUpdated' && data?.autoGenerated === true) {
+                        log('🎟 Ignorado: actualización automática de hábitos.');
+                        return;
+                    }
+        
+                    log(`📢 Cambio detectado: ${event}`);
                     this.markUserChanges();
                 });
             });
@@ -504,7 +537,13 @@
             };
         }
     };
-
-    // La auto-inicialización se ha movido a app-init.js para centralizar el arranque.
-    // Esto hace que GitHubSync sea un módulo más puro y que app-init.js sea el orquestador.
+    
+    // Auto-inicialización con soporte async
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.GitHubSync.init();
+        });
+    } else {
+        window.GitHubSync.init();
+    }
 })();

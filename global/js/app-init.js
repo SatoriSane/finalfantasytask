@@ -1,80 +1,66 @@
-// global/js/app-init.js
-// Inicializa el espacio de nombres global 'App' y coordina el arranque.
+// app-init.js
+// Inicializa el espacio de nombres global 'App' y sus sub-objetos principales.
 (function() {
-    'use strict';
-
-    // Asegura que el objeto global App y sus propiedades existan
     window.App = window.App || {};
     window.App.ui = window.App.ui || {};
-    window.App.ui.render = window.App.ui.render || {};
-    window.App.ui.events = window.App.ui.events || {};
-    window.App.state = window.App.state || {};
-    window.App.utils = window.App.utils || {};
-    
-    const log = (...msg) => console.log('[AppInit]', ...msg);
+    // Sub-objetos esenciales
+    window.App.ui.render = window.App.ui.render || {}; // Asegura que App.ui.render exista
+    window.App.ui.events = window.App.ui.events || {}; // Asegura que App.ui.events exista
+    window.App.state = window.App.state || {}; // Asegura que App.state exista
+    window.App.utils = window.App.utils || {}; // Asegura que App.utils exista
 
+    // ------------------- Coordinación con GitHub Sync -------------------
     /**
-     * Procesa tareas iniciales DESPUÉS de que GitHub Sync haya verificado.
-     * Esto evita procesar datos que podrían ser sobrescritos por una importación.
+     * Procesa tareas iniciales DESPUÉS de que GitHub Sync haya verificado
+     * Evita procesar con datos desactualizados que serán sobrescritos
      */
     const processInitialTasks = () => {
-        log('🚀 Procesando tareas iniciales de la app...');
+        console.log('[AppInit] 🚀 Procesando tareas iniciales...');
         
-        if (window.App?.state?.processScheduledMissionsForToday) {
+        // Procesar misiones programadas para hoy al iniciar
+        if (window.App && App.state && App.state.processScheduledMissionsForToday) {
             App.state.processScheduledMissionsForToday();
         }
 
-        if (window.App?.state?.rolloverUncompletedTasks) {
+        // Mover tareas incompletas del día anterior a hoy
+        if (window.App && App.state && App.state.rolloverUncompletedTasks) {
             App.state.rolloverUncompletedTasks();
         }
 
-        log('✅ Tareas iniciales completadas.');
+        console.log('[AppInit] ✅ Tareas iniciales completadas');
     };
 
-    /**
-     * Espera a que la sincronización inicial de GitHub termine si está en curso.
-     * Incluye un timeout para no bloquear la app indefinidamente.
-     */
-    const waitForInitialSync = async () => {
-        if (!window.GitHubSync?.isConnected) {
-            log('GitHub no conectado, continuando sin esperar.');
-            return;
-        }
-
-        log('⏳ Esperando la verificación inicial de GitHub Sync...');
-        let attempts = 0;
-        const maxAttempts = 50; // 50 * 100ms = 5 segundos de timeout
-
-        while (window.GitHubSync.isSyncing && attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-
-        if (attempts >= maxAttempts) {
-            log('⚠️ Timeout esperando a GitHub Sync. La app podría tener datos desactualizados.');
-        } else {
-            log('✅ Verificación de GitHub Sync completada.');
-        }
-    };
-
-    // ------------------- INICIO COORDINADO DE LA APP -------------------
+    // ------------------- Inicialización Coordinada -------------------
     document.addEventListener('DOMContentLoaded', async () => {
-        log('📱 DOMContentLoaded - Orquestando inicio de la aplicación...');
+        console.log('[AppInit] 📱 DOMContentLoaded - Iniciando app...');
 
-        // 1. Inicializar el módulo de sincronización PRIMERO.
-        await window.GitHubSync.init();
+        // ✅ Esperar a que GitHub Sync complete su verificación inicial
+        if (window.GitHubSync && window.GitHubSync.isConnected) {
+            console.log('[AppInit] ⏳ Esperando verificación de GitHub Sync...');
+            
+            // Esperar máximo 5 segundos a que termine la sincronización inicial
+            let attempts = 0;
+            const maxAttempts = 50; // 50 * 100ms = 5 segundos
+            
+            while (window.GitHubSync.isSyncing && attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
 
-        // 2. Esperar a que la posible sincronización inicial termine.
-        await waitForInitialSync();
+            if (attempts >= maxAttempts) {
+                console.warn('[AppInit] ⚠️ Timeout esperando GitHub Sync, continuando...');
+            } else {
+                console.log('[AppInit] ✅ GitHub Sync completado, procesando tareas');
+            }
+        }
 
-        // 3. Ahora que los datos están (potencialmente) actualizados, procesar lógica de la app.
+        // Procesar tareas iniciales solo DESPUÉS de verificar sincronización
         processInitialTasks();
 
-        // NOTA: La lógica de `processAllChallengesOnLoad` se mantiene donde esté (p. ej., script.js)
-        // ya que depende de que otros estados se carguen primero.
+        // NOTA: processAllChallengesOnLoad se llama desde script.js después de cargar el estado
     });
 
-    // ------------------- Service Worker & Actualización -------------------
+    // ------------------- Service Worker & actualización -------------------
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('service-worker.js')
             .then(reg => console.log('[ServiceWorker] ✅ Registrado:', reg.scope))
@@ -82,8 +68,9 @@
 
         navigator.serviceWorker.addEventListener('message', event => {
             if (event.data?.type === 'NEW_VERSION') {
-                log('[ServiceWorker] 🆕 Nueva versión disponible. Mostrando banner.');
+                console.log('[ServiceWorker] 🆕 Nueva versión disponible');
                 
+                // Crear banner discreto para actualizar
                 const banner = document.createElement('div');
                 banner.textContent = '¡Nueva versión disponible! Toca para actualizar.';
                 banner.style.cssText = `
@@ -102,7 +89,7 @@
                     box-shadow: var(--shadow-md);
                 `;
                 banner.onclick = () => {
-                    log('[ServiceWorker] 🔄 Recargando para instalar la nueva versión...');
+                    console.log('[ServiceWorker] 🔄 Recargando para actualizar...');
                     location.reload();
                 };
                 document.body.appendChild(banner);
@@ -110,9 +97,12 @@
         });
     }
 
-    // API pública por si se necesita forzar
+    // ------------------- API Pública -------------------
     window.App.init = {
+        /**
+         * Fuerza el procesamiento de tareas iniciales
+         * Útil para testing o llamadas manuales
+         */
         forceProcessTasks: processInitialTasks
     };
-
 })();

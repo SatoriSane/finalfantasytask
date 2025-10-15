@@ -1,10 +1,12 @@
+
 // features/feature-today.js
 (function(App) {
     'use strict';
 
     // --- PRIVATE STATE ---
-    let _prevTaskProgress = {};
-    let _prevGlobalProgress = null;
+let _prevTaskProgress = {};
+let _prevGlobalProgress = null;
+let _currentCategoryFilter = null; // <--- estado del filtro
 
     // --- PRIVATE METHODS ---
 
@@ -152,6 +154,7 @@
 
     // --- PUBLIC API ---
     App.ui.today = {
+        
         /**
          * @description Renderiza las tareas del día actual y actualiza la UI relacionada.
          */
@@ -159,26 +162,52 @@
             const container = document.getElementById("todayTasksList");
             const todayTitleElement = document.getElementById("todayTitle");
             const totalPointsBtn = document.getElementById("totalPointsBtn");
-
+        
             if (!container) {
                 console.warn("Contenedor #todayTasksList no encontrado.");
                 return;
             }
             container.innerHTML = "";
-
+        
             if (todayTitleElement) {
                 todayTitleElement.textContent = "Misiones de Hoy";
             }
-
+        
             const state = App.state.getState();
             let todayTasks = App.state.getTodayTasks();
 
+            if (_currentCategoryFilter) {
+                todayTasks = todayTasks.filter(task => {
+                    if (!task.missionId) return false;
+                    const mission = App.state.getMissions().find(m => m.id === task.missionId);
+                    return mission && mission.categoryId === _currentCategoryFilter;
+                });
+            
+                // Botón “Ver todas”
+                const header = document.getElementById("todayTitle");
+                if (header && !document.getElementById("clearCategoryFilterBtn")) {
+                    const btn = document.createElement("button");
+                    btn.id = "clearCategoryFilterBtn";
+                    btn.className = "clear-filter-btn";
+                    btn.textContent = "Ver todas";
+                    btn.addEventListener("click", () => {
+                        _currentCategoryFilter = null; // quitar filtro
+                        btn.remove();
+                        this.render();
+                    });
+                    header.appendChild(btn);
+                }
+            } else {
+                const existingBtn = document.getElementById("clearCategoryFilterBtn");
+                if (existingBtn) existingBtn.remove(); // limpiar si ya no hay filtro
+            }
             if (!todayTasks || todayTasks.length === 0) {
                 container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">¡Hoy no tienes misiones programadas! Usa el botón ➕ para añadir una.</p>`;
                 _renderGlobalPointsBar(0, 0, false);
                 return;
             }
-
+        
+            // --- Calcular puntos totales y ganados ---
             let totalPoints = 0;
             let earnedPoints = 0;
             todayTasks.forEach(task => {
@@ -187,24 +216,21 @@
                 totalPoints += task.points * maxReps;
                 earnedPoints += task.points * currentReps;
             });
-
+        
             if (totalPointsBtn) {
                 totalPointsBtn.querySelector("#pointsValue").textContent = state.points;
             }
-
+        
             _renderGlobalPointsBar(totalPoints, earnedPoints, true);
-
-            // --- INICIO DE CAMBIOS PARA ORDENAR ---
+        
+            // --- Ordenar tareas según guardado ---
             const savedOrder = App.state.getTodayTaskOrder() || [];
-            
-            // Separar tareas completadas
             const completedTasks = todayTasks.filter(t => t.completed);
             const incompleteTasks = todayTasks.filter(t => !t.completed);
-
-            // Ordenar las tareas incompletas según la secuencia guardada
+        
             const orderedIncompleteTasks = [];
             const remainingIncompleteTasks = new Set(incompleteTasks.map(t => t.id));
-
+        
             savedOrder.forEach(id => {
                 const task = incompleteTasks.find(t => t.id === id);
                 if (task) {
@@ -212,178 +238,184 @@
                     remainingIncompleteTasks.delete(id);
                 }
             });
-
-            // Añadir tareas que no estaban en la lista guardada al final
+        
             remainingIncompleteTasks.forEach(id => {
                 const task = incompleteTasks.find(t => t.id === id);
-                if (task) {
-                    orderedIncompleteTasks.push(task);
-                }
+                if (task) orderedIncompleteTasks.push(task);
             });
-
-            // Unir la lista ordenada de incompletas con las completadas
+        
             todayTasks = orderedIncompleteTasks.concat(completedTasks);
-            // --- FIN DE CAMBIOS PARA ORDENAR ---
-
-
+        
+            // --- Renderizar todas las tareas usando _renderTaskCard ---
             const bonusMissionId = App.state.getBonusMissionForToday();
-
-            todayTasks.forEach(task => {
-                const taskCard = document.createElement("div");
-                taskCard.className = `task-card ${task.completed ? "completed" : ""}`;
-                taskCard.dataset.taskId = task.id;
-                taskCard.draggable = !task.completed; // Solo se pueden arrastrar las tareas incompletas
+            todayTasks.forEach(task => this._renderTaskCard(task, bonusMissionId));
+        
+            // --- Drag & Drop solo para tareas incompletas ---
+            const taskCards = container.querySelectorAll('.task-card:not(.completed)');
+            taskCards.forEach(taskCard => {
+                taskCard.draggable = true;
                 taskCard.setAttribute("aria-grabbed", "false");
-
-                taskCard.addEventListener("dragstart", (e) => {
+        
+                taskCard.addEventListener("dragstart", e => {
                     e.stopPropagation();
                     taskCard.classList.add("is-dragging-task");
-                    e.dataTransfer.setData("text/plain", task.id);
+                    e.dataTransfer.setData("text/plain", taskCard.dataset.taskId);
                     e.dataTransfer.effectAllowed = "move";
                 });
-                taskCard.addEventListener("dragend", (e) => {
+        
+                taskCard.addEventListener("dragend", e => {
                     e.stopPropagation();
                     taskCard.classList.remove("is-dragging-task");
                     document.querySelectorAll(".drag-over-task").forEach(el => el.classList.remove("drag-over-task"));
                 });
-
-                // --- INICIO DE NUEVOS LISTENERS DE DRAG & DROP ---
-                taskCard.addEventListener("dragover", (e) => {
+        
+                taskCard.addEventListener("dragover", e => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (!e.target.closest('.task-card')) return;
+                    const targetCard = e.target.closest('.task-card');
+                    if (!targetCard) return;
                     document.querySelectorAll(".drag-over-task").forEach(el => el.classList.remove("drag-over-task"));
-                    e.target.closest('.task-card').classList.add("drag-over-task");
+                    targetCard.classList.add("drag-over-task");
                 });
-
-                taskCard.addEventListener("dragleave", (e) => {
+        
+                taskCard.addEventListener("dragleave", e => {
                     e.stopPropagation();
-                    e.target.closest('.task-card').classList.remove("drag-over-task");
+                    const targetCard = e.target.closest('.task-card');
+                    if (targetCard) targetCard.classList.remove("drag-over-task");
                 });
-                
-                taskCard.addEventListener("drop", (e) => {
+        
+                taskCard.addEventListener("drop", e => {
                     e.preventDefault();
                     e.stopPropagation();
                     const draggedTaskId = e.dataTransfer.getData("text/plain");
                     const droppedOnCard = e.target.closest('.task-card');
                     if (!draggedTaskId || !droppedOnCard) return;
-
-                    const draggedTaskCard = document.querySelector(`.task-card[data-task-id="${draggedTaskId}"]`);
+        
+                    const draggedTaskCard = container.querySelector(`.task-card[data-task-id="${draggedTaskId}"]`);
                     if (draggedTaskCard === droppedOnCard) {
                         droppedOnCard.classList.remove("drag-over-task");
                         return;
                     }
-
-                    // Reordenar visualmente en el DOM
+        
                     const allCards = Array.from(container.querySelectorAll('.task-card:not(.completed)'));
                     const droppedIndex = allCards.indexOf(droppedOnCard);
                     const draggedIndex = allCards.indexOf(draggedTaskCard);
-
+        
                     if (draggedIndex < droppedIndex) {
                         container.insertBefore(draggedTaskCard, droppedOnCard.nextSibling);
                     } else {
                         container.insertBefore(draggedTaskCard, droppedOnCard);
                     }
                     droppedOnCard.classList.remove("drag-over-task");
-                    
-                    // Guardar el nuevo orden en el estado
+        
                     const newOrder = Array.from(container.querySelectorAll('.task-card:not(.completed)')).map(card => card.dataset.taskId);
-                    App.state.saveTodayTaskOrder(newOrder); // Llamada a la nueva función en App.state
+                    App.state.saveTodayTaskOrder(newOrder);
                 });
-                // --- FIN DE NUEVOS LISTENERS ---
-
-                taskCard.addEventListener("click", (e) => {
-                    const missionCard = e.target.closest('.task-card');
-                    if (!missionCard) return;
-                
-                    if (task.missionId) {
-                        const missionExists = App.state.getMissions().some(m => m.id === task.missionId);
-                        if (missionExists) {
-                            // Misión normal aún existente
-                            App.ui.missions.openEditMissionModal(task.missionId, true, task.id);
-                        } else {
-                            // La misión fue eliminada → tratar la tarea como temporal editable
-                            console.warn(`La misión ${task.missionId} ya no existe, abriendo editor temporal.`);
-                            _openEditTemporaryTaskModal(task.id);
-                        }
-                    } else {
-                        _openEditTemporaryTaskModal(task.id);
-                    }
-                });
-                
-
-                const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
-                const currentReps = task.currentRepetitions || 0;
-                const progressPercentage = task.completed ? 100 : (currentReps / maxReps) * 100;
-
-                // Barra de progreso que rellena todo el task-card
-                const progressBar = document.createElement("div");
-                progressBar.className = "repetition-progress-bar";
-                taskCard.appendChild(progressBar);
-
-                // Configura el ancho inicial sin animación para evitar un destello
-                progressBar.style.width = `${progressPercentage}%`; 
-
-                // Badge de repeticiones (solo si hay múltiples)
-                if (maxReps > 1) {
-                    const badge = document.createElement("div");
-                    badge.className = "repetition-badge";
-                    badge.textContent = `${currentReps}/${maxReps}`;
-                    taskCard.appendChild(badge);
-                }
-
-                const taskNameDiv = document.createElement("span");
-                taskNameDiv.className = "task-name";
-                let descriptionIcon = '';
-                if (task.missionId) {
-                    const mission = App.state.getMissions().find(m => m.id === task.missionId);
-                    if (mission && mission.description) {
-                        descriptionIcon = `<span class="description-icon" title="Tiene descripción"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="description-icon-svg"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h12v2H4z"></path></svg></span>`;
-                    }
-                }
-                taskNameDiv.innerHTML = `${task.name} ${descriptionIcon}`;
-                taskCard.appendChild(taskNameDiv);
-
-                const taskPointsSpan = document.createElement("span");
-                taskPointsSpan.className = `task-points ${task.points >= 0 ? "positive" : "negative"}`;
-                
-                                const isBonusMission = task.missionId && task.missionId === bonusMissionId;
-                let pointsText = `${task.points >= 0 ? "＋" : "−"}${Math.abs(task.points)}`;
-                if (isBonusMission) {
-                    pointsText += ` <span class="bonus-multiplier">x2</span>`;
-                }
-                taskPointsSpan.innerHTML = pointsText;
-
-                taskCard.appendChild(taskPointsSpan);
-
-                const actionsContainer = document.createElement("div");
-                actionsContainer.className = "task-actions-reps";
-
-                if (!task.completed) {
-                    const completeButton = document.createElement("button");
-                    completeButton.className = "task-btn-complete";
-                    completeButton.innerHTML = "✓";
-                    let buttonPoints = Math.abs(task.points);
-                    if (isBonusMission) {
-                        buttonPoints *= 2;
-                    }
-                    completeButton.title = `Completar (${task.points >= 0 ? "＋" : "−"}${buttonPoints} puntos)`;
-                    completeButton.onclick = (e) => {
-                        e.stopPropagation();
-                        App.state.completeTaskRepetition(task.id);
-                    };
-                    actionsContainer.appendChild(completeButton);
-                } else {
-                    const completedMessage = document.createElement("span");
-                    completedMessage.className = "completed-message";
-                    completedMessage.innerHTML = " ¡Hecho!";
-                    actionsContainer.appendChild(completedMessage);
-                }
-
-                taskCard.appendChild(actionsContainer);
-                container.appendChild(taskCard);
             });
         },
+        
+        filterByCategory: function(categoryId) {
+            _currentCategoryFilter = categoryId; // guardar filtro
+            this.render();
+        },
+        
+        _renderTaskCard: function(task, bonusMissionId) {
+            const container = document.getElementById("todayTasksList");
+            const taskCard = document.createElement("div");
+            taskCard.className = `task-card ${task.completed ? "completed" : ""}`;
+            taskCard.dataset.taskId = task.id;
+            taskCard.draggable = !task.completed;
+        
+            // Barra de progreso y badges de repeticiones
+            const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
+            const currentReps = task.currentRepetitions || 0;
+            const progressPercentage = task.completed ? 100 : (currentReps / maxReps) * 100;
+        
+            const progressBar = document.createElement("div");
+            progressBar.className = "repetition-progress-bar";
+            progressBar.style.width = `${progressPercentage}%`;
+            taskCard.appendChild(progressBar);
+        
+            if (maxReps > 1) {
+                const badge = document.createElement("div");
+                badge.className = "repetition-badge";
+                badge.textContent = `${currentReps}/${maxReps}`;
+                taskCard.appendChild(badge);
+            }
+        
+            // Nombre + descripción + badge categoría
+            let descriptionIcon = '';
+            let categoryBadge = '';
+            if (task.missionId) {
+                const mission = App.state.getMissions().find(m => m.id === task.missionId);
+                if (mission && mission.description) {
+                    descriptionIcon = `<span class="description-icon" title="Tiene descripción"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="description-icon-svg"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h12v2H4z"></path></svg></span>`;
+                }
+                const category = mission ? App.state.getCategoryById(mission.categoryId) : null;
+                categoryBadge = category
+                    ? `<span class="category-badge" data-cat-id="${category.id}" title="Propósito: ${category.name}">${category.name}</span>`
+                    : `<span class="category-badge category-unknown" title="Sin propósito">Sin propósito</span>`;
+            } else {
+                categoryBadge = `<span class="category-badge category-temp" title="Tarea rápida (sin propósito)">Rápida</span>`;
+            }
+        
+            const taskNameDiv = document.createElement("div");
+            taskNameDiv.className = "task-name";
+            taskNameDiv.innerHTML = `${task.name} ${descriptionIcon} ${categoryBadge}`;
+            taskCard.appendChild(taskNameDiv);
+        
+            // Puntos
+            const taskPointsSpan = document.createElement("span");
+            taskPointsSpan.className = `task-points ${task.points >= 0 ? "positive" : "negative"}`;
+            let pointsText = `${task.points >= 0 ? "＋" : "−"}${Math.abs(task.points)}`;
+            if (task.missionId && task.missionId === bonusMissionId) pointsText += ` <span class="bonus-multiplier">x2</span>`;
+            taskPointsSpan.innerHTML = pointsText;
+            taskCard.appendChild(taskPointsSpan);
+        
+            // Botones de acción
+            const actionsContainer = document.createElement("div");
+            actionsContainer.className = "task-actions-reps";
+            if (!task.completed) {
+                const completeButton = document.createElement("button");
+                completeButton.className = "task-btn-complete";
+                completeButton.innerHTML = "✓";
+                let buttonPoints = Math.abs(task.points);
+                if (task.missionId && task.missionId === bonusMissionId) buttonPoints *= 2;
+                completeButton.title = `Completar (${task.points >= 0 ? "＋" : "−"}${buttonPoints} puntos)`;
+                completeButton.onclick = (e) => { e.stopPropagation(); App.state.completeTaskRepetition(task.id); };
+                actionsContainer.appendChild(completeButton);
+            } else {
+                const completedMessage = document.createElement("span");
+                completedMessage.className = "completed-message";
+                completedMessage.innerHTML = " ¡Hecho!";
+                actionsContainer.appendChild(completedMessage);
+            }
+            taskCard.appendChild(actionsContainer);
+            // --- Listener para abrir modal de edición ---
+            taskCard.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!task.completed) {
+                    if (!task.missionId) {
+                        // Tarea rápida
+                        _openEditTemporaryTaskModal(task.id);
+                    } else {
+                        // Misión programada
+                        App.ui.missions.openEditMissionModal(task.missionId);
+                    }
+                }
+            });
+
+            container.appendChild(taskCard);
+        
+            const badgeEl = taskCard.querySelector('.category-badge');
+            if (badgeEl && badgeEl.dataset.catId) {
+                badgeEl.addEventListener('click', (e) => {
+                    e.stopPropagation(); // ❌ evita que se abra el modal de tarea
+                    App.ui.today.filterByCategory(badgeEl.dataset.catId); // 🔹 mantiene el filtrado
+                });
+            }            
+        },
+        
 
         /**
          * @description Inicializa los listeners para la sección "Hoy".

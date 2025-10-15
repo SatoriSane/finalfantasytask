@@ -221,6 +221,7 @@
 
 /* Barra de progreso que rellena todo el task-card */
 .repetition-progress-bar {
+    pointer-events: none; /* permite hacer click en lo que está debajo */
     position: absolute;
     top: 0;
     left: 0;
@@ -282,3 +283,61 @@
 /* Si quieres que eliminar quede visualmente a la izquierda del guardar,
    la inserción anterior lo coloca ahí; .modal-actions sigue alineando todo a la derecha,
    por eso eliminamos margin-left en guardar y usamos margin-right en eliminar. */
+
+
+
+
+
+
+
+
+
+
+
+   .category-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 0.12rem 0.45rem;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: rgba(0,0,0,0.03);
+    color: var(--ff-text-dark, #333);
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    cursor: pointer; 
+    pointer-events: auto; /* asegura que reciba clicks */}
+
+/* Variante para categorías desconocidas (más tenue) */
+.category-badge.category-unknown {
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Variante para tareas rápidas */
+.category-badge.category-temp {
+    opacity: 0.85;
+}
+
+/* Si quieres colorear por categoría más adelante: */
+.category-badge[data-cat-color] {
+    border-color: transparent;
+    background: transparent;
+    color: inherit;
+}
+
+.clear-filter-btn {
+    margin-left: 1rem;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    border: 1px solid var(--ff-accent);
+    background-color: var(--ff-bg-light);
+    color: var(--ff-accent);
+    cursor: pointer;
+    transition: all var(--transition-speed);
+}
+
+.clear-filter-btn:hover {
+    background-color: var(--ff-accent);
+    color: var(--ff-bg-light);
+}

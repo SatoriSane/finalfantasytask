@@ -394,16 +394,28 @@ let _currentCategoryFilter = null; // <--- estado del filtro
             // --- Listener para abrir modal de edición ---
             taskCard.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (!task.completed) {
-                    if (!task.missionId) {
-                        // Tarea rápida
-                        _openEditTemporaryTaskModal(task.id);
+                if (task.completed) return;
+            
+                if (!task.missionId) {
+                    // Tarea rápida
+                    _openEditTemporaryTaskModal(task.id);
+                } else {
+                    // Misión programada, verificar si existe
+                    const mission = App.state.getMissions().find(m => m.id === task.missionId);
+                    if (mission) {
+                        App.ui.missions.openEditMissionModal(task.missionId, true, task.id);
                     } else {
-                        // Misión programada
-                        App.ui.missions.openEditMissionModal(task.missionId);
+                        // Misión huérfana -> convertir a temporal y abrir modal de edición de tarea rápida
+                        console.warn('Misión huérfana, convirtiendo en tarea rápida...');
+                        task.isTemp = true;
+                        task.missionId = null;
+                        App.state.updateTodayTask(task.id, task);
+                        _openEditTemporaryTaskModal(task.id);
+                        App.events.emit('showToast', 'Esta misión ya no existe, ahora es editable como tarea rápida.');
                     }
                 }
             });
+            
 
             container.appendChild(taskCard);
         

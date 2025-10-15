@@ -157,7 +157,7 @@
                 App.events.emit('todayTasksUpdated');
                 App.events.emit('shownotifyMessage', `Tarea "${name}" eliminada de Hoy.`);
             } else {
-                console.warn(`Intento de eliminar tarea temporal no encontrada: ${taskId}`);
+                console.warn(`Intento de eliminar tarea temporal no encontradaaaa: ${taskId}`);
             }
         }
     }

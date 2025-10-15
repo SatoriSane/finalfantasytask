@@ -15,7 +15,6 @@
     
     const TIMING = {
         CHECK_INTERVAL: 30000,
-        INACTIVITY_THRESHOLD: 60000,
         DEBOUNCE_EXPORT: 2000,
         POST_EXPORT_PAUSE: 10000
     };
@@ -38,6 +37,7 @@
     
         checkTimer: null,
         exportTimer: null,
+        counterInterval: null,
         skipNextCheck: false,
         nextCheckIn: 0,
     
@@ -52,15 +52,11 @@
                 log('🔗 Usuario ya conectado, iniciando monitoreo y verificación automática.');
                 this.startActivityMonitoring();
                 this.startAutoCheck();
-                this.listenToAppChanges(); // Escucha eventos de la app
+                this.listenToAppChanges();
         
-                // ✅ Verificación inmediata si hace más de CHECK_INTERVAL desde la última importación
-                const lastImportTime = new Date(this.lastImport || 0).getTime();
-                const now = Date.now();
-                if ((now - lastImportTime) > TIMING.CHECK_INTERVAL) {
-                    log('⏱ Ha pasado más de 30s desde la última importación → check inmediato');
-                    this.checkAndImport();
-                }
+                // ✅ SIEMPRE verificar al iniciar/refrescar
+                log('🔄 Verificación inmediata al iniciar la app');
+                this.checkAndImport();
             } else {
                 log('⚠️ No conectado a GitHub todavía.');
             }
@@ -74,7 +70,7 @@
             this.gistId = localStorage.getItem(STORAGE.GIST_ID);
             this.deviceId = localStorage.getItem(STORAGE.DEVICE_ID);
             this.lastImport = localStorage.getItem(STORAGE.LAST_IMPORT);
-            this.isConnected = !!this.token;
+            this.isConnected = !!(this.token && this.gistId);
     
             if (!this.deviceId) {
                 this.deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -91,29 +87,36 @@
         async connect(token) {
             if (!token?.trim()) throw new Error('Token inválido');
             log('🔐 Conectando con GitHub...');
-    
+
             const response = await fetch('https://api.github.com/user', {
                 headers: {
                     'Authorization': `token ${token}`,
                     'Accept': 'application/vnd.github.v3+json'
                 }
             });
-    
+
             if (!response.ok) throw new Error('Token inválido');
-    
+
             this.token = token;
             localStorage.setItem(STORAGE.TOKEN, token);
-            this.isConnected = true;
-            log('✅ Conectado correctamente. Buscando o creando Gist...');
-    
+            log('✅ Token validado. Buscando o creando Gist...');
+
             await this.findOrCreateGist();
+            
+            if (!this.gistId) {
+                throw new Error('No se pudo crear o encontrar el Gist');
+            }
+
+            this.isConnected = true;
             log('📁 Gist listo:', this.gistId);
-    
+
+            // ✅ SIEMPRE verificar después del login
+            log('🔄 Verificación inmediata después del login');
             await this.checkAndImport();
-    
+
             this.startActivityMonitoring();
             this.startAutoCheck();
-            this.listenToAppChanges(); // <---- Escucha eventos de la app
+            this.listenToAppChanges();
             log('🟢 Sincronización automática iniciada.');
             return true;
         },
@@ -171,9 +174,12 @@
                     this.gistId = result.id;
                     localStorage.setItem(STORAGE.GIST_ID, result.id);
                     log('✅ Gist creado con éxito:', this.gistId);
+                } else {
+                    throw new Error(`Error al crear Gist: ${createResponse.status}`);
                 }
             } catch (error) {
                 console.error('[GitHubSync] ❌ Error al buscar/crear Gist:', error);
+                throw error;
             }
         },
     
@@ -182,29 +188,22 @@
          */
         startActivityMonitoring() {
             log('👀 Iniciando monitoreo de actividad...');
+            
+            // Detecta cuando el usuario vuelve a la pestaña
             document.addEventListener('visibilitychange', () => {
                 this.isPageVisible = !document.hidden;
+                
                 if (this.isPageVisible) {
-                    const inactiveTime = Date.now() - this.lastActivity;
-        
-                    // ✅ Solo check si ha pasado más de INACTIVITY_THRESHOLD
-                    if (inactiveTime > TIMING.INACTIVITY_THRESHOLD) {
-                        log('💤 Usuario volvió tras inactividad. Revisando cambios...');
-                        this.checkAndImport();
-                    }
-        
+                    // ✅ SIEMPRE verificar cuando vuelve a la pestaña
+                    log('👋 Usuario volvió a la página. Verificando cambios remotos...');
+                    this.checkAndImport();
                     this.lastActivity = Date.now();
                 }
             });
         
+            // Actualiza timestamp de actividad
             const updateActivity = () => {
-                const now = Date.now();
-                const wasInactive = (now - this.lastActivity) > TIMING.INACTIVITY_THRESHOLD;
-                this.lastActivity = now;
-                if (wasInactive && this.isPageVisible) {
-                    log('👋 Actividad detectada después de pausa. Verificando...');
-                    this.checkAndImport();
-                }
+                this.lastActivity = Date.now();
             };
         
             ['mousemove', 'scroll', 'keydown', 'click', 'touchstart']
@@ -217,6 +216,8 @@
         startAutoCheck() {
             log('⏱ Iniciando verificación automática cada 30s...');
             this.nextCheckIn = 30;
+            
+            // Contador visual
             this.counterInterval = setInterval(() => {
                 if (this.isPageVisible && !this.isSyncing) {
                     this.nextCheckIn--;
@@ -225,6 +226,7 @@
                 }
             }, 1000);
     
+            // Verificación automática
             this.checkTimer = setInterval(() => {
                 if (this.isPageVisible && !this.skipNextCheck) {
                     this.checkAndImport();
@@ -237,7 +239,12 @@
          * Verifica cambios remotos e importa automáticamente
          */
         async checkAndImport() {
-            if (!this.isConnected || !this.gistId || this.isSyncing) return;
+            if (!this.isConnected || !this.gistId || this.isSyncing) {
+                if (this.isSyncing) {
+                    log('⏳ Ya hay una sincronización en curso, omitiendo...');
+                }
+                return;
+            }
     
             try {
                 this.isSyncing = true;
@@ -253,17 +260,29 @@
                     }
                 });
     
-                if (!response.ok) return;
+                if (!response.ok) {
+                    log('⚠️ Error al obtener Gist:', response.status);
+                    return;
+                }
+                
                 const gist = await response.json();
                 const content = gist.files['fftask-backup.json']?.content;
-                if (!content) return;
+                
+                if (!content) {
+                    log('⚠️ No se encontró contenido en el Gist');
+                    return;
+                }
     
                 const backup = JSON.parse(content);
                 const isDifferentDevice = backup.deviceId !== this.deviceId;
                 const isNewer = new Date(backup.timestamp) > new Date(this.lastImport || 0);
     
                 if (isDifferentDevice && isNewer) {
-                    log('📥 Cambios detectados desde otro dispositivo, iniciando importación...');
+                    log('📥 Cambios detectados desde otro dispositivo:');
+                    log('   - Device remoto:', backup.deviceId);
+                    log('   - Device local:', this.deviceId);
+                    log('   - Timestamp remoto:', backup.timestamp);
+                    log('   - Última importación:', this.lastImport || 'nunca');
                     await this.importData(backup);
                 } else {
                     log('✅ No hay cambios nuevos.');
@@ -281,27 +300,36 @@
          * Importa datos automáticamente
          */
         async importData(backup) {
-            if (!backup?.data) return;
+            if (!backup?.data) {
+                log('⚠️ Backup sin datos, omitiendo importación');
+                return;
+            }
+            
             this.syncAction = 'import';
             this.updateUI();
     
             log('⬇️ Importando datos desde Gist...');
             const keepKeys = Object.values(STORAGE);
     
+            // Limpiar localStorage excepto datos de sincronización
             for (let i = localStorage.length - 1; i >= 0; i--) {
                 const key = localStorage.key(i);
-                if (!keepKeys.includes(key)) localStorage.removeItem(key);
+                if (!keepKeys.includes(key)) {
+                    localStorage.removeItem(key);
+                }
             }
     
+            // Importar nuevos datos
             Object.entries(backup.data).forEach(([key, value]) => {
                 localStorage.setItem(key, value);
             });
     
+            // Actualizar timestamp de importación
             const now = new Date().toISOString();
             this.lastImport = now;
             localStorage.setItem(STORAGE.LAST_IMPORT, now);
-            log('✅ Datos importados correctamente. Recargando en 0.5s...');
-    
+            
+            log('✅ Datos importados correctamente. Recargando página...');
             setTimeout(() => window.location.reload(), 500);
         },
     
@@ -312,6 +340,7 @@
             this.hasUserChanges = true;
             clearTimeout(this.exportTimer);
             log('📦 Cambio detectado → exportación programada en 2s.');
+            
             this.exportTimer = setTimeout(() => {
                 if (this.isConnected && this.gistId) {
                     this.exportData();
@@ -324,6 +353,7 @@
          */
         async exportData() {
             if (!this.isConnected || !this.gistId || this.isSyncing) return;
+            
             try {
                 this.isSyncing = true;
                 this.syncAction = 'export';
@@ -356,7 +386,12 @@
                     this.hasUserChanges = false;
                     this.skipNextCheck = true;
                     this.nextCheckIn = 30;
-                    setTimeout(() => this.skipNextCheck = false, TIMING.POST_EXPORT_PAUSE);
+                    
+                    // Pausa temporal de verificaciones después de exportar
+                    setTimeout(() => {
+                        this.skipNextCheck = false;
+                    }, TIMING.POST_EXPORT_PAUSE);
+                    
                     log('✅ Datos exportados correctamente.');
                 } else {
                     log('⚠️ Fallo al exportar datos:', response.status);
@@ -375,18 +410,25 @@
          */
         collectAppData() {
             const excludeKeys = Object.values(STORAGE);
-            const data = { version: '1.0', timestamp: new Date().toISOString(), data: {} };
+            const data = { 
+                version: '1.0', 
+                timestamp: new Date().toISOString(),
+                deviceId: this.deviceId,
+                data: {} 
+            };
+            
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (!excludeKeys.includes(key)) {
                     data.data[key] = localStorage.getItem(key);
                 }
             }
+            
             return data;
         },
     
         /**
-         * Escucha eventos de cambios en la app (excepto tickets)
+         * Escucha eventos de cambios en la app
          */
         listenToAppChanges() {
             log('🎧 Escuchando eventos de la app...');
@@ -394,7 +436,7 @@
                 'todayTasksUpdated',
                 'missionsUpdated',
                 'habitsUpdated',
-                'habitsAutoUpdated', // lo escuchamos pero lo ignoramos explícitamente
+                'habitsAutoUpdated',
                 'shopItemsUpdated',
                 'pointsUpdated'
             ];
@@ -404,60 +446,75 @@
         
                     // 🚫 Ignorar generación automática de tickets
                     if (event === 'habitsAutoUpdated') {
-                        log('🎟 Ignorado: generación automática de tickets (habitsAutoUpdated).');
+                        log('🎟 Ignorado: generación automática de tickets.');
                         return;
                     }
         
-                    // 🚫 Ignorar actualizaciones de puntos que provengan de tickets automáticos
+                    // 🚫 Ignorar actualizaciones automáticas de puntos
                     if (event === 'pointsUpdated' && data?.source === 'autoTicket') {
-                        log('🎟 Ignorado: actualización automática de puntos por ticket.');
+                        log('🎟 Ignorado: actualización automática de puntos.');
                         return;
                     }
         
-                    // 🚫 Ignorar si la estructura "habits" no cambió realmente
+                    // 🚫 Ignorar actualizaciones automáticas de hábitos
                     if (event === 'habitsUpdated' && data?.autoGenerated === true) {
                         log('🎟 Ignorado: actualización automática de hábitos.');
                         return;
                     }
         
-                    log(`📢 Cambio detectado en la app: ${event}`);
+                    log(`📢 Cambio detectado: ${event}`);
                     this.markUserChanges();
                 });
             });
         },
-        
     
+        /**
+         * Actualiza UI
+         */
         updateUI() {
             window.GitHubSyncUI?.updateButton?.();
         },
     
+        /**
+         * Desconecta GitHub Sync
+         */
         disconnect() {
             log('🔌 Desconectando GitHub Sync...');
+            
             clearInterval(this.checkTimer);
             clearInterval(this.counterInterval);
             clearTimeout(this.exportTimer);
+            
             this.token = null;
             this.gistId = null;
             this.lastImport = null;
             this.isConnected = false;
+            
             Object.values(STORAGE).forEach(key => localStorage.removeItem(key));
+            
+            log('✅ Desconectado correctamente.');
         },
     
+        /**
+         * Obtiene estado actual
+         */
         getStatus() {
             return {
                 isConnected: this.isConnected,
                 isSyncing: this.isSyncing,
                 syncAction: this.syncAction,
                 nextCheckIn: this.nextCheckIn,
-                hasChanges: this.hasUserChanges
+                hasChanges: this.hasUserChanges,
+                deviceId: this.deviceId,
+                lastImport: this.lastImport
             };
         }
     };
     
+    // Auto-inicialización
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => window.GitHubSync.init());
     } else {
         window.GitHubSync.init();
     }
-    })();
-    
+})();

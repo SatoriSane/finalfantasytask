@@ -1,6 +1,7 @@
 /* ===================================
    github-sync-state.js - GESTIÓN DE ESTADO
    Sistema de sincronización automática con GitHub
+   Versión Robusta con verificación garantizada
    =================================== */
 
    (function() {
@@ -16,7 +17,9 @@
     const TIMING = {
         CHECK_INTERVAL: 30000,
         DEBOUNCE_EXPORT: 2000,
-        POST_EXPORT_PAUSE: 10000
+        POST_EXPORT_PAUSE: 10000,
+        FORCE_CHECK_TIMEOUT: 5000,  // Timeout para verificación forzada
+        FORCE_CHECK_RETRY: 1000     // Intervalo entre reintentos
     };
     
     const log = (...msg) => console.log('[GitHubSync]', ...msg);
@@ -44,19 +47,23 @@
         /**
          * Inicializa el sistema
          */
-        init() {
+        async init() {
             log('▶ init() → Iniciando sistema de sincronización...');
             this.loadState();
         
             if (this.isConnected) {
                 log('🔗 Usuario ya conectado, iniciando monitoreo y verificación automática.');
+                
+                // ✅ VERIFICACIÓN INMEDIATA Y FORZADA AL INICIAR
+                // Se ejecuta ANTES de iniciar los timers para evitar conflictos
+                log('🔄 Verificación PRIORITARIA al abrir la aplicación');
+                await this.forceCheckAndImport();
+                
+                // Una vez completada la verificación inicial, inicia el monitoreo
                 this.startActivityMonitoring();
                 this.startAutoCheck();
                 this.listenToAppChanges();
-        
-                // ✅ SIEMPRE verificar al iniciar/refrescar
-                log('🔄 Verificación inmediata al iniciar la app');
-                this.checkAndImport();
+                log('✅ Sistema de monitoreo iniciado después de verificación inicial');
             } else {
                 log('⚠️ No conectado a GitHub todavía.');
             }
@@ -110,9 +117,9 @@
             this.isConnected = true;
             log('📁 Gist listo:', this.gistId);
 
-            // ✅ SIEMPRE verificar después del login
-            log('🔄 Verificación inmediata después del login');
-            await this.checkAndImport();
+            // ✅ VERIFICACIÓN INMEDIATA Y FORZADA DESPUÉS DEL LOGIN
+            log('🔄 Verificación PRIORITARIA después del login');
+            await this.forceCheckAndImport();
 
             this.startActivityMonitoring();
             this.startAutoCheck();
@@ -190,13 +197,13 @@
             log('👀 Iniciando monitoreo de actividad...');
             
             // Detecta cuando el usuario vuelve a la pestaña
-            document.addEventListener('visibilitychange', () => {
+            document.addEventListener('visibilitychange', async () => {
                 this.isPageVisible = !document.hidden;
                 
                 if (this.isPageVisible) {
-                    // ✅ SIEMPRE verificar cuando vuelve a la pestaña
+                    // ✅ VERIFICACIÓN FORZADA cuando vuelve a la pestaña
                     log('👋 Usuario volvió a la página. Verificando cambios remotos...');
-                    this.checkAndImport();
+                    await this.forceCheckAndImport();
                     this.lastActivity = Date.now();
                 }
             });
@@ -233,6 +240,42 @@
                 }
                 this.skipNextCheck = false;
             }, TIMING.CHECK_INTERVAL);
+        },
+    
+        /**
+         * Verificación FORZADA - Prioriza verificaciones críticas
+         * Se usa en: inicio de app, return to tab, login
+         * 
+         * Esta función garantiza que la verificación se ejecute incluso si
+         * hay operaciones en curso, esperando un máximo de 5 segundos
+         */
+        async forceCheckAndImport() {
+            if (!this.isConnected || !this.gistId) {
+                log('⚠️ No se puede verificar: no conectado o sin Gist');
+                return;
+            }
+
+            // Si ya hay sincronización en curso, espera con timeout
+            const maxAttempts = TIMING.FORCE_CHECK_TIMEOUT / TIMING.FORCE_CHECK_RETRY;
+            let attempts = 0;
+            
+            while (this.isSyncing && attempts < maxAttempts) {
+                log(`⏳ Sincronización en curso, esperando... (intento ${attempts + 1}/${maxAttempts})`);
+                await new Promise(resolve => setTimeout(resolve, TIMING.FORCE_CHECK_RETRY));
+                attempts++;
+            }
+
+            // Si después del timeout sigue ocupado, aborta para evitar bloqueos
+            if (this.isSyncing) {
+                log('⚠️ No se pudo forzar verificación: sincronización bloqueada después de 5s');
+                return;
+            }
+
+            // Resetea el timer de verificación automática
+            this.nextCheckIn = 30;
+            
+            log('🚀 Ejecutando verificación forzada...');
+            return this.checkAndImport();
         },
     
         /**
@@ -511,9 +554,11 @@
         }
     };
     
-    // Auto-inicialización
+    // Auto-inicialización con soporte async
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => window.GitHubSync.init());
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.GitHubSync.init();
+        });
     } else {
         window.GitHubSync.init();
     }

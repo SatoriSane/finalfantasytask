@@ -316,7 +316,8 @@
                 
                 setTimeout(() => {
                     App.events.emit("shownotifyMessage", message);
-                    App.events.emit("habitsUpdated");
+                    // ✅ Usar evento diferente para generación automática (no debe exportar a GitHub)
+                    App.events.emit("habitsAutoUpdated");
                 }, 500);
             }
         },

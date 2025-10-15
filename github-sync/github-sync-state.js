@@ -407,11 +407,11 @@
          */
         listenToAppChanges() {
             const events = [
-                'tasksUpdated',
-                'missionsUpdated',
-                'habitsUpdated',
-                'shopUpdated',
-                'pointsUpdated'
+                'todayTasksUpdated',      // Tareas de hoy (crear, editar, eliminar, completar)
+                'missionsUpdated',        // Misiones y categorías
+                'habitsUpdated',          // Retos de abstinencia
+                'shopItemsUpdated',       // Productos de la tienda
+                'pointsUpdated'           // Cambios en puntos (muy importante)
             ];
 
             events.forEach(event => {

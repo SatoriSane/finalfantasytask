@@ -631,7 +631,8 @@
             const habitsContainer = document.getElementById('tab-habits');
             if (!habitsContainer) return;
 
-            App.events.on('habitsUpdated', () => {
+            // Escuchar tanto cambios manuales como automáticos
+            const handleHabitsUpdate = () => {
                 // Solo re-renderizar si hay cambios estructurales importantes
                 const currentChallenges = App.state.get().habits.challenges;
                 const currentCards = document.querySelectorAll('.abstinence-card');
@@ -649,7 +650,11 @@
                     // Solo actualizar los timers sin re-renderizar todo
                     updateAbstinenceTimers();
                 }
-            });
+            };
+            
+            // Escuchar ambos eventos
+            App.events.on('habitsUpdated', handleHabitsUpdate);
+            App.events.on('habitsAutoUpdated', handleHabitsUpdate);
             App.events.on('stateRefreshed', () => this.render());
 
             habitsContainer.addEventListener('click', (e) => {

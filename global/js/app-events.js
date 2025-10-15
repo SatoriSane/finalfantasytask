@@ -1,4 +1,4 @@
-// app-events.js
+// global/js/app-events.js
 // A simple pub/sub event bus for the application.
 (function(App) {
     const topics = {};

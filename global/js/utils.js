@@ -1,4 +1,4 @@
-// utils.js
+// global/js/utils.js
 // Contiene funciones de ayuda genéricas que no dependen del estado de la aplicación ni de la interfaz de usuario.
 (function(App) {
     App.utils = {

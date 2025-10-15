@@ -1,4 +1,4 @@
-// app-state.js
+// global/js/app-state.js
 // Maneja el estado de la aplicación y la lógica que lo modifica.
 (function(App) {
     let state = {

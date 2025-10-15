@@ -1,4 +1,4 @@
-// script.js
+// global/js/script.js
 // El archivo principal que orquesta la carga y el inicio de la aplicación.
 (function() {
     // Asegura que el espacio de nombres 'App' exista antes de que cualquier módulo intente adjuntarse a él.

@@ -1,4 +1,4 @@
-// features/feature-ui.js
+// global/js/feature-ui.js
 // Maneja la interacción del usuario y la representación visual de la aplicación.
 // 
 // Este archivo centraliza toda la lógica de la interfaz de usuario (UI), incluyendo:

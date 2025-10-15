@@ -1,4 +1,4 @@
-// features/feature-data.js
+// global/js/feature-data.js
 // Maneja la importación y exportación de datos de la aplicación.
 (function(App) {
     App.data = {

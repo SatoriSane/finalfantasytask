@@ -1,6 +1,6 @@
 /* ===================================
    github-sync-state.js - GESTIÓN DE ESTADO
-   Sistema de sincronización automática con GitHub (optimizado)
+   Sistema de sincronización automática con GitHub
    =================================== */
 
    (function() {
@@ -47,19 +47,19 @@
         init() {
             log('▶ init() → Iniciando sistema de sincronización...');
             this.loadState();
-    
+        
             if (this.isConnected) {
                 log('🔗 Usuario ya conectado, iniciando monitoreo y verificación automática.');
                 this.startActivityMonitoring();
                 this.startAutoCheck();
-                this.listenToAppChanges();
-    
+                this.listenToAppChanges(); // Escucha eventos de la app
+        
                 // ✅ Verificación inmediata si hace más de CHECK_INTERVAL desde la última importación
                 const lastImportTime = new Date(this.lastImport || 0).getTime();
                 const now = Date.now();
                 if ((now - lastImportTime) > TIMING.CHECK_INTERVAL) {
                     log('⏱ Ha pasado más de 30s desde la última importación → check inmediato');
-                    this.checkMeta();
+                    this.checkAndImport();
                 }
             } else {
                 log('⚠️ No conectado a GitHub todavía.');
@@ -109,11 +109,11 @@
             await this.findOrCreateGist();
             log('📁 Gist listo:', this.gistId);
     
-            await this.checkMeta();
+            await this.checkAndImport();
     
             this.startActivityMonitoring();
             this.startAutoCheck();
-            this.listenToAppChanges();
+            this.listenToAppChanges(); // <---- Escucha eventos de la app
             log('🟢 Sincronización automática iniciada.');
             return true;
         },
@@ -161,12 +161,6 @@
                                     deviceId: this.deviceId,
                                     data: {}
                                 }, null, 2)
-                            },
-                            'fftask-meta.json': {
-                                content: JSON.stringify({
-                                    timestamp: new Date().toISOString(),
-                                    deviceId: this.deviceId
-                                }, null, 2)
                             }
                         }
                     })
@@ -192,24 +186,27 @@
                 this.isPageVisible = !document.hidden;
                 if (this.isPageVisible) {
                     const inactiveTime = Date.now() - this.lastActivity;
+        
+                    // ✅ Solo check si ha pasado más de INACTIVITY_THRESHOLD
                     if (inactiveTime > TIMING.INACTIVITY_THRESHOLD) {
                         log('💤 Usuario volvió tras inactividad. Revisando cambios...');
-                        this.checkMeta();
+                        this.checkAndImport();
                     }
+        
                     this.lastActivity = Date.now();
                 }
             });
-    
+        
             const updateActivity = () => {
                 const now = Date.now();
                 const wasInactive = (now - this.lastActivity) > TIMING.INACTIVITY_THRESHOLD;
                 this.lastActivity = now;
                 if (wasInactive && this.isPageVisible) {
                     log('👋 Actividad detectada después de pausa. Verificando...');
-                    this.checkMeta();
+                    this.checkAndImport();
                 }
             };
-    
+        
             ['mousemove', 'scroll', 'keydown', 'click', 'touchstart']
                 .forEach(event => document.addEventListener(event, updateActivity, { passive: true }));
         },
@@ -230,58 +227,14 @@
     
             this.checkTimer = setInterval(() => {
                 if (this.isPageVisible && !this.skipNextCheck) {
-                    this.checkMeta();
+                    this.checkAndImport();
                 }
                 this.skipNextCheck = false;
             }, TIMING.CHECK_INTERVAL);
         },
     
         /**
-         * Verifica cambios usando solo el archivo meta
-         */
-        async checkMeta() {
-            if (!this.isConnected || !this.gistId || this.isSyncing) return;
-    
-            try {
-                this.isSyncing = true;
-                this.syncAction = 'check';
-                this.nextCheckIn = 30;
-                this.updateUI();
-    
-                log('🔍 Verificando cambios remotos (meta)...');
-                const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
-                    headers: {
-                        'Authorization': `token ${this.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-    
-                if (!response.ok) return;
-                const gist = await response.json();
-                const metaContent = gist.files['fftask-meta.json']?.content;
-                if (!metaContent) return;
-    
-                const meta = JSON.parse(metaContent);
-                const isDifferentDevice = meta.deviceId !== this.deviceId;
-                const isNewer = new Date(meta.timestamp) > new Date(this.lastImport || 0);
-    
-                if (isDifferentDevice || isNewer) {
-                    log('📥 Cambios detectados según meta, descargando backup completo...');
-                    await this.checkAndImport();
-                } else {
-                    log('✅ No hay cambios nuevos según meta.');
-                }
-            } catch (error) {
-                console.error('[GitHubSync] ❌ Error al verificar meta:', error);
-            } finally {
-                this.isSyncing = false;
-                this.syncAction = null;
-                this.updateUI();
-            }
-        },
-    
-        /**
-         * Verifica cambios remotos e importa automáticamente (backup completo)
+         * Verifica cambios remotos e importa automáticamente
          */
         async checkAndImport() {
             if (!this.isConnected || !this.gistId || this.isSyncing) return;
@@ -292,7 +245,7 @@
                 this.nextCheckIn = 30;
                 this.updateUI();
     
-                log('🔍 Descargando backup completo...');
+                log('🔍 Verificando cambios remotos...');
                 const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
                     headers: {
                         'Authorization': `token ${this.token}`,
@@ -309,7 +262,7 @@
                 const isDifferentDevice = backup.deviceId !== this.deviceId;
                 const isNewer = new Date(backup.timestamp) > new Date(this.lastImport || 0);
     
-                if (isDifferentDevice || isNewer) {
+                if (isDifferentDevice && isNewer) {
                     log('📥 Cambios detectados desde otro dispositivo, iniciando importación...');
                     await this.importData(backup);
                 } else {
@@ -380,9 +333,6 @@
                 const data = this.collectAppData();
                 data.deviceId = this.deviceId;
     
-                const contentBackup = JSON.stringify(data, null, 2);
-                const meta = JSON.stringify({ timestamp: new Date().toISOString(), deviceId: this.deviceId }, null, 2);
-    
                 const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
                     method: 'PATCH',
                     headers: {
@@ -392,8 +342,9 @@
                     },
                     body: JSON.stringify({
                         files: {
-                            'fftask-backup.json': { content: contentBackup },
-                            'fftask-meta.json': { content: meta }
+                            'fftask-backup.json': {
+                                content: JSON.stringify(data, null, 2)
+                            }
                         }
                     })
                 });
@@ -443,34 +394,38 @@
                 'todayTasksUpdated',
                 'missionsUpdated',
                 'habitsUpdated',
-                'habitsAutoUpdated',
+                'habitsAutoUpdated', // lo escuchamos pero lo ignoramos explícitamente
                 'shopItemsUpdated',
                 'pointsUpdated'
             ];
-    
+        
             events.forEach(event => {
                 window.App?.events?.on(event, (data) => {
-    
+        
+                    // 🚫 Ignorar generación automática de tickets
                     if (event === 'habitsAutoUpdated') {
                         log('🎟 Ignorado: generación automática de tickets (habitsAutoUpdated).');
                         return;
                     }
-    
+        
+                    // 🚫 Ignorar actualizaciones de puntos que provengan de tickets automáticos
                     if (event === 'pointsUpdated' && data?.source === 'autoTicket') {
                         log('🎟 Ignorado: actualización automática de puntos por ticket.');
                         return;
                     }
-    
+        
+                    // 🚫 Ignorar si la estructura "habits" no cambió realmente
                     if (event === 'habitsUpdated' && data?.autoGenerated === true) {
                         log('🎟 Ignorado: actualización automática de hábitos.');
                         return;
                     }
-    
+        
                     log(`📢 Cambio detectado en la app: ${event}`);
                     this.markUserChanges();
                 });
             });
         },
+        
     
         updateUI() {
             window.GitHubSyncUI?.updateButton?.();
@@ -504,6 +459,5 @@
     } else {
         window.GitHubSync.init();
     }
-    
     })();
     

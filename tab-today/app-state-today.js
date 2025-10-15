@@ -108,10 +108,29 @@
         const state = _get();
         const today = App.utils.getFormattedDate();
         const task = (state.tasksByDate[today] || []).find(t => t.id === taskId);
-
+    
         if (task) {
-            task.name = updatedData.name;
-            task.points = updatedData.points;
+            // Actualizar campos existentes
+            if (typeof updatedData.name === 'string') task.name = updatedData.name;
+            if (typeof updatedData.points === 'number') task.points = updatedData.points;
+    
+            // Soporte para repeticiones diarias
+            if (updatedData.dailyRepetitions && typeof updatedData.dailyRepetitions.max === 'number') {
+                const newMax = Math.max(1, parseInt(updatedData.dailyRepetitions.max, 10) || 1);
+                task.dailyRepetitions = task.dailyRepetitions || { max: 1 };
+    
+                // Si cambió el máximo y las repeticiones actuales exceden, ajustar
+                if ((task.currentRepetitions || 0) > newMax) {
+                    task.currentRepetitions = newMax;
+                }
+                task.dailyRepetitions.max = newMax;
+    
+                // Si ahora max > current y estaba marcada como completed, desmarcar (si procede)
+                if (task.completed && (task.currentRepetitions || 0) < task.dailyRepetitions.max) {
+                    task.completed = false;
+                }
+            }
+    
             _save();
             App.events.emit('todayTasksUpdated');
             App.events.emit('shownotifyMessage', `Tarea "${task.name}" actualizada.`);
@@ -119,6 +138,30 @@
             console.warn(`No se pudo encontrar la tarea temporal con ID: ${taskId} para actualizar.`);
         }
     }
+    
+    function deleteTemporaryTask(taskId) {
+        // Reutilizamos la función existente deleteTodayTask pero sin pedir confirmación
+        if (typeof App.state.deleteTodayTask === 'function') {
+            App.state.deleteTodayTask(taskId, true);
+        } else {
+            // Fallback: eliminación manual por si no existe deleteTodayTask
+            const state = _get();
+            const todayStr = App.utils.getFormattedDate();
+            const tasks = state.tasksByDate[todayStr] || [];
+            const idx = tasks.findIndex(t => t.id === taskId);
+            if (idx !== -1) {
+                const name = tasks[idx].name;
+                tasks.splice(idx, 1);
+                state.tasksByDate[todayStr] = tasks;
+                _save();
+                App.events.emit('todayTasksUpdated');
+                App.events.emit('shownotifyMessage', `Tarea "${name}" eliminada de Hoy.`);
+            } else {
+                console.warn(`Intento de eliminar tarea temporal no encontrada: ${taskId}`);
+            }
+        }
+    }
+    
 
     // --- FUNCIONES AÑADIDAS PARA ORDENAR ---
     function saveTodayTaskOrder(order) {
@@ -143,74 +186,65 @@
         addQuickTask: addQuickTask,
         updateTemporaryTask: updateTemporaryTask,
         addTaskToToday: addTaskToToday,
+        deleteTemporaryTask: deleteTemporaryTask, // 👈 AÑADE ESTA LÍNEA AQUÍ
+    
         completeTaskRepetition: function(taskId) {
             const tasks = this.getTodayTasks();
             const task = tasks.find(t => t.id === taskId);
-
+    
             if (!task || task.completed) {
                 if (task && task.completed) {
                     App.events.emit('shownotifyMessage', `"${task.name}" ya está completada para hoy.`);
                 }
                 return false;
             }
-
+    
             if (task.currentRepetitions >= task.dailyRepetitions.max) {
                 App.events.emit('shownotifyMessage', `Ya has alcanzado el límite de repeticiones para "${task.name}" hoy.`);
                 return false;
             }
-
+    
             task.currentRepetitions += 1;
-
+    
             const bonusMissionId = App.state.getBonusMissionForToday();
             let pointsAwarded = task.points;
             if (task.missionId && task.missionId === bonusMissionId) {
                 pointsAwarded *= 2;
             }
-
+    
             App.state.addPoints(pointsAwarded);
             App.state.addHistoryAction(`Misión: ${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})`, pointsAwarded, 'tarea');
-
+    
             if (task.currentRepetitions >= task.dailyRepetitions.max) {
                 task.completed = true;
-                // Registrar la finalización de la misión
                 if (task.missionId) {
                     App.state.trackMissionCompletion(task.missionId);
                 }
-                
-                // Auto-eliminar misiones de un solo día que han sido completadas
+    
                 if (App.state.autoDeleteCompletedSingleDayMissions) {
                     setTimeout(() => {
                         App.state.autoDeleteCompletedSingleDayMissions();
-                    }, 100); // Pequeño delay para asegurar que el estado se haya guardado
+                    }, 100);
                 }
             } else {
                 App.events.emit('shownotifyMessage', `¡${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})! +${pointsAwarded}`);
             }
-
+    
             _save();
             App.events.emit('pointsUpdated', _get().points);
             App.events.emit('historyUpdated');
-            
-            // Primero, emite este evento para iniciar la animación de la barra de progreso.
             App.events.emit('taskCompleted', taskId);
-            
-            // Luego, espera 0.5 segundos para que la animación termine y luego emite el evento
-            // que hará que se re-renderice la lista y se reordene.
-            setTimeout(() => {
-                App.events.emit('todayTasksUpdated');
-            }, 1000); // Mismo tiempo que la duración de la transición en CSS
-            
+            setTimeout(() => App.events.emit('todayTasksUpdated'), 1000);
             return true;
         },
-
-
+    
         deleteTodayTask: function(taskId, skipConfirm = false) {
             const performDelete = () => {
                 const state = _get();
                 const todayStr = App.utils.getFormattedDate();
                 const tasks = state.tasksByDate[todayStr];
                 const taskIndex = tasks ? tasks.findIndex(t => t.id === taskId) : -1;
-
+    
                 if (taskIndex !== -1) {
                     const taskName = tasks[taskIndex].name;
                     tasks.splice(taskIndex, 1);
@@ -224,7 +258,7 @@
                     console.warn(`Intento de eliminar tarea con ID ${taskId} no encontrada.`);
                 }
             };
-
+    
             if (skipConfirm) {
                 performDelete();
             } else {
@@ -238,41 +272,41 @@
                 });
             }
         },
-        
+    
         getTodayTasks: function() {
             return _get().tasksByDate[App.utils.getFormattedDate()] || [];
         },
-
+    
         rolloverUncompletedTasks: function() {
             const state = _get();
             const today = App.utils.getFormattedDate();
             const yesterday = App.utils.getFormattedDate(App.utils.addDateUnit(new Date(), -1, 'day'));
-
+    
             const yesterdayTasks = state.tasksByDate[yesterday] || [];
             if (yesterdayTasks.length === 0) return;
-
+    
             const uncompletedTasks = yesterdayTasks.filter(task => !task.completed);
             if (uncompletedTasks.length === 0) return;
-
+    
             const todayTasks = state.tasksByDate[today] || [];
             const todayTaskIds = new Set(todayTasks.map(t => t.id));
-
+    
             const tasksToRollover = uncompletedTasks.filter(task => !todayTaskIds.has(task.id)).map(task => ({
                 ...task,
                 completed: false,
                 currentRepetitions: 0
             }));
-
+    
             if (tasksToRollover.length > 0) {
                 state.tasksByDate[today] = [...tasksToRollover, ...todayTasks];
                 _save();
                 console.log(`${tasksToRollover.length} tarea(s) no completada(s) ha(n) sido movida(s) a hoy.`);
             }
         },
-        
-        // Añado las nuevas funciones al objeto principal de App.state
+    
         saveTodayTaskOrder: saveTodayTaskOrder,
         getTodayTaskOrder: getTodayTaskOrder,
     });
+    
 
 })(window.App = window.App || {});

@@ -64,38 +64,91 @@
         const nameInput = document.getElementById('editTemporaryTaskName');
         const pointsInput = document.getElementById('editTemporaryTaskPoints');
         const closeBtn = modal.querySelector('.modal-close-btn');
-
+    
         const tasks = App.state.getTodayTasks();
         const task = tasks.find(t => t.id === taskId);
-
+    
         if (!task || !modal) return;
-
+    
         taskIdInput.value = task.id;
         nameInput.value = task.name;
         pointsInput.value = task.points;
+    
+        // --- Campo de repeticiones máximas ---
+        let repsInput = form.querySelector('#editTemporaryTaskReps');
+        if (!repsInput) {
+            const repsGroup = document.createElement('div');
+            repsGroup.className = 'form-group';
+            repsGroup.innerHTML = `
+                <label for="editTemporaryTaskReps">Repeticiones máximas:</label>
+                <input type="number" id="editTemporaryTaskReps" min="1" />
+            `;
+            // Insertar antes del bloque de botones (.modal-actions)
+            const actions = form.querySelector('.modal-actions');
+            if (actions) {
+                form.insertBefore(repsGroup, actions);
+            } else {
+                form.appendChild(repsGroup);
+            }
+            repsInput = repsGroup.querySelector('input');
+        }
+        repsInput.value = (task.dailyRepetitions && task.dailyRepetitions.max) || 1;
+    
+        // --- Botón de eliminar tarea ---
+        let deleteBtn = form.querySelector('.delete-temp-task-btn');
+        if (!deleteBtn) {
+            const actions = form.querySelector('.modal-actions');
+            deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'delete-temp-task-btn danger';
+            deleteBtn.textContent = 'Eliminar tarea';
 
+            // Insertar ANTES del botón de guardar (a la izquierda)
+            if (actions) {
+                const saveBtn = actions.querySelector('button[type="submit"]');
+                if (saveBtn) {
+                    actions.insertBefore(deleteBtn, saveBtn);
+                } else {
+                    actions.appendChild(deleteBtn);
+                }
+            } else {
+                form.appendChild(deleteBtn);
+            }
+        }
+
+    
         modal.classList.add('visible');
         nameInput.focus();
-
+    
         const closeHandler = () => {
             modal.classList.remove('visible');
-            form.onsubmit = null; // Clean up listener
+            form.onsubmit = null;
+            deleteBtn.onclick = null;
         };
-
+    
         form.onsubmit = (e) => {
             e.preventDefault();
             const updatedData = {
                 name: nameInput.value.trim(),
-                points: parseInt(pointsInput.value, 10) || 0
+                points: parseInt(pointsInput.value, 10) || 0,
+                dailyRepetitions: { max: parseInt(repsInput.value, 10) || 1 }
             };
             if (updatedData.name) {
                 App.state.updateTemporaryTask(taskId, updatedData);
                 closeHandler();
             }
         };
-
+    
+        deleteBtn.onclick = () => {
+            if (confirm('¿Seguro que deseas eliminar esta tarea?')) {
+                App.state.deleteTemporaryTask(taskId);
+                closeHandler();
+            }
+        };
+    
         closeBtn.onclick = closeHandler;
     }
+    
 
     // --- PUBLIC API ---
     App.ui.today = {
@@ -242,13 +295,22 @@
                 taskCard.addEventListener("click", (e) => {
                     const missionCard = e.target.closest('.task-card');
                     if (!missionCard) return;
-
-                    if (task.missionId) { // It's a permanent mission
-                        App.ui.missions.openEditMissionModal(task.missionId, true, task.id);
-                    } else { // It's a temporary task
+                
+                    if (task.missionId) {
+                        const missionExists = App.state.getMissions().some(m => m.id === task.missionId);
+                        if (missionExists) {
+                            // Misión normal aún existente
+                            App.ui.missions.openEditMissionModal(task.missionId, true, task.id);
+                        } else {
+                            // La misión fue eliminada → tratar la tarea como temporal editable
+                            console.warn(`La misión ${task.missionId} ya no existe, abriendo editor temporal.`);
+                            _openEditTemporaryTaskModal(task.id);
+                        }
+                    } else {
                         _openEditTemporaryTaskModal(task.id);
                     }
                 });
+                
 
                 const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
                 const currentReps = task.currentRepetitions || 0;

@@ -254,3 +254,31 @@
     background-color: var(--ff-bg-medium);
 }
 
+/* Botón eliminar: borde rojo, fondo transparente */
+.delete-temp-task-btn.danger {
+    background: transparent;
+    color: var(--ff-danger, #d33);
+    border: 2px solid var(--ff-danger, #d33);
+    padding: 0.5em 0.9em;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 0.6em; /* espacio entre eliminar y guardar */
+}
+
+/* Hover ligeramente más oscuro */
+.delete-temp-task-btn.danger:hover {
+    color: #b22;
+    border-color: #b22;
+}
+
+/* Asegura que el botón guardar mantiene su estilo 'primary' alineado a la derecha */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end; /* coloca los botones a la derecha */
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* Si quieres que eliminar quede visualmente a la izquierda del guardar,
+   la inserción anterior lo coloca ahí; .modal-actions sigue alineando todo a la derecha,
+   por eso eliminamos margin-left en guardar y usamos margin-right en eliminar. */

@@ -16,7 +16,7 @@
             routines: [] // Rutinas para crear hábitos
         },
         lastDate: "",
-        todayOrder: {} // NUEVO: Para guardar el orden de las tareas de hoy.
+        todayOrder: {}, // NUEVO: Para guardar el orden de las tareas de hoy.
     };
 
     function _saveStateToLocalStorage() {

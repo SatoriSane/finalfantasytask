@@ -478,12 +478,10 @@
             const events = [
                 'todayTasksUpdated',
                 'missionsUpdated',
-                'habitsUpdated',
-                'habitsAutoUpdated',
+                'habitsUpdated',    // ✅ Solo este se exporta
                 'shopItemsUpdated',
                 'pointsUpdated'
             ];
-        
             events.forEach(event => {
                 window.App?.events?.on(event, (data) => {
         

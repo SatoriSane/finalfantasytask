@@ -462,7 +462,43 @@
     <button id="showQuickAddBtn" class="floating-add-btn" aria-expanded="false" aria-controls="quickAddFormContainer" title="Agregar Tarea Rápida">
         <span class="icon">➕</span>
     </button>
+<!-- MODAL: Nueva Misión Rápida -->
+<div id="quickMissionModal" class="quick-mission-modal hidden">
+    <div class="quick-mission-content">
+      <h2 class="quick-mission-title">Nueva misión rápida</h2>
+  
+      <form id="quickMissionForm" class="quick-mission-form">
+        <label class="quick-mission-label">Nombre de la misión</label>
+        <input
+          type="text"
+          id="quickMissionName"
+          class="quick-mission-input"
+          placeholder="Ej: Hacer 10 flexiones"
+        />
+  
+        <label class="quick-mission-label">Puntos</label>
+        <input
+          type="number"
+          id="quickMissionPoints"
+          class="quick-mission-input"
+          min="1"
+          value="1"
+        />
+  
+        <label class="quick-mission-label">Selecciona un propósito</label>
+        <div id="quickMissionPurposeGrid" class="quick-mission-purpose-grid"></div>
+  
+        <div class="quick-mission-actions">
+            <button type="button" class="quick-mission-btn cancel-btn">Cancelar</button>
+          <button type="submit" class="quick-mission-btn confirm-btn">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  
 
+  
     <nav class="tabs" role="tablist" aria-label="Pestañas principales">
         <button id="navToday" role="tab" aria-selected="true" aria-controls="tab-today" tabindex="0" class="active">
             <span class="icon">📜</span> Hoy
@@ -491,7 +527,7 @@
     <script src="modal-subasta/modal-subasta-simple.js"></script>
     <script src="tab-habits/app-state-habits.js"></script>
     <script src="tab-missions/app-state-missions.js"></script>
-    <!-- <script src="tab-today/quick-task.js"></script> -->
+    <!-- <script src="tab-today/feature-quickadd-modal.js"></script> -->
     <script src="tab-today/app-state-today.js"></script>
     <script src="tab-shop/app-state-shop.js"></script>
     <script src="tab-today/feature-today.js"></script>

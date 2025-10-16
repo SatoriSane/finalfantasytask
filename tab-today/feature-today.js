@@ -1,5 +1,5 @@
 
-// features/feature-today.js
+// tab-today/feature-today.js
 (function(App) {
     'use strict';
 
@@ -150,6 +150,88 @@ let _pointsAnimationRunning = false;
     
         closeBtn.onclick = closeHandler;
     }
+    function _openQuickMissionModal() {
+        const modal = document.getElementById('quickMissionModal');
+        const form = document.getElementById('quickMissionForm');
+        const purposeGrid = document.getElementById('quickMissionPurposeGrid');
+        const nameInput = document.getElementById('quickMissionName');
+        const pointsInput = document.getElementById('quickMissionPoints');
+        const closeBtn = modal.querySelector('.cancel-btn');
+      
+        if (!modal || !form) return;
+      
+        // --- Obtener última categoría seleccionada (si existe) ---
+        let selectedCategoryId = App.state.getLastSelectedCategory?.() || null;
+      
+        // --- Rellenar propósitos ---
+        const categories = App.state.getCategories();
+        purposeGrid.innerHTML = '';
+      
+        categories.forEach(cat => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'quick-mission-purpose-btn';
+          btn.textContent = cat.name;
+      
+          // Marcar preseleccionado
+          if (cat.id === selectedCategoryId) {
+            btn.classList.add('selected');
+          }
+      
+          btn.onclick = () => {
+            // Marcar selección visual
+            purposeGrid.querySelectorAll('.quick-mission-purpose-btn')
+              .forEach(b => b.classList.remove('selected'));
+      
+            btn.classList.add('selected');
+            selectedCategoryId = cat.id;
+            App.state.setLastSelectedCategory?.(cat.id); // ✅ Guardar para futuras aperturas
+          };
+      
+          purposeGrid.appendChild(btn);
+        });
+      
+        // --- Mostrar modal ---
+        modal.classList.remove('hidden');
+        modal.classList.add('visible');
+        nameInput.value = '';
+        pointsInput.value = 1;
+      
+        // --- Cierre ---
+        const closeHandler = () => {
+          modal.classList.remove('visible');
+          modal.classList.add('hidden');
+          form.onsubmit = null;
+          closeBtn.onclick = null;
+        };
+        closeBtn.onclick = closeHandler;
+      
+        // --- Envío ---
+        form.onsubmit = (e) => {
+          e.preventDefault();
+          const missionName = nameInput.value.trim();
+          const points = parseInt(pointsInput.value, 10) || 1;
+      
+          if (!selectedCategoryId || !missionName) {
+            alert("Por favor completa todos los campos y elige un propósito.");
+            return;
+          }
+      
+          App.state.addQuickTask({
+            name: missionName,
+            points: points,
+            categoryId: selectedCategoryId
+          });
+      
+          closeHandler();
+        };
+      }
+      
+      
+      
+    
+    
+    
     
 
     // --- PUBLIC API ---
@@ -322,6 +404,16 @@ let _pointsAnimationRunning = false;
         _renderTaskCard: function(task, bonusMissionId) {
             const container = document.getElementById("todayTasksList");
             const taskCard = document.createElement("div");
+            // ✅ Detectar si la misión proviene de días pasados
+            let isCarriedOver = false;
+            if (task.missionId) {
+                const scheduled = App.state.getScheduledMissionByOriginalMissionId(task.missionId);
+                const today = App.utils.getFormattedDate();
+                if (scheduled && scheduled.lastProcessedDate && scheduled.lastProcessedDate < today) {
+                    isCarriedOver = true;
+                }
+            }
+            
             taskCard.className = `task-card ${task.completed ? "completed" : ""}`;
             taskCard.dataset.taskId = task.id;
             taskCard.draggable = !task.completed;
@@ -517,7 +609,11 @@ let _pointsAnimationRunning = false;
                     }
                 }
             });
-        
+            // Opcional: estilo visual de carried-over
+            if (isCarriedOver) {
+                taskCard.style.borderColor = "#FFAA33"; // ejemplo: borde distinto
+                taskCard.title = "Misión pendiente de días anteriores";
+            }
             container.appendChild(taskCard);
         
             const badgeEl = taskCard.querySelector('.category-badge');
@@ -534,7 +630,9 @@ let _pointsAnimationRunning = false;
          * @description Inicializa los listeners para la sección "Hoy".
          */
         initListeners: function() {
-            // Listen for state changes
+            // ==============================
+            // Listeners para cambios de estado
+            // ==============================
             App.events.on('todayTasksUpdated', () => this.render());
             App.events.on('stateRefreshed', () => this.render());
             App.events.on('taskCompleted', (taskId) => {
@@ -548,36 +646,20 @@ let _pointsAnimationRunning = false;
                     }
                 }
             });
+        
+            // ==============================
+            // Abrir modal de misión rápida
+            // ==============================
             const showQuickAddBtn = document.getElementById('showQuickAddBtn');
-            const quickAddForm = document.getElementById('quickAddForm');
-            const quickAddNameInput = document.getElementById('quickAddNameInput');
-            const quickAddPointsInput = document.getElementById('quickAddPointsInput');
-
             if (showQuickAddBtn) {
                 showQuickAddBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    App.ui.general.toggleFormVisibility('quickAddFormContainer', quickAddNameInput);
-                });
-            }
-
-            if (quickAddForm) {
-                quickAddForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const taskName = quickAddNameInput.value.trim();
-                    const taskPoints = parseInt(quickAddPointsInput.value, 10) || 0;
-
-                    if (taskName) {
-                        App.state.addQuickTask({
-                            name: taskName,
-                            points: taskPoints
-                        });
-                        quickAddNameInput.value = '';
-                        quickAddPointsInput.value = '0';
-                        App.ui.general.toggleFormVisibility('quickAddFormContainer', null, false);
-                    }
+                    _openQuickMissionModal(); // abrir modal directamente
                 });
             }
         }
+        
+        
     };
 
 })(window.App = window.App || {});

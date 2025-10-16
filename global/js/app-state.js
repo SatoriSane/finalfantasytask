@@ -402,6 +402,27 @@
                 this.saveState(); // This will trigger pointsUpdated, historyUpdated, and habitsUpdated events
             }
         },
+        // --- Preferencias del usuario ---
+        getLastSelectedCategory: function() {
+            try {
+                return localStorage.getItem("fftask_last_selected_category") || null;
+            } catch (e) {
+                console.warn("Error getting last selected category:", e);
+                return null;
+            }
+        },
+
+        setLastSelectedCategory: function(categoryId) {
+            try {
+                if (categoryId) {
+                    localStorage.setItem("fftask_last_selected_category", categoryId);
+                } else {
+                    localStorage.removeItem("fftask_last_selected_category");
+                }
+            } catch (e) {
+                console.warn("Error saving last selected category:", e);
+            }
+        },
 
     };
 })(window.App = window.App || {});

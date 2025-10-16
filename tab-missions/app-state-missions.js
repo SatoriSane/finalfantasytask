@@ -1,4 +1,4 @@
-// features/app-state-missions.js
+// tab-missions/app-state-missions.js
 (function(App) {
     'use strict';
 
@@ -14,8 +14,8 @@
     const missionState = {
         addMission: function(name, points, categoryId, dailyRepetitionsMax) {
             if (!name || !categoryId) {
-                App.ui.events.showCustomAlert("El nombre y la categoría son obligatorios.");
-                return;
+                App.ui.general.showCustomAlert("El nombre y la categoría son obligatorios.");
+                return null; // retorno explícito si falla
             }
             const state = _get();
             const newMission = {
@@ -29,8 +29,13 @@
             _save();
             App.events.emit('missionsUpdated');
             App.events.emit('shownotifyMessage', `¡Misión "${name}" añadida!!!`);
+        
+            return newMission.id; // <-- solo devolvemos el id
         },
+        
+        
 
+        
         deleteMission: function(missionId, skipConfirm = false) {
             const performDelete = () => {
                 const state = _get();
@@ -119,7 +124,7 @@
             const state = _get();
             const missionToProgram = state.missions.find(m => m.id === missionId);
             if (!missionToProgram) {
-                App.ui.events.showCustomAlert("La misión que intentas programar no fue encontrada.");
+                App.ui.general.showCustomAlert("La misión que intentas programar no fue encontrada.");
                 return;
             }
 

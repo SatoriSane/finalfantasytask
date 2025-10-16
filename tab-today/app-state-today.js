@@ -9,32 +9,49 @@
     const _get = () => App.state.get();
     const _save = () => App.state.saveState();
 
-    function addQuickTask(taskData) {
-        const state = _get();
-        const today = App.utils.getFormattedDate();
-
-        if (!state.tasksByDate[today]) {
-            state.tasksByDate[today] = [];
+    function addQuickTask({ name, points = 0, categoryId = null }) {
+        if (!name) return;
+    
+        const state = App.state.get();
+    
+        // Usar categoría seleccionada por el usuario o por defecto
+        let catId = categoryId || state.lastQuickAddCategoryId || null;
+        if (!catId) {
+            let sporadicCat = state.categories.find(c => c.name === "Propósito esporádico");
+            if (!sporadicCat) {
+                App.state.addCategory("Propósito esporádico");
+                sporadicCat = state.categories.find(c => c.name === "Propósito esporádico");
+            }
+            catId = sporadicCat.id;
         }
-
-        // Create a temporary task directly for today, without creating a permanent mission
-        const newTemporaryTask = {
-            id: App.utils.genId("task"), // A unique ID for the task itself
-            name: taskData.name,
-            points: taskData.points || 0,
-            missionId: null, // No associated mission
-            completed: false,
-            currentRepetitions: 0,
-            dailyRepetitions: { max: 1 }
-        };
-
-        state.tasksByDate[today].push(newTemporaryTask);
-
-        _save();
-        // No need to emit 'missionsUpdated' since no mission was created/changed
+    
+        const dailyRepetitionsMax = 1;
+    
+        // Crear la misión con la categoría seleccionada
+        App.state.addMission(name, points, catId, dailyRepetitionsMax);
+    
+        const newMission = state.missions[state.missions.length - 1];
+    
+        const today = App.utils.getFormattedDate();
+        App.state.scheduleMission(newMission.id, today, false);
+    
+        App.state.addTaskToToday({
+            missionId: newMission.id,
+            name: name,
+            points: points,
+            dailyRepetitions: { max: dailyRepetitionsMax }
+        });
+    
+        state.lastQuickAddCategoryId = catId;
+        App.state.saveState();
+    
         App.events.emit('todayTasksUpdated');
-        App.events.emit('shownotifyMessage', `Tarea "${taskData.name}" añadida a Hoy.`);
+        App.events.emit('missionsUpdated');
+        App.events.emit('shownotifyMessage', `Misión rápida "${name}" añadida a Hoy.`);
     }
+    
+    
+    
 
     function addTaskToToday(task) {
         const state = _get();

@@ -170,7 +170,6 @@ input:focus, select:focus {
 
 .modal-close-btn:hover { 
     color: var(--ff-accent); 
-    transform: rotate(90deg) scale(1.1);
 }
 
 /* Estilos de Stats en Modales (ej. total de puntos) */

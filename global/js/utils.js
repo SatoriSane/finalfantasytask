@@ -119,55 +119,5 @@
             return newDate;
         },
 
-        /**
-         * @description Encuentra el índice de una tarea por su ID en un array de tareas.
-         * @param {Array} tasks El array de tareas.
-         * @param {string} taskId El ID de la tarea a buscar.
-         * @returns {number} El índice de la tarea, o -1 si no se encuentra.
-         */
-        findTaskIndexById: function(tasks, taskId) {
-            if (!Array.isArray(tasks)) {
-                console.error("findTaskIndexById: 'tasks' no es un array válido.");
-                return -1;
-            }
-            return tasks.findIndex(task => task.id === taskId);
-        },
-
-        /**
-         * @description Inserta un elemento en un array en un índice específico.
-         * @param {Array} arr El array original.
-         * @param {number} index El índice donde insertar el elemento.
-         * @param {*} item El elemento a insertar.
-         * @returns {Array} El array modificado.
-         */
-        insertAtIndex: function(arr, index, item) {
-            if (!Array.isArray(arr)) {
-                console.error("insertAtIndex: 'arr' no es un array válido.");
-                return arr;
-            }
-            arr.splice(index, 0, item);
-            return arr;
-        },
-
-
-
-        /**
-         * @description Calcula la diferencia en días entre dos fechas.
-         * @param {string|Date} dateStr1 Primera fecha (YYYY-MM-DD o Date).
-         * @param {string|Date} dateStr2 Segunda fecha (YYYY-MM-DD o Date).
-         * @returns {number} El número de días entre las dos fechas.
-         */
-        getDaysBetween: function(dateStr1, dateStr2) {
-            const date1 = this.normalizeDateToStartOfDay(dateStr1);
-            const date2 = this.normalizeDateToStartOfDay(dateStr2);
-
-            if (!date1 || !date2) {
-                return 0;
-            }
-
-            const timeDiff = Math.abs(date2.getTime() - date1.getTime());
-            const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-            return diffDays;
-        }
     };
 })(window.App = window.App || {});

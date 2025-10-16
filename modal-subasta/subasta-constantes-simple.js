@@ -1,31 +1,31 @@
 // subasta-constantes-simple.js - VERSIÓN COMPLETAMENTE SIMPLIFICADA
 (function(global) {
     'use strict';
-
+    
     global.SubastaConstantes = {
         MIN_BIDDERS: 3,
-        MAX_BIDDERS: 12,
+        MAX_BIDDERS: 10,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
-            MESSAGE_DELAY: 3500,              // Delay entre mensajes
-            PRICE_ANIMATION_DURATION: 1200,   // Duración animación precio
-            BID_INTERVAL_MIN: 2500,          // Intervalo mínimo entre pujas
-            BID_INTERVAL_MAX: 5000,          // Intervalo máximo entre pujas
-            HAMMER_PAUSE: 3000,              // Pausa en cada frase del hammer
-            FINAL_DELAY: 500,                // Delay antes de mostrar botón final
-            HAMMER_FIRST_DELAY: 4500, // ⏳ Espera inicial extra antes del primer mensaje del martillo
+            MESSAGE_DELAY: 3500,
+            PRICE_ANIMATION_DURATION: 1200,
+            BID_INTERVAL_MIN: 2500,
+            BID_INTERVAL_MAX: 5000,
+            HAMMER_PAUSE: 3000,
+            FINAL_DELAY: 500,
+            HAMMER_FIRST_DELAY: 4500,
         },
+        // 🔥 Rango de puja extrema en puntos
         EXTREME_BID_RANGE: {
-            min: 0.2,   // 20%
-            max: 0.7  // 70%
+            min: 2,
+            max: 10
         },
-        // 🎲 PROBABILIDADES SIMPLES
         PROBABILITIES: {
-            HAMMER_CHANCE: 0.05,              // 5% probabilidad inicial de que inicie la secuencia del martillo en lugar de puja
-            HAMMER_BONUS_INCREMENT: 0.05,        // 5% de incremento de la probabilidad acumulada del martillo cada vez que aparece
-            HAMMER_RESUME_CHANCES: [0.5, 0.4, 0.4], // 50%, 40% y 30% de probabilidad de reanurarse para cada fase
-            HAMMER_RESUME_DECREMENT: 0.15,       // 15% de decremento de la probabilidad de reanudación de esta fase después de que se reanuda
-            EXTREME_BID_CHANCE: 0.15,           // 15% probabilidad de puja extrema
+            HAMMER_CHANCE: 0.05,
+            HAMMER_BONUS_INCREMENT: 0.05,
+            HAMMER_RESUME_CHANCES: [0.5, 0.5, 0.4],
+            HAMMER_RESUME_DECREMENT: 0.15,
+            EXTREME_BID_CHANCE: 0.15,
             EXTREME_BID_RETREAT_CHANCES: {
                 strategic: 0.7,
                 calculated: 0.8,
@@ -35,15 +35,15 @@
                 default: 0.7
             },
             NORMAL_BID_RETREAT_CHANCES: {
-                aggressive: 0.13,    // Los agresivos se retiran más (0.8 / 5)
-                impulsive: 0.12,     // Los impulsivos también se retiran bastante (0.7 / 5)
-                passionate: 0.1,    // Los apasionados se retiran moderadamente (0.6 / 5)
-                strategic: 0.08,     // Los estratégicos se quedan más (0.4 / 5)
-                calculated: 0.07,    // Los calculados son los más persistentes (0.3 / 5)
+                aggressive: 0.13,
+                impulsive: 0.12,
+                passionate: 0.1,
+                strategic: 0.08,
+                calculated: 0.07,
                 default: 0.1
             },
-            FEAR_MESSAGE_DELAY_MAX: 5000,  
-            FEAR_MESSAGE_DELAY_MIN: 1000   
+            FEAR_MESSAGE_DELAY_MAX: 5000,
+            FEAR_MESSAGE_DELAY_MIN: 1000
         },
 
 

@@ -421,120 +421,79 @@ const createWinnerAvatar = (winner) => {
         
             let increasePercent;
             if (isExtremeBid) {
-                
                 // 🔥 Puja extrema: usar rango definido en constantes
                 const min = SubastaConstantes.EXTREME_BID_RANGE.min;
                 const max = SubastaConstantes.EXTREME_BID_RANGE.max;
-                increasePercent = min + Math.random() * (max - min);
-                console.log(`🔥 ¡PUJA EXTREMA! ${bidder.name} aumenta ${(increasePercent*100).toFixed(1)}%`);
+                const increase = Math.floor(Math.random() * (max - min + 1)) + min;
             
-                // 1️⃣ PRIMERO: Mostrar el mensaje de la puja extrema y actualizar precio
-                const increase = Math.max(1, currentPrice * increasePercent);
+                console.log(`🔥 ¡PUJA EXTREMA! ${bidder.name} aumenta +${increase} pts`);
+            
                 currentPrice += increase;
                 lastBidder = bidder;
-                
+            
                 let bidMessage = SubastaConstantes.getBidMessage(bidder, isExtremeBid);
-                
-                // Si interrumpió el martillo, agregar mensaje especial
-                if(wasHammerInterrupted) {
+                if (wasHammerInterrupted) {
                     bidMessage = `¡¡${bidder.name} INTERRUMPE EL MARTILLO!! ${bidMessage}`;
                 }
-                
-                addMessage(`${bidMessage} y puja +${Math.round(increase)} pts`, 'extreme-bid');
-                
-                // Iluminar avatar del pujador y mostrar burbuja de diálogo
+            
+                addMessage(`${bidMessage} y puja +${increase} pts`, 'extreme-bid');
                 highlightSpeakingAvatar(bidder);
                 showSpeechBubble(bidder, currentPrice, true);
-                if(navigator.vibrate) navigator.vibrate([100,50,100,50,200]);
-        
-                // 2️⃣ SEGUNDO: Procesar retiradas después del mensaje de puja
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+            
+                // Procesar retiradas (igual que antes)
                 const removedBidders = [];
                 const potentialLeavers = [...activeBidders];
-            
                 potentialLeavers.forEach(b => {
-                    // El pujador que hizo la oferta extrema NUNCA se retira a sí mismo
                     if (b === bidder) return;
             
-                    // Obtener la probabilidad de retiro según la personalidad del pujador
-                    let retreatChance = SubastaConstantes.PROBABILITIES.EXTREME_BID_RETREAT_CHANCES[b.personality] || 
-                    SubastaConstantes.PROBABILITIES.EXTREME_BID_RETREAT_CHANCES.default;
-        
-                    // aplicar multiplicador dinámico según jugadores activos
+                    let retreatChance =
+                        SubastaConstantes.PROBABILITIES.EXTREME_BID_RETREAT_CHANCES[b.personality] ||
+                        SubastaConstantes.PROBABILITIES.EXTREME_BID_RETREAT_CHANCES.default;
+            
                     const multiplier = getRetreatMultiplier(activeBidders.length);
-                    retreatChance *= multiplier;
-        
-                    // asegurar entre 0 y 1
-                    retreatChance = Math.min(1, Math.max(0, retreatChance));
-        
-                    // 🎲 Tirar el dado: ¿Se retira o se queda?
+                    retreatChance = Math.min(1, Math.max(0, retreatChance * multiplier));
+            
                     if (Math.random() < retreatChance) {
                         removedBidders.push(b);
-            
-                        // Lo eliminamos de la lista de pujadores activos
-                        const index = activeBidders.findIndex(ab => ab === b);
+                        const index = activeBidders.indexOf(b);
                         if (index > -1) activeBidders.splice(index, 1);
                     }
                 });
             
-                // 3️⃣ TERCERO: Iniciar martillo Y mostrar retiradas simultáneamente
                 if (removedBidders.length > 0) {
                     console.log(`💨 Se retiraron por miedo: ${removedBidders.map(b => b.name).join(', ')}`);
-                    
-                    // 🔨 INICIAR MARTILLO INMEDIATAMENTE (dramático)
                     setTimeout(() => {
-                        if (isAuctionActive) {
-                            console.log('🔨 Iniciando martillo mientras la gente huye...');
-                            processHammer();
-                        }
+                        if (isAuctionActive) processHammer();
                     }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500);
-                    
-                    // 💨 MOSTRAR RETIRADAS EN PARALELO (con delay ligeramente mayor)
                     setTimeout(() => {
                         showRetreatMessagesInBackground(removedBidders, bidder);
                     }, (SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500) + 800);
-                    
                 } else {
-                    // Si nadie se retiró, continuar con martillo normalmente
                     setTimeout(() => {
                         if (isAuctionActive) processHammer();
                     }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500);
                 }
-                
+            
             } else {
-                // Puja normal según personalidad
-                switch(bidder.personality){
-                    case 'aggressive': increasePercent = 0.04 + Math.random()*0.05; break;
-                    case 'impulsive': increasePercent = 0.02 + Math.random()*0.07; break;
-                    case 'strategic': increasePercent = 0.02 + Math.random()*0.04; break;
-                    case 'calculated': increasePercent = 0.02 + Math.random()*0.03; break;
-                    case 'passionate': increasePercent = 0.02 + Math.random()*0.05; break;
-                    default: increasePercent = 0.02 + Math.random()*0.05; break;
-                }
-                
-                // Procesar puja normal inmediatamente
-                const increase = Math.max(1, currentPrice * increasePercent);
+                // 💰 Puja normal: siempre +1 punto fijo
+                const increase = 1;
                 currentPrice += increase;
                 lastBidder = bidder;
             
                 let bidMessage = SubastaConstantes.getBidMessage(bidder, isExtremeBid);
-                
-                // Si interrumpió el martillo, agregar mensaje especial
-                if(wasHammerInterrupted) {
+                if (wasHammerInterrupted) {
                     bidMessage = `¡${bidder.name} se apresura e interrumpe! ${bidMessage}`;
                 }
-                
-                addMessage(`${bidMessage} y puja +${Math.round(increase)} pts`, 'bid');
-                
-                // Iluminar avatar del pujador y mostrar burbuja de diálogo
+            
+                addMessage(`${bidMessage} y puja +${increase} pts`, 'bid');
                 highlightSpeakingAvatar(bidder);
                 showSpeechBubble(bidder, currentPrice, false);
-        
-                // 🎲 Procesar posibles retiradas en pujas normales (probabilidad menor)
+            
                 processNormalBidRetreat(bidder);
-        
-                // Continuar con siguiente turno - AQUÍ DETECTAR SI FUE INTERRUPCIÓN
                 scheduleNextTurn(wasHammerInterrupted);
             }
+            
         };
 
         // 🎲 Función nueva: Procesar retiradas en pujas normales (probabilidad menor, lógica inversa)

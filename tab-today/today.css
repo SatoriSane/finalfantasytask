@@ -36,6 +36,7 @@
     box-shadow: var(--shadow-sm);
     position: relative;
 }
+
 .points-progress {
     height: 100%;
     width: 0%;
@@ -46,13 +47,8 @@
         rgba(88, 228, 120, 0.6)
     );
     box-shadow: 0 0 4px rgba(88, 228, 120, 0.3);
-    
-    /* Animación suave al cambiar el ancho */
     transition: width 0.6s ease-in-out;
 }
-
-
-
 
 /* Puntos a la derecha */
 .net-points-value {
@@ -80,7 +76,7 @@
     transition: transform var(--transition-speed), box-shadow var(--transition-speed), border-color var(--transition-speed);
     border: 1px solid var(--ff-border);
     position: relative;
-    overflow: hidden; /* Para que la barra de progreso no se salga */
+    overflow: visible; /* Permite que badges sobresalgan */
 }
 
 #todayTasksList .task-card:hover:not(.completed) {
@@ -93,39 +89,7 @@
     font-weight: 600;
     font-size: 1.2rem;
     flex-grow: 1;
-}
-
-#todayTasksList .task-points {
-    font-weight: 700;
-    font-size: 1.4rem;
-    min-width: 60px;
-    text-align: right;
-    user-select: none;
-    font-family: 'Orbitron', sans-serif;
-}
-
-/* Botón completar */
-#todayTasksList .task-btn-complete {
-    background: #00000033;
-    color: var(--positive-color);
-    border: 2px solid var(--ff-border);
-    border-radius: 24%;
-    width: 45px;
-    height: 45px;
-    font-weight: 700;
-    font-size: 1.4rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-speed);
-    margin-left: 1.5rem;
-}
-
-#todayTasksList .task-btn-complete:hover:not(:disabled) {
-    color: var(--ff-bg-dark);
-    background-color: var(--positive-color);
-    transform: scale(1.15);
+    margin-right: 1rem;
 }
 
 /* Estado completado */
@@ -133,10 +97,10 @@
     opacity: 0.5;
     background-color: var(--ff-bg-dark);
     border-color: transparent;
-    padding: 0rem 1rem;   /* menos espacio interno */
-    margin: 0.2rem 0;         /* menos separación vertical */
-    min-height: unset;        /* evita alturas mínimas heredadas */
-    gap: 0rem;   
+    padding: 0rem 1rem;
+    margin: 0.2rem 0;
+    min-height: unset;
+    gap: 0rem;
 }
 
 #todayTasksList .task-card.completed .task-name {
@@ -153,11 +117,121 @@
     margin-left: 1.5rem;
 }
 
+/* ===================== BOTÓN COMPLETAR - DISEÑO CIRCULAR ELEGANTE ===================== */
+#todayTasksList .task-btn-complete {
+    background: linear-gradient(135deg, var(--ff-bg-medium) 0%, var(--ff-bg-light) 100%);
+    border: 2px solid var(--ff-border);
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-speed);
+    margin-left: auto;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+#todayTasksList .task-btn-complete:hover:not(:disabled) {
+    border-color: var(--positive-color);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(88, 228, 120, 0.3);
+}
+
+/* Check - elemento principal */
+.btn-check {
+    font-size: 2rem;
+    right: 0;
+    line-height: 1;
+    color: var(--positive-color);
+    text-shadow: 0 0 12px rgba(88, 228, 120, 0.5);
+    transition: all var(--transition-speed);
+}
+
+#todayTasksList .task-btn-complete:hover:not(:disabled) .btn-check {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px) scale(1.25);
+}
+
+/* Badge de puntos - flotante y discreto */
+.btn-points-badge {
+    position: absolute;
+    top: -5px;
+    left: -20px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    padding: 2px 5px;
+    border-radius: 8px;
+    line-height: 1;
+    min-width: 18px;
+    text-align: center;
+    z-index: 3;
+    border: 1.5px solid var(--ff-bg-dark);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(4px);
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background var(--transition-speed);
+}
+
+.btn-points-badge.positive {
+    background: rgba(88, 228, 120, 0.1);
+    color: var(--positive-color);
+}
+
+.btn-points-badge.negative {
+    background: rgba(255, 90, 95, 0.75);
+    color: white;
+}
+
+#todayTasksList .task-btn-complete:hover:not(:disabled) .btn-points-badge {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+#todayTasksList .task-btn-complete:hover:not(:disabled) .btn-points-badge.positive {
+    background: rgba(88, 228, 120, 0.2);
+}
+
+#todayTasksList .task-btn-complete:hover:not(:disabled) .btn-points-badge.negative {
+    background: rgba(255, 90, 95, 0.2);
+}
+@keyframes flyToCounter {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+    }
+    20% {
+        transform: translate3d(0, -20px, 0) scale(1.4); /* pequeño impulso */
+        opacity: 1;
+    }
+    70% {
+        transform: translate3d(var(--fly-x), var(--fly-y), 0) scale(0.8);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translate3d(var(--fly-x), var(--fly-y), 0) scale(0.3);
+        opacity: 0;
+    }
+}
+
+.btn-points-badge.flying {
+    position: fixed; /* 👈 importante: se mueve relativo a la ventana */
+    left: 0;
+    top: 0;
+    z-index: 9999;
+    animation: flyToCounter 1.4s cubic-bezier(0.4, 0.6, 0.5, 1) forwards;
+    pointer-events: none;
+}
+
+
 
 /* ===================== BOTÓN FLOTANTE AGREGAR TAREA ===================== */
 .floating-add-btn {
     position: fixed;
-    bottom: 80px; /* Por encima de las pestañas */
+    bottom: 80px;
     right: 5px;
     width: 56px;
     height: 56px;
@@ -198,46 +272,41 @@
     gap: 0.8rem;
 }
 
-/* Badge de repeticiones en esquina superior */
-.task-card {
-    position: relative;
-}
-
+/* Badge de repeticiones en esquina superior IZQUIERDA - Discreto */
 .repetition-badge {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: var(--ff-primary);
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 600;
+    top: 0px;
+    left: 0px;
+    background: rgba(var(--ff-accent-rgb), 0.2); /* Más discreto con transparencia */
+    color: var(--ff-text-light);
+    font-size: 0.65rem;
+    font-weight: 700;
     padding: 2px 6px;
     border-radius: 10px;
-    min-width: 16px;
+    min-width: 18px;
     text-align: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    z-index: 2;
+    box-shadow: 0 1px 4px rgba(0, 228, 255, 0.25);
+    z-index: 3;
+    border: 1.5px solid var(--ff-bg-dark);
+    backdrop-filter: blur(4px);
 }
 
 /* Barra de progreso que rellena todo el task-card */
 .repetition-progress-bar {
-    pointer-events: none; /* permite hacer click en lo que está debajo */
+    pointer-events: none;
     position: absolute;
     top: 0;
     left: 0;
     height: 100%;
-    /* Usa un degradado para que se vea diferente al relleno del fondo */
     background: linear-gradient(
         to right,
         rgba(var(--ff-accent-rgb), 0.1),
         rgba(var(--ff-accent-rgb), 0.3)
     );
     border-radius: var(--border-radius-md);
-    z-index: 0; /* Detrás del contenido */
-    /* Aquí definimos la transición, más adelante la activaremos con una clase */
-    transition: width 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Un poco más elegante */
+    z-index: 0;
+    transition: width 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-
 
 /* ===================== DRAG & DROP ===================== */
 .task-card.is-dragging-task {
@@ -263,38 +332,23 @@
     padding: 0.5em 0.9em;
     border-radius: 6px;
     cursor: pointer;
-    margin-right: 0.6em; /* espacio entre eliminar y guardar */
+    margin-right: 0.6em;
 }
 
-/* Hover ligeramente más oscuro */
 .delete-temp-task-btn.danger:hover {
     color: #b22;
     border-color: #b22;
 }
 
-/* Asegura que el botón guardar mantiene su estilo 'primary' alineado a la derecha */
 .modal-actions {
     display: flex;
-    justify-content: flex-end; /* coloca los botones a la derecha */
+    justify-content: flex-end;
     gap: 0.5rem;
     align-items: center;
 }
 
-/* Si quieres que eliminar quede visualmente a la izquierda del guardar,
-   la inserción anterior lo coloca ahí; .modal-actions sigue alineando todo a la derecha,
-   por eso eliminamos margin-left en guardar y usamos margin-right en eliminar. */
-
-
-
-
-
-
-
-
-
-
-
-   .category-badge {
+/* ===================== BADGES DE CATEGORÍA ===================== */
+.category-badge {
     display: inline-block;
     font-size: 0.75rem;
     padding: 0.12rem 0.45rem;
@@ -304,21 +358,19 @@
     color: var(--ff-text-dark, #333);
     margin-left: 0.5rem;
     vertical-align: middle;
-    cursor: pointer; 
-    pointer-events: auto; /* asegura que reciba clicks */}
+    cursor: pointer;
+    pointer-events: auto;
+}
 
-/* Variante para categorías desconocidas (más tenue) */
 .category-badge.category-unknown {
     opacity: 0.6;
     font-style: italic;
 }
 
-/* Variante para tareas rápidas */
 .category-badge.category-temp {
     opacity: 0.85;
 }
 
-/* Si quieres colorear por categoría más adelante: */
 .category-badge[data-cat-color] {
     border-color: transparent;
     background: transparent;
@@ -340,4 +392,39 @@
 .clear-filter-btn:hover {
     background-color: var(--ff-accent);
     color: var(--ff-bg-light);
+}
+
+
+
+
+/*
+// ==================================================================
+// PARTE 6: CSS para la animación de "renacimiento"
+// ==================================================================
+// Ya no necesitas añadir CSS adicional, todo se maneja con JavaScript inline
+// Pero si quieres una clase reutilizable, puedes añadir esto a today.css:
+*/
+
+
+
+.btn-points-badge.rebirth {
+    animation: badgeRebirth 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes badgeRebirth {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    60% {
+        transform: scale(1.25);
+        opacity: 1;
+    }
+    80% {
+        transform: scale(0.92);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

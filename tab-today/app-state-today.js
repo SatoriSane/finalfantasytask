@@ -179,6 +179,34 @@
         const today = App.utils.getFormattedDate();
         return (state.todayOrder && state.todayOrder[today]) || null;
     }
+
+
+    function recordTaskRepetition(taskId) {
+        const tasks = App.state.getTodayTasks();
+        const task = tasks.find(t => t.id === taskId);
+
+        if (!task || task.completed) {
+            return false; // No hacer nada si no hay tarea o ya está completada
+        }
+
+        if (task.currentRepetitions >= task.dailyRepetitions.max) {
+            return false; // Límite de repeticiones alcanzado
+        }
+
+        task.currentRepetitions += 1;
+
+        if (task.currentRepetitions >= task.dailyRepetitions.max) {
+            task.completed = true;
+            if (task.missionId) {
+                App.state.trackMissionCompletion(task.missionId);
+            }
+        }
+        
+        _save();
+        App.events.emit('taskCompleted', taskId); // Notifica que la tarea se actualizó
+        setTimeout(() => App.events.emit('todayTasksUpdated'), 1000); // Refresca la lista tras un segundo
+        return true;
+    }
     // --- FIN DE FUNCIONES AÑADIDAS ---
 
     Object.assign(App.state, {
@@ -187,56 +215,79 @@
         updateTemporaryTask: updateTemporaryTask,
         addTaskToToday: addTaskToToday,
         deleteTemporaryTask: deleteTemporaryTask, // 👈 AÑADE ESTA LÍNEA AQUÍ
-    
-        completeTaskRepetition: function(taskId) {
+        recordTaskRepetition: recordTaskRepetition,
+
+
+
+
+
+        completeTaskRepetition: function(taskId, options = {}) {
             const tasks = this.getTodayTasks();
             const task = tasks.find(t => t.id === taskId);
-    
+        
             if (!task || task.completed) {
                 if (task && task.completed) {
                     App.events.emit('shownotifyMessage', `"${task.name}" ya está completada para hoy.`);
                 }
                 return false;
             }
-    
+        
             if (task.currentRepetitions >= task.dailyRepetitions.max) {
                 App.events.emit('shownotifyMessage', `Ya has alcanzado el límite de repeticiones para "${task.name}" hoy.`);
                 return false;
             }
-    
+        
+            // INCREMENTAR REPETICIÓN
             task.currentRepetitions += 1;
-    
+        
+            // CALCULAR PUNTOS
             const bonusMissionId = App.state.getBonusMissionForToday();
             let pointsAwarded = task.points;
             if (task.missionId && task.missionId === bonusMissionId) {
                 pointsAwarded *= 2;
             }
-    
-            App.state.addPoints(pointsAwarded);
-            App.state.addHistoryAction(`Misión: ${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})`, pointsAwarded, 'tarea');
-    
+        
+            // SUMAR PUNTOS - Si viene de la animación del botón, NO actualizar UI aún
+            App.state.addPoints(pointsAwarded, { 
+                silentUI: options.silentUI || false 
+            });
+            
+            App.state.addHistoryAction(
+                `Misión: ${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})`, 
+                pointsAwarded, 
+                'tarea'
+            );
+        
+            // MARCAR COMO COMPLETADA SI ALCANZÓ EL MÁXIMO
             if (task.currentRepetitions >= task.dailyRepetitions.max) {
                 task.completed = true;
                 if (task.missionId) {
                     App.state.trackMissionCompletion(task.missionId);
                 }
-    
+        
                 if (App.state.autoDeleteCompletedSingleDayMissions) {
                     setTimeout(() => {
                         App.state.autoDeleteCompletedSingleDayMissions();
                     }, 100);
                 }
             } else {
-                App.events.emit('shownotifyMessage', `¡${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})! +${pointsAwarded}`);
+                // Solo mostrar notificación si NO es silenciosa
+                if (!options.silentUI) {
+                    App.events.emit('shownotifyMessage', `¡${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})! +${pointsAwarded}`);
+                }
             }
-    
+        
+            // GUARDAR TODO INMEDIATAMENTE
             _save();
-            App.events.emit('pointsUpdated', _get().points);
+            
+            // Emitir eventos
             App.events.emit('historyUpdated');
             App.events.emit('taskCompleted', taskId);
             setTimeout(() => App.events.emit('todayTasksUpdated'), 1000);
+            
             return true;
         },
+        
     
         deleteTodayTask: function(taskId, skipConfirm = false) {
             const performDelete = () => {

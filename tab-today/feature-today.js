@@ -7,7 +7,7 @@
 let _prevTaskProgress = {};
 let _prevGlobalProgress = null;
 let _currentCategoryFilter = null; // <--- estado del filtro
-
+let _pointsAnimationRunning = false;
     // --- PRIVATE METHODS ---
 
     /**
@@ -364,33 +364,135 @@ let _currentCategoryFilter = null; // <--- estado del filtro
             taskNameDiv.innerHTML = `${task.name} ${descriptionIcon} ${categoryBadge}`;
             taskCard.appendChild(taskNameDiv);
         
-            // Puntos
-            const taskPointsSpan = document.createElement("span");
-            taskPointsSpan.className = `task-points ${task.points >= 0 ? "positive" : "negative"}`;
-            let pointsText = `${task.points >= 0 ? "＋" : "−"}${Math.abs(task.points)}`;
-            if (task.missionId && task.missionId === bonusMissionId) pointsText += ` <span class="bonus-multiplier">x2</span>`;
-            taskPointsSpan.innerHTML = pointsText;
-            taskCard.appendChild(taskPointsSpan);
-        
-            // Botones de acción
+            // Botones de acción con diseño circular elegante
             const actionsContainer = document.createElement("div");
             actionsContainer.className = "task-actions-reps";
+            
             if (!task.completed) {
                 const completeButton = document.createElement("button");
                 completeButton.className = "task-btn-complete";
-                completeButton.innerHTML = "✓";
+                
                 let buttonPoints = Math.abs(task.points);
                 if (task.missionId && task.missionId === bonusMissionId) buttonPoints *= 2;
+                
+                // Diseño: Check grande centrado + badge de puntos flotante
+                completeButton.innerHTML = `
+                    <span class="btn-check">✓</span>
+                    <span class="btn-points-badge ${task.points >= 0 ? "positive" : "negative"}">+${buttonPoints}</span>
+                `;
+                
                 completeButton.title = `Completar (${task.points >= 0 ? "＋" : "−"}${buttonPoints} puntos)`;
-                completeButton.onclick = (e) => { e.stopPropagation(); App.state.completeTaskRepetition(task.id); };
+
+
+
+
+
+
+
+                completeButton.onclick = (e) => {
+                    e.stopPropagation();
+                
+                    const badge = completeButton.querySelector('.btn-points-badge');
+                    const totalPointsBtn = document.querySelector('#totalPointsBtn');
+                    const pointsValueEl = document.querySelector('#pointsValue');
+                    if (!badge || !totalPointsBtn || !pointsValueEl) return;
+                
+                    // Verificar si esta será la última repetición ANTES de registrar
+                    const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
+                    const currentReps = task.currentRepetitions || 0;
+                    const isLastRepetition = (currentReps + 1) >= maxReps;
+                
+                    // ===== 1. CAPTURAR POSICIÓN DEL BADGE MIENTRAS ESTÁ VISIBLE =====
+                    const startRect = badge.getBoundingClientRect();
+                
+                    // ===== 2. OCULTAR BADGE ORIGINAL INMEDIATAMENTE (SIEMPRE) =====
+                    badge.style.opacity = '0';
+                    badge.style.transform = 'scale(0)';                
+                    // ===== 3. REGISTRO INMEDIATO EN LOCALSTORAGE =====
+                    const taskUpdated = App.state.completeTaskRepetition(task.id, { 
+                        silentUI: true
+                    });
+                    
+                    if (!taskUpdated) {
+                        // Si falla, restaurar el badge
+                        badge.style.visibility = 'visible';
+                        return;
+                    }
+                
+                    // ===== 4. CREAR BADGE VOLADOR (DESPUÉS de ocultar original) =====
+                    const flyingBadge = badge.cloneNode(true);
+                    const endRect = totalPointsBtn.getBoundingClientRect();
+                
+                    // Configurar el badge volador
+                    flyingBadge.style.visibility = 'visible';
+                    flyingBadge.style.opacity = '1';
+                    flyingBadge.style.position = 'fixed';
+                    flyingBadge.style.left = `${startRect.left}px`;
+                    flyingBadge.style.top = `${startRect.top}px`;
+                    flyingBadge.style.margin = '0';
+                    flyingBadge.style.zIndex = '9999';
+                    
+                    const deltaX = (endRect.left + endRect.width / 2) - (startRect.left + startRect.width / 2);
+                    const deltaY = (endRect.top + endRect.height / 2) - (startRect.top + startRect.height / 2);
+                    
+                    flyingBadge.style.setProperty('--fly-x', `${deltaX}px`);
+                    flyingBadge.style.setProperty('--fly-y', `${deltaY}px`);
+                
+                    // ===== 5. INICIAR ANIMACIÓN DE VUELO =====
+                    document.body.appendChild(flyingBadge);
+                    void flyingBadge.offsetWidth; // Force reflow
+                    flyingBadge.classList.add('flying');
+                
+                    // ===== 6. SI NO ES LA ÚLTIMA, HACER "RENACER" EL BADGE =====
+                    if (!isLastRepetition) {
+                        setTimeout(() => {
+                            // Esperar al siguiente frame tras re-render (DOM actualizado)
+                            requestAnimationFrame(() => {
+                                const freshBadge = completeButton.querySelector('.btn-points-badge');
+                                if (!freshBadge) return;
+                    
+                                freshBadge.style.opacity = '1';
+                                freshBadge.style.transform = 'scale(0)'; // punto de partida visible
+                                void freshBadge.offsetWidth; // fuerza reflow
+                    
+                                freshBadge.classList.add('rebirth');
+                    
+                                freshBadge.addEventListener('animationend', function cleanupRebirth() {
+                                    freshBadge.classList.remove('rebirth');
+                                    freshBadge.style.transform = '';
+                                    freshBadge.removeEventListener('animationend', cleanupRebirth);
+                                });
+                            });
+                        }, 1200);
+                    }
+                    
+                    
+
+                
+                    // ===== 7. ACTUALIZAR CONTADOR VISUAL CON RESPLANDOR =====
+                    setTimeout(() => {
+                        App.ui.general.updatePointsDisplay(App.state.getPoints());
+                    }, 400);
+                
+                    // ===== 8. LIMPIEZA DEL BADGE VOLADOR =====
+                    flyingBadge.addEventListener('animationend', () => {
+                        flyingBadge.remove();
+                    }, { once: true });
+                };
+                
+                
+                
+                
+                
                 actionsContainer.appendChild(completeButton);
             } else {
                 const completedMessage = document.createElement("span");
                 completedMessage.className = "completed-message";
-                completedMessage.innerHTML = " ¡Hecho!";
+                completedMessage.innerHTML = "¡Hecho!";
                 actionsContainer.appendChild(completedMessage);
             }
             taskCard.appendChild(actionsContainer);
+            
             // --- Listener para abrir modal de edición ---
             taskCard.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -415,17 +517,16 @@ let _currentCategoryFilter = null; // <--- estado del filtro
                     }
                 }
             });
-            
-
+        
             container.appendChild(taskCard);
         
             const badgeEl = taskCard.querySelector('.category-badge');
             if (badgeEl && badgeEl.dataset.catId) {
                 badgeEl.addEventListener('click', (e) => {
-                    e.stopPropagation(); // ❌ evita que se abra el modal de tarea
-                    App.ui.today.filterByCategory(badgeEl.dataset.catId); // 🔹 mantiene el filtrado
+                    e.stopPropagation();
+                    App.ui.today.filterByCategory(badgeEl.dataset.catId);
                 });
-            }            
+            }
         },
         
 

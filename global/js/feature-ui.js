@@ -108,33 +108,37 @@
             // Las llamadas a renderizado específicas de cada módulo se manejan en script.js al cambiar de pestaña.
         },
 
+
+
         updatePointsDisplay: function(finalPoints) {
             const pointsValueElement = document.getElementById("pointsValue");
             if (!pointsValueElement) return;
-
-            const startPoints = parseInt(pointsValueElement.textContent.replace(/\D/g, '') || '0', 10);
-
-            if (finalPoints === startPoints) return;
-
-            const duration = 500; // ms
-            const frameDuration = 1000 / 60; // 60fps
-            const totalFrames = Math.round(duration / frameDuration);
-            let frame = 0;
-
-            const countUp = () => {
-                frame++;
-                const progress = frame / totalFrames;
-                const currentPoints = Math.round(startPoints + (finalPoints - startPoints) * progress);
-                pointsValueElement.textContent = currentPoints;
-
-                if (frame < totalFrames) {
-                    requestAnimationFrame(countUp);
-                } else {
-                    pointsValueElement.textContent = finalPoints;
-                }
-            };
-            requestAnimationFrame(countUp);
+        
+            if (typeof finalPoints === 'undefined') {
+                finalPoints = App.state.getPoints();
+            }
+        
+            if (pointsValueElement.dataset.animating === "true") {
+                pointsValueElement.textContent = finalPoints;
+                return;
+            }
+        
+            pointsValueElement.dataset.animating = "true";
+            pointsValueElement.textContent = finalPoints;
+            pointsValueElement.classList.add('point-flash');
+            
+            pointsValueElement.addEventListener('animationend', () => {
+                pointsValueElement.classList.remove('point-flash');
+                pointsValueElement.dataset.animating = "false";
+            }, { once: true });
         },
+        
+        
+        
+        
+        
+        
+        
 
         renderStatsToday: function() {
             const todayStr = App.utils.getFormattedDate();
@@ -214,8 +218,11 @@
         },
 
         // --- Inicialización de Listeners ---
-
         initListeners: function() {
+            // Evitar inicializar listeners más de una vez
+            if (this.listenersInitialized) return;
+            this.listenersInitialized = true;
+        
             // Listen for global UI events
             App.events.on('showAlert', (message) => this.showCustomAlert(message));
             App.events.on('shownotifyMessage', (message) => this.shownotifyMessage(message));
@@ -223,7 +230,7 @@
             App.events.on('pointsUpdated', (points) => this.updatePointsDisplay(points));
             App.events.on('showMotivationMessage', (message) => this.showMotivationMessage(message));
             App.events.on('stateRefreshed', () => this.updatePointsDisplay());
-
+        
             // Global Nav
             document.querySelectorAll('nav.tabs button').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -232,7 +239,7 @@
                     sessionStorage.setItem('lastActiveTab', tabId);
                 });
             });
-
+        
             document.getElementById('totalPointsBtn')?.addEventListener('click', () => {
                 App.ui.general.renderStatsToday();
                 document.getElementById('statsModal')?.classList.add('visible');
@@ -240,14 +247,14 @@
             document.getElementById('closeStatsModal')?.addEventListener('click', () => document.getElementById('statsModal')?.classList.remove('visible'));
             document.getElementById('openResetOptionsBtn')?.addEventListener('click', this.showResetOptionsModal);
             document.getElementById('closeResetConfirmModal')?.addEventListener('click', this.closeResetConfirmModal);
-
+        
             document.getElementById('toggleAgendaBtn')?.addEventListener('click', (e) => {
                 const isExpanded = e.currentTarget.getAttribute('aria-expanded') === 'true';
                 e.currentTarget.setAttribute('aria-expanded', !isExpanded);
                 document.getElementById('scheduledMissionsContainer').style.display = !isExpanded ? 'block' : 'none';
                 e.currentTarget.classList.toggle('active', !isExpanded);
             });
-
+        
             // Forms & General Click Handling
             const addCategoryForm = document.getElementById('addCategoryForm');
             const categoryInput = document.getElementById('categoryInput');
@@ -265,7 +272,7 @@
                     this.showCustomAlert("El nombre de la categoría no puede estar vacío.");
                 }
             });
-
+        
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.form-container, .category-wrapper, #addCategoryFormContainer, .habit-card, .modal-content, .floating-button, .notify-message, .date-display-container, .challenge-card')) {
                     document.querySelectorAll('.form-container.active').forEach(f => f.classList.remove('active'));
@@ -276,19 +283,19 @@
                     if (categoryId) App.state.deleteCategory(categoryId);
                 }
             });
-
+        
             // Import/Export Listeners
             const importFileInput = document.getElementById('importFile');
-
+        
             document.getElementById('exportDataBtn')?.addEventListener('click', () => {
                 App.data.exportData();
                 this.closeResetConfirmModal();
             });
-
+        
             document.getElementById('importDataBtn')?.addEventListener('click', () => {
                 importFileInput?.click();
             });
-
+        
             importFileInput?.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (file) {
@@ -297,8 +304,7 @@
                 this.closeResetConfirmModal();
                 importFileInput.value = ''; // Reset for next import
             });
-
-
+        
             // Reset Listeners
             document.getElementById('resetHistoryBtn')?.addEventListener('click', () => {
                 this.closeResetConfirmModal();
@@ -310,7 +316,7 @@
                     }
                 });
             });
-
+        
             document.getElementById('resetAppBtn')?.addEventListener('click', () => {
                 this.closeResetConfirmModal();
                 this.showCustomConfirm('¡ADVERTENCIA! Vas a ELIMINAR TODOS tus datos. ¿Seguro?', (confirmed) => {
@@ -326,6 +332,7 @@
                 });
             });
         }
+        
     };
 
 })(window.App = window.App || {});

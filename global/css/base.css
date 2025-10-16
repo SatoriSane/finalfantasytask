@@ -33,7 +33,9 @@
     
     --border-radius-sm: 6px;
     --border-radius-md: 10px;
-    
+    --border-radius-lg: 14px;
+    --border-radius-xl: 18px;
+    --border-radius-xxl: 22px;
     --transition-speed: 0.2s ease-in-out;
     --fab-size: 56px;
     --ff-border: #2A3C6B; /* Color para bordes de contenedores */

@@ -150,13 +150,16 @@
             });
         },
 
-        addPoints: function(amount) {
+        addPoints: function(amount, options = {}) {
             if (typeof amount === 'number' && !isNaN(amount)) {
                 state.points += amount;
-                App.events.emit('pointsUpdated', state.points);
+                
+                // Solo emitir el evento si no se especificó silentUI
+                if (!options.silentUI) {
+                    App.events.emit('pointsUpdated', state.points);
+                }
             }
         },
-
         getHabits: () => ({ ...state.habits }),
 
         getChallengeById: function(challengeId) {

@@ -46,46 +46,6 @@ header.navbar #appName {
     text-shadow: 0 0 8px var(--ff-accent);
 }
 
-header.navbar #totalPointsBtn {
-    padding: 0.5rem 1rem;
-    background: var(--ff-bg-medium);
-    border: 1px solid var(--ff-border);
-    border-radius: var(--border-radius-sm);
-    font-weight: 700;
-    cursor: pointer;
-    transition: all var(--transition-speed);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    user-select: none;
-    color: var(--ff-text-light);
-    outline: none; /* Esto elimina el contorno de enfoque predeterminado del botón */
-}
-
-header.navbar #totalPointsBtn:hover {
-    background: var(--ff-bg-light);
-    border-color: var(--ff-accent);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
-    color: var(--ff-accent);
-}
-
-header.navbar #pointsValue {
-    font-size: 1.2rem;
-    font-family: 'Orbitron', sans-serif;
-    color: var(--ff-accent);
-}
-
-header.navbar .points-icon svg {
-    width: 1.5rem;
-    height: 1.5rem;
-    fill: var(--ff-accent);
-    stroke: var(--ff-accent);
-}
-header.navbar .points-icon svg:hover {
-   transform: scale(1.2);
-
-}
 
 /* Navbar Inferior (Pestañas) */
 nav.tabs {

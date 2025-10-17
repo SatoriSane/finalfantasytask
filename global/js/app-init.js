@@ -24,10 +24,6 @@
             App.state.processScheduledMissionsForToday();
         }
 
-        if (window.App?.state?.rolloverUncompletedTasks) {
-            App.state.rolloverUncompletedTasks();
-        }
-
         log('✅ Tareas iniciales completadas.');
     };
 

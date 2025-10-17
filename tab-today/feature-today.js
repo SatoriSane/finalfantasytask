@@ -4,11 +4,77 @@
     'use strict';
 
     // --- PRIVATE STATE ---
-let _prevTaskProgress = {};
 let _prevGlobalProgress = null;
-let _currentCategoryFilter = null; // <--- estado del filtro
-let _pointsAnimationRunning = false;
-    // --- PRIVATE METHODS ---
+// --- PRIVATE STATE ---
+let _currentCategoryFilter = null;
+let _currentViewDate = null; // siempre almacenada como string YYYY-MM-DD
+
+// --- PRIVATE METHODS ---
+
+/**
+ * Obtiene la fecha que se está visualizando actualmente (por defecto: hoy)
+ * @returns {string} Fecha actual en formato YYYY-MM-DD
+ */
+function _getCurrentViewDate() {
+    if (!_currentViewDate) {
+        _currentViewDate = App.utils.getFormattedDate(); // hoy por defecto
+    }
+    return _currentViewDate;
+}
+
+/**
+ * Navega a una fecha específica (string YYYY-MM-DD)
+ */
+function _navigateToDate(dateString) {
+    _currentViewDate = dateString;
+    App.ui.today.render();
+}
+
+/**
+ * Navega un día hacia atrás
+ */
+function _navigatePrevDay() {
+    const currentDate = App.utils.normalizeDateToStartOfDay(_getCurrentViewDate());
+    const prevDate = App.utils.addDateUnit(currentDate, -1, 'day');
+    _navigateToDate(App.utils.getFormattedDate(prevDate));
+}
+
+/**
+ * Navega un día hacia adelante
+ */
+function _navigateNextDay() {
+    const currentDate = App.utils.normalizeDateToStartOfDay(_getCurrentViewDate());
+    const nextDate = App.utils.addDateUnit(currentDate, 1, 'day');
+    _navigateToDate(App.utils.getFormattedDate(nextDate));
+}
+
+/**
+ * Verifica si la fecha visualizada es hoy
+ */
+function _isViewingToday() {
+    return _getCurrentViewDate() === App.utils.getFormattedDate();
+}
+
+/**
+ * Formatea la fecha para mostrar en el título
+ */
+function _formatDateTitle(dateString) {
+    const today = App.utils.getFormattedDate();
+    const tomorrow = App.utils.getFormattedDate(
+        App.utils.addDateUnit(App.utils.normalizeDateToStartOfDay(new Date()), 1, 'day')
+    );
+    const yesterday = App.utils.getFormattedDate(
+        App.utils.addDateUnit(App.utils.normalizeDateToStartOfDay(new Date()), -1, 'day')
+    );
+
+    if (dateString === today) return "Misiones de Hoy";
+    if (dateString === tomorrow) return "Misiones de Mañana";
+    if (dateString === yesterday) return "Misiones de Ayer";
+
+    const date = App.utils.normalizeDateToStartOfDay(dateString);
+    const options = { weekday: 'long', day: 'numeric', month: 'long' };
+    return "Misiones del " + date.toLocaleDateString('es-ES', options);
+}
 
     /**
      * @description Renderiza la barra de progreso de puntos global para el día de hoy.
@@ -59,6 +125,7 @@ let _pointsAnimationRunning = false;
         _prevGlobalProgress = newWidth;
     }
 
+
     function _openEditTemporaryTaskModal(taskId) {
         const modal = document.getElementById('editTemporaryTaskModal');
         const form = document.getElementById('editTemporaryTaskForm');
@@ -67,7 +134,9 @@ let _pointsAnimationRunning = false;
         const pointsInput = document.getElementById('editTemporaryTaskPoints');
         const closeBtn = modal.querySelector('.modal-close-btn');
     
-        const tasks = App.state.getTodayTasks();
+        const viewDate = _getCurrentViewDate();
+        const state = App.state.get();
+        const tasks = state.tasksByDate[viewDate] || [];
         const task = tasks.find(t => t.id === taskId);
     
         if (!task || !modal) return;
@@ -76,7 +145,6 @@ let _pointsAnimationRunning = false;
         nameInput.value = task.name;
         pointsInput.value = task.points;
     
-        // --- Campo de repeticiones máximas ---
         let repsInput = form.querySelector('#editTemporaryTaskReps');
         if (!repsInput) {
             const repsGroup = document.createElement('div');
@@ -85,7 +153,6 @@ let _pointsAnimationRunning = false;
                 <label for="editTemporaryTaskReps">Repeticiones máximas:</label>
                 <input type="number" id="editTemporaryTaskReps" min="1" />
             `;
-            // Insertar antes del bloque de botones (.modal-actions)
             const actions = form.querySelector('.modal-actions');
             if (actions) {
                 form.insertBefore(repsGroup, actions);
@@ -96,7 +163,6 @@ let _pointsAnimationRunning = false;
         }
         repsInput.value = (task.dailyRepetitions && task.dailyRepetitions.max) || 1;
     
-        // --- Botón de eliminar tarea ---
         let deleteBtn = form.querySelector('.delete-temp-task-btn');
         if (!deleteBtn) {
             const actions = form.querySelector('.modal-actions');
@@ -105,7 +171,6 @@ let _pointsAnimationRunning = false;
             deleteBtn.className = 'delete-temp-task-btn danger';
             deleteBtn.textContent = 'Eliminar tarea';
 
-            // Insertar ANTES del botón de guardar (a la izquierda)
             if (actions) {
                 const saveBtn = actions.querySelector('button[type="submit"]');
                 if (saveBtn) {
@@ -117,7 +182,6 @@ let _pointsAnimationRunning = false;
                 form.appendChild(deleteBtn);
             }
         }
-
     
         modal.classList.add('visible');
         nameInput.focus();
@@ -136,20 +200,21 @@ let _pointsAnimationRunning = false;
                 dailyRepetitions: { max: parseInt(repsInput.value, 10) || 1 }
             };
             if (updatedData.name) {
-                App.state.updateTemporaryTask(taskId, updatedData);
+                App.state.updateTemporaryTask(taskId, updatedData, viewDate);
                 closeHandler();
             }
         };
     
         deleteBtn.onclick = () => {
             if (confirm('¿Seguro que deseas eliminar esta tarea?')) {
-                App.state.deleteTemporaryTask(taskId);
+                App.state.deleteTemporaryTask(taskId, viewDate);
                 closeHandler();
             }
         };
     
         closeBtn.onclick = closeHandler;
     }
+
     function _openQuickMissionModal() {
         const modal = document.getElementById('quickMissionModal');
         const form = document.getElementById('quickMissionForm');
@@ -160,80 +225,68 @@ let _pointsAnimationRunning = false;
       
         if (!modal || !form) return;
       
-        // --- Obtener última categoría seleccionada (si existe) ---
         let selectedCategoryId = App.state.getLastSelectedCategory?.() || null;
       
-        // --- Rellenar propósitos ---
         const categories = App.state.getCategories();
         purposeGrid.innerHTML = '';
       
         categories.forEach(cat => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'quick-mission-purpose-btn';
-          btn.textContent = cat.name;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'quick-mission-purpose-btn';
+            btn.textContent = cat.name;
       
-          // Marcar preseleccionado
-          if (cat.id === selectedCategoryId) {
-            btn.classList.add('selected');
-          }
+            if (cat.id === selectedCategoryId) {
+                btn.classList.add('selected');
+            }
       
-          btn.onclick = () => {
-            // Marcar selección visual
-            purposeGrid.querySelectorAll('.quick-mission-purpose-btn')
-              .forEach(b => b.classList.remove('selected'));
+            btn.onclick = () => {
+                purposeGrid.querySelectorAll('.quick-mission-purpose-btn')
+                    .forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedCategoryId = cat.id;
+                App.state.setLastSelectedCategory?.(cat.id);
+            };
       
-            btn.classList.add('selected');
-            selectedCategoryId = cat.id;
-            App.state.setLastSelectedCategory?.(cat.id); // ✅ Guardar para futuras aperturas
-          };
-      
-          purposeGrid.appendChild(btn);
+            purposeGrid.appendChild(btn);
         });
       
-        // --- Mostrar modal ---
         modal.classList.remove('hidden');
         modal.classList.add('visible');
         nameInput.value = '';
         pointsInput.value = 1;
       
-        // --- Cierre ---
         const closeHandler = () => {
-          modal.classList.remove('visible');
-          modal.classList.add('hidden');
-          form.onsubmit = null;
-          closeBtn.onclick = null;
+            modal.classList.remove('visible');
+            modal.classList.add('hidden');
+            form.onsubmit = null;
+            closeBtn.onclick = null;
         };
         closeBtn.onclick = closeHandler;
       
-        // --- Envío ---
         form.onsubmit = (e) => {
-          e.preventDefault();
-          const missionName = nameInput.value.trim();
-          const points = parseInt(pointsInput.value, 10) || 1;
+            e.preventDefault();
+            const missionName = nameInput.value.trim();
+            const points = parseInt(pointsInput.value, 10) || 1;
       
-          if (!selectedCategoryId || !missionName) {
-            alert("Por favor completa todos los campos y elige un propósito.");
-            return;
-          }
-      
-          App.state.addQuickTask({
-            name: missionName,
-            points: points,
-            categoryId: selectedCategoryId
-          });
-      
-          closeHandler();
-        };
-      }
-      
-      
-      
-    
-    
-    
-    
+            if (!selectedCategoryId || !missionName) {
+                alert("Por favor completa todos los campos y elige un propósito.");
+                return;
+            }
 
+            const targetDate = _getCurrentViewDate();
+      
+            App.state.addQuickTask({
+                name: missionName,
+                points: points,
+                categoryId: selectedCategoryId,
+                targetDate: targetDate
+            });
+      
+            closeHandler();
+        };
+    }
+      
     // --- PUBLIC API ---
     App.ui.today = {
         
@@ -244,28 +297,44 @@ let _pointsAnimationRunning = false;
             const container = document.getElementById("todayTasksList");
             const todayTitleElement = document.getElementById("todayTitle");
             const totalPointsBtn = document.getElementById("totalPointsBtn");
-        
+            const state = App.state.get();
             if (!container) {
                 console.warn("Contenedor #todayTasksList no encontrado.");
                 return;
             }
             container.innerHTML = "";
-        
+
+            const viewDate = _getCurrentViewDate();
+            const formattedTitle = _formatDateTitle(viewDate);
+
             if (todayTitleElement) {
-                todayTitleElement.textContent = "Misiones de Hoy";
+                todayTitleElement.innerHTML = `
+                    <button id="prevDayBtnToday" class="date-nav-btn" aria-label="Día anterior">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <span class="today-title-text">${formattedTitle}</span>
+                    <button id="nextDayBtnToday" class="date-nav-btn" aria-label="Día siguiente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                `;
+
+                document.getElementById('prevDayBtnToday').addEventListener('click', () => _navigatePrevDay());
+                document.getElementById('nextDayBtnToday').addEventListener('click', () => _navigateNextDay());
             }
         
-            const state = App.state.getState();
-            let todayTasks = App.state.getTodayTasks();
+            let viewDateTasks = App.state.getTasksForDate(viewDate);
 
             if (_currentCategoryFilter) {
-                todayTasks = todayTasks.filter(task => {
+                viewDateTasks = viewDateTasks.filter(task => {
                     if (!task.missionId) return false;
                     const mission = App.state.getMissions().find(m => m.id === task.missionId);
                     return mission && mission.categoryId === _currentCategoryFilter;
                 });
             
-                // Botón “Ver todas”
                 const header = document.getElementById("todayTitle");
                 if (header && !document.getElementById("clearCategoryFilterBtn")) {
                     const btn = document.createElement("button");
@@ -273,7 +342,7 @@ let _pointsAnimationRunning = false;
                     btn.className = "clear-filter-btn";
                     btn.textContent = "Ver todas";
                     btn.addEventListener("click", () => {
-                        _currentCategoryFilter = null; // quitar filtro
+                        _currentCategoryFilter = null;
                         btn.remove();
                         this.render();
                     });
@@ -281,18 +350,18 @@ let _pointsAnimationRunning = false;
                 }
             } else {
                 const existingBtn = document.getElementById("clearCategoryFilterBtn");
-                if (existingBtn) existingBtn.remove(); // limpiar si ya no hay filtro
+                if (existingBtn) existingBtn.remove();
             }
-            if (!todayTasks || todayTasks.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">¡Hoy no tienes misiones programadas! Usa el botón ➕ para añadir una.</p>`;
+
+            if (!viewDateTasks || viewDateTasks.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:var(--ff-text-dark);">No hay misiones registradas para esta fecha.</p>`;
                 _renderGlobalPointsBar(0, 0, false);
                 return;
             }
         
-            // --- Calcular puntos totales y ganados ---
             let totalPoints = 0;
             let earnedPoints = 0;
-            todayTasks.forEach(task => {
+            viewDateTasks.forEach(task => {
                 const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
                 const currentReps = task.currentRepetitions || 0;
                 totalPoints += task.points * maxReps;
@@ -305,10 +374,9 @@ let _pointsAnimationRunning = false;
         
             _renderGlobalPointsBar(totalPoints, earnedPoints, true);
         
-            // --- Ordenar tareas según guardado ---
-            const savedOrder = App.state.getTodayTaskOrder() || [];
-            const completedTasks = todayTasks.filter(t => t.completed);
-            const incompleteTasks = todayTasks.filter(t => !t.completed);
+            const savedOrder = App.state.getTodayTaskOrder(viewDate) || [];
+            const completedTasks = viewDateTasks.filter(t => t.completed);
+            const incompleteTasks = viewDateTasks.filter(t => !t.completed);
         
             const orderedIncompleteTasks = [];
             const remainingIncompleteTasks = new Set(incompleteTasks.map(t => t.id));
@@ -326,13 +394,12 @@ let _pointsAnimationRunning = false;
                 if (task) orderedIncompleteTasks.push(task);
             });
         
-            todayTasks = orderedIncompleteTasks.concat(completedTasks);
+            viewDateTasks = orderedIncompleteTasks.concat(completedTasks);
         
-            // --- Renderizar todas las tareas usando _renderTaskCard ---
             const bonusMissionId = App.state.getBonusMissionForToday();
-            todayTasks.forEach(task => this._renderTaskCard(task, bonusMissionId));
+            viewDateTasks.forEach(task => this._renderTaskCard(task, bonusMissionId));
         
-            // --- Drag & Drop solo para tareas incompletas ---
+            // Drag & Drop para todas las fechas
             const taskCards = container.querySelectorAll('.task-card:not(.completed)');
             taskCards.forEach(taskCard => {
                 taskCard.draggable = true;
@@ -391,34 +458,25 @@ let _pointsAnimationRunning = false;
                     droppedOnCard.classList.remove("drag-over-task");
         
                     const newOrder = Array.from(container.querySelectorAll('.task-card:not(.completed)')).map(card => card.dataset.taskId);
-                    App.state.saveTodayTaskOrder(newOrder);
+                    App.state.saveTodayTaskOrder(newOrder, viewDate);
                 });
             });
         },
         
         filterByCategory: function(categoryId) {
-            _currentCategoryFilter = categoryId; // guardar filtro
+            _currentCategoryFilter = categoryId;
             this.render();
         },
         
+    
         _renderTaskCard: function(task, bonusMissionId) {
             const container = document.getElementById("todayTasksList");
             const taskCard = document.createElement("div");
-            // ✅ Detectar si la misión proviene de días pasados
-            let isCarriedOver = false;
-            if (task.missionId) {
-                const scheduled = App.state.getScheduledMissionByOriginalMissionId(task.missionId);
-                const today = App.utils.getFormattedDate();
-                if (scheduled && scheduled.lastProcessedDate && scheduled.lastProcessedDate < today) {
-                    isCarriedOver = true;
-                }
-            }
             
             taskCard.className = `task-card ${task.completed ? "completed" : ""}`;
             taskCard.dataset.taskId = task.id;
             taskCard.draggable = !task.completed;
         
-            // Barra de progreso y badges de repeticiones
             const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
             const currentReps = task.currentRepetitions || 0;
             const progressPercentage = task.completed ? 100 : (currentReps / maxReps) * 100;
@@ -435,7 +493,6 @@ let _pointsAnimationRunning = false;
                 taskCard.appendChild(badge);
             }
         
-            // Nombre + descripción + badge categoría
             let descriptionIcon = '';
             let categoryBadge = '';
             if (task.missionId) {
@@ -456,7 +513,6 @@ let _pointsAnimationRunning = false;
             taskNameDiv.innerHTML = `${task.name} ${descriptionIcon} ${categoryBadge}`;
             taskCard.appendChild(taskNameDiv);
         
-            // Botones de acción con diseño circular elegante
             const actionsContainer = document.createElement("div");
             actionsContainer.className = "task-actions-reps";
             
@@ -467,19 +523,12 @@ let _pointsAnimationRunning = false;
                 let buttonPoints = Math.abs(task.points);
                 if (task.missionId && task.missionId === bonusMissionId) buttonPoints *= 2;
                 
-                // Diseño: Check grande centrado + badge de puntos flotante
                 completeButton.innerHTML = `
                     <span class="btn-check">✓</span>
                     <span class="btn-points-badge ${task.points >= 0 ? "positive" : "negative"}">+${buttonPoints}</span>
                 `;
                 
                 completeButton.title = `Completar (${task.points >= 0 ? "＋" : "−"}${buttonPoints} puntos)`;
-
-
-
-
-
-
 
                 completeButton.onclick = (e) => {
                     e.stopPropagation();
@@ -489,33 +538,28 @@ let _pointsAnimationRunning = false;
                     const pointsValueEl = document.querySelector('#pointsValue');
                     if (!badge || !totalPointsBtn || !pointsValueEl) return;
                 
-                    // Verificar si esta será la última repetición ANTES de registrar
                     const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
                     const currentReps = task.currentRepetitions || 0;
                     const isLastRepetition = (currentReps + 1) >= maxReps;
                 
-                    // ===== 1. CAPTURAR POSICIÓN DEL BADGE MIENTRAS ESTÁ VISIBLE =====
                     const startRect = badge.getBoundingClientRect();
-                
-                    // ===== 2. OCULTAR BADGE ORIGINAL INMEDIATAMENTE (SIEMPRE) =====
                     badge.style.opacity = '0';
-                    badge.style.transform = 'scale(0)';                
-                    // ===== 3. REGISTRO INMEDIATO EN LOCALSTORAGE =====
+                    badge.style.transform = 'scale(0)';
+                
+                    const viewDate = _getCurrentViewDate();
                     const taskUpdated = App.state.completeTaskRepetition(task.id, { 
-                        silentUI: true
+                        silentUI: true,
+                        targetDate: viewDate
                     });
                     
                     if (!taskUpdated) {
-                        // Si falla, restaurar el badge
                         badge.style.visibility = 'visible';
                         return;
                     }
                 
-                    // ===== 4. CREAR BADGE VOLADOR (DESPUÉS de ocultar original) =====
                     const flyingBadge = badge.cloneNode(true);
                     const endRect = totalPointsBtn.getBoundingClientRect();
                 
-                    // Configurar el badge volador
                     flyingBadge.style.visibility = 'visible';
                     flyingBadge.style.opacity = '1';
                     flyingBadge.style.position = 'fixed';
@@ -530,22 +574,19 @@ let _pointsAnimationRunning = false;
                     flyingBadge.style.setProperty('--fly-x', `${deltaX}px`);
                     flyingBadge.style.setProperty('--fly-y', `${deltaY}px`);
                 
-                    // ===== 5. INICIAR ANIMACIÓN DE VUELO =====
                     document.body.appendChild(flyingBadge);
-                    void flyingBadge.offsetWidth; // Force reflow
+                    void flyingBadge.offsetWidth;
                     flyingBadge.classList.add('flying');
                 
-                    // ===== 6. SI NO ES LA ÚLTIMA, HACER "RENACER" EL BADGE =====
                     if (!isLastRepetition) {
                         setTimeout(() => {
-                            // Esperar al siguiente frame tras re-render (DOM actualizado)
                             requestAnimationFrame(() => {
                                 const freshBadge = completeButton.querySelector('.btn-points-badge');
                                 if (!freshBadge) return;
                     
                                 freshBadge.style.opacity = '1';
-                                freshBadge.style.transform = 'scale(0)'; // punto de partida visible
-                                void freshBadge.offsetWidth; // fuerza reflow
+                                freshBadge.style.transform = 'scale(0)';
+                                void freshBadge.offsetWidth;
                     
                                 freshBadge.classList.add('rebirth');
                     
@@ -557,24 +598,15 @@ let _pointsAnimationRunning = false;
                             });
                         }, 1200);
                     }
-                    
-                    
 
-                
-                    // ===== 7. ACTUALIZAR CONTADOR VISUAL CON RESPLANDOR =====
                     setTimeout(() => {
                         App.ui.general.updatePointsDisplay(App.state.getPoints());
                     }, 400);
                 
-                    // ===== 8. LIMPIEZA DEL BADGE VOLADOR =====
                     flyingBadge.addEventListener('animationend', () => {
                         flyingBadge.remove();
                     }, { once: true });
                 };
-                
-                
-                
-                
                 
                 actionsContainer.appendChild(completeButton);
             } else {
@@ -585,35 +617,28 @@ let _pointsAnimationRunning = false;
             }
             taskCard.appendChild(actionsContainer);
             
-            // --- Listener para abrir modal de edición ---
             taskCard.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (task.completed) return;
             
                 if (!task.missionId) {
-                    // Tarea rápida
                     _openEditTemporaryTaskModal(task.id);
                 } else {
-                    // Misión programada, verificar si existe
                     const mission = App.state.getMissions().find(m => m.id === task.missionId);
                     if (mission) {
                         App.ui.missions.openEditMissionModal(task.missionId, true, task.id);
                     } else {
-                        // Misión huérfana -> convertir a temporal y abrir modal de edición de tarea rápida
                         console.warn('Misión huérfana, convirtiendo en tarea rápida...');
                         task.isTemp = true;
                         task.missionId = null;
-                        App.state.updateTodayTask(task.id, task);
+                        const viewDate = _getCurrentViewDate();
+                        App.state.updateTodayTask(task.id, task, viewDate);
                         _openEditTemporaryTaskModal(task.id);
                         App.events.emit('showToast', 'Esta misión ya no existe, ahora es editable como tarea rápida.');
                     }
                 }
             });
-            // Opcional: estilo visual de carried-over
-            if (isCarriedOver) {
-                taskCard.style.borderColor = "#FFAA33"; // ejemplo: borde distinto
-                taskCard.title = "Misión pendiente de días anteriores";
-            }
+
             container.appendChild(taskCard);
         
             const badgeEl = taskCard.querySelector('.category-badge');
@@ -630,9 +655,6 @@ let _pointsAnimationRunning = false;
          * @description Inicializa los listeners para la sección "Hoy".
          */
         initListeners: function() {
-            // ==============================
-            // Listeners para cambios de estado
-            // ==============================
             App.events.on('todayTasksUpdated', () => this.render());
             App.events.on('stateRefreshed', () => this.render());
             App.events.on('taskCompleted', (taskId) => {
@@ -640,26 +662,31 @@ let _pointsAnimationRunning = false;
                 if (taskCard) {
                     const progressBar = taskCard.querySelector('.repetition-progress-bar');
                     if (progressBar) {
-                        const task = App.state.getTodayTasks().find(t => t.id === taskId);
-                        const newWidth = task.completed ? 100 : ((task.currentRepetitions || 0) / (task.dailyRepetitions.max || 1)) * 100;
-                        progressBar.style.width = `${newWidth}%`;
+                        const viewDate = _getCurrentViewDate();
+                        const state = App.state.get();
+                        const tasks = state.tasksByDate[viewDate] || [];
+                        const task = tasks.find(t => t.id === taskId);
+                        if (task) {
+                            const newWidth = task.completed ? 100 : ((task.currentRepetitions || 0) / (task.dailyRepetitions.max || 1)) * 100;
+                            progressBar.style.width = `${newWidth}%`;
+                        }
                     }
                 }
             });
         
-            // ==============================
-            // Abrir modal de misión rápida
-            // ==============================
             const showQuickAddBtn = document.getElementById('showQuickAddBtn');
             if (showQuickAddBtn) {
                 showQuickAddBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    _openQuickMissionModal(); // abrir modal directamente
+                    _openQuickMissionModal();
                 });
             }
+        },
+
+        resetToToday: function() {
+            _currentViewDate = null;
+            this.render();
         }
-        
-        
     };
 
 })(window.App = window.App || {});

@@ -12,6 +12,36 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FF Task">
 </head>
+<!-- Modal de Misión Rápida (agregar antes de </body>) -->
+<div id="quickMissionModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="quickMissionTitle">
+    <div class="modal-content">
+        <button class="modal-close-btn cancel-btn" aria-label="Cerrar modal">&times;</button>
+        <h2 id="quickMissionTitle">Nueva Misión Rápida</h2>
+        <form id="quickMissionForm">
+            <div class="form-group">
+                <label for="quickMissionName">Nombre de la Misión:</label>
+                <input type="text" id="quickMissionName" placeholder="Ej: Hacer ejercicio" autocomplete="off" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="quickMissionPoints">Puntos:</label>
+                <input type="number" id="quickMissionPoints" min="1" value="1" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Selecciona un Propósito:</label>
+                <div id="quickMissionPurposeGrid" class="quick-mission-purpose-grid">
+                    <!-- Los botones de categorías se generarán dinámicamente -->
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="secondary cancel-btn">Cancelar</button>
+                <button type="submit" class="primary">Crear Misión</button>
+            </div>
+        </form>
+    </div>
+</div>
 <body class="no-seleccionable">
 
     <header class="navbar" role="banner">
@@ -57,15 +87,7 @@
             </div>
             
             
-            
-            <!-- Formulario de agregar tarea rápida -->
-            <div id="quickAddFormContainer" class="form-container">
-                <form id="quickAddForm" aria-label="Agregar tarea rápida a Hoy">
-                    <input id="quickAddNameInput" type="text" placeholder="Nombre de la tarea" autocomplete="off" required />
-                    <input id="quickAddPointsInput" type="number" placeholder="Puntos" min="1" value="1" autocomplete="off" required />
-                    <button type="submit" class="primary">➕</button>
-                </form>
-            </div>
+
             
             <div id="todayTasksList" role="list" aria-live="polite" aria-label="Lista de tareas para hoy"></div>
             
@@ -351,8 +373,6 @@
         </div>
     </div>
 
-
-
     <div id="editMissionModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="editMissionTitle" aria-hidden="true">
         <div class="modal-content">
             <button class="modal-close-btn" id="closeEditMissionModal" aria-label="Cerrar editor de misión">&times;</button>
@@ -462,39 +482,7 @@
     <button id="showQuickAddBtn" class="floating-add-btn" aria-expanded="false" aria-controls="quickAddFormContainer" title="Agregar Tarea Rápida">
         <span class="icon">➕</span>
     </button>
-<!-- MODAL: Nueva Misión Rápida -->
-<div id="quickMissionModal" class="quick-mission-modal hidden">
-    <div class="quick-mission-content">
-      <h2 class="quick-mission-title">Nueva misión rápida</h2>
-  
-      <form id="quickMissionForm" class="quick-mission-form">
-        <label class="quick-mission-label">Nombre de la misión</label>
-        <input
-          type="text"
-          id="quickMissionName"
-          class="quick-mission-input"
-          placeholder="Ej: Hacer 10 flexiones"
-        />
-  
-        <label class="quick-mission-label">Puntos</label>
-        <input
-          type="number"
-          id="quickMissionPoints"
-          class="quick-mission-input"
-          min="1"
-          value="1"
-        />
-  
-        <label class="quick-mission-label">Selecciona un propósito</label>
-        <div id="quickMissionPurposeGrid" class="quick-mission-purpose-grid"></div>
-  
-        <div class="quick-mission-actions">
-            <button type="button" class="quick-mission-btn cancel-btn">Cancelar</button>
-          <button type="submit" class="quick-mission-btn confirm-btn">Guardar</button>
-        </div>
-      </form>
-    </div>
-  </div>
+
   
   
 

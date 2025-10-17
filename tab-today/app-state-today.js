@@ -1,5 +1,5 @@
 // app-state-today.js
-// Maneja el estado y lógica de las tareas de hoy
+// Maneja el estado y lógica de las tareas de cualquier fecha
 (function(App) {
     if (!App.state) {
         console.error("App.state is not initialized. Make sure app-state.js is loaded first.");
@@ -9,12 +9,11 @@
     const _get = () => App.state.get();
     const _save = () => App.state.saveState();
 
-    function addQuickTask({ name, points = 0, categoryId = null }) {
+    function addQuickTask({ name, points = 0, categoryId = null, targetDate = null }) {
         if (!name) return;
     
         const state = App.state.get();
     
-        // Usar categoría seleccionada por el usuario o por defecto
         let catId = categoryId || state.lastQuickAddCategoryId || null;
         if (!catId) {
             let sporadicCat = state.categories.find(c => c.name === "Propósito esporádico");
@@ -26,61 +25,22 @@
         }
     
         const dailyRepetitionsMax = 1;
-    
-        // Crear la misión con la categoría seleccionada
         App.state.addMission(name, points, catId, dailyRepetitionsMax);
-    
         const newMission = state.missions[state.missions.length - 1];
     
-        const today = App.utils.getFormattedDate();
-        App.state.scheduleMission(newMission.id, today, false);
+        const scheduleDate = targetDate || App.utils.getFormattedDate();
     
-        App.state.addTaskToToday({
-            missionId: newMission.id,
-            name: name,
-            points: points,
-            dailyRepetitions: { max: dailyRepetitionsMax }
-        });
+        // Solo programar la misión, NO añadir manualmente a today
+        App.state.scheduleMission(newMission.id, scheduleDate, false);
     
         state.lastQuickAddCategoryId = catId;
         App.state.saveState();
     
-        App.events.emit('todayTasksUpdated');
         App.events.emit('missionsUpdated');
-        App.events.emit('shownotifyMessage', `Misión rápida "${name}" añadida a Hoy.`);
+        App.events.emit('shownotifyMessage', `Misión "${name}" añadida para ${scheduleDate === App.utils.getFormattedDate() ? 'Hoy' : scheduleDate}.`);
     }
     
-    
-    
 
-    function addTaskToToday(task) {
-        const state = _get();
-        const today = App.utils.getFormattedDate();
-        if (!state.tasksByDate[today]) {
-            state.tasksByDate[today] = [];
-        }
-        
-        const exists = state.tasksByDate[today].some(t => t.missionId === task.missionId);
-        if (exists) return;
-        
-        state.tasksByDate[today].push({
-            id: App.utils.genId("task"),
-            name: task.name,
-            points: task.points,
-            missionId: task.missionId,
-            completed: false,
-            currentRepetitions: 0,
-            dailyRepetitions: { max: (task.dailyRepetitions && task.dailyRepetitions.max) || 1 }
-        });
-
-        // Registrar la aparición de la misión
-        if (task.missionId) {
-            App.state.trackMissionAppearance(task.missionId);
-        }
-        
-        _save();
-        App.events.emit('todayTasksUpdated');
-    }
 
     function unscheduleTaskForToday(taskId) {
         const state = _get();
@@ -91,7 +51,6 @@
         if (task && task.missionId) {
             App.ui.general.showCustomConfirm(`¿Seguro que quieres quitar la misión "${task.name}" de hoy?`, (confirmed) => {
                 if (confirmed) {
-                    // Encontrar la misión programada correspondiente
                     const scheduledMission = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
                     
                     if (scheduledMission) {
@@ -104,13 +63,12 @@
                         }
                     }
                     
-                    // Eliminar la tarea de hoy
                     state.tasksByDate[todayStr] = tasks.filter(t => t.id !== taskId);
                     
                     _save();
                     App.events.emit('todayTasksUpdated');
                     App.events.emit('scheduledMissionsUpdated');
-                    App.events.emit('missionsUpdated'); // Para actualizar iconos
+                    App.events.emit('missionsUpdated');
                     App.events.emit('shownotifyMessage', `"${task.name}" ha sido desprogramada.`);
                 } else {
                     App.events.emit('shownotifyMessage', `Acción cancelada.`);
@@ -121,28 +79,24 @@
         }
     }
 
-    function updateTemporaryTask(taskId, updatedData) {
+    function updateTemporaryTask(taskId, updatedData, targetDate = null) {
         const state = _get();
-        const today = App.utils.getFormattedDate();
-        const task = (state.tasksByDate[today] || []).find(t => t.id === taskId);
+        const dateStr = targetDate || App.utils.getFormattedDate();
+        const task = (state.tasksByDate[dateStr] || []).find(t => t.id === taskId);
     
         if (task) {
-            // Actualizar campos existentes
             if (typeof updatedData.name === 'string') task.name = updatedData.name;
             if (typeof updatedData.points === 'number') task.points = updatedData.points;
     
-            // Soporte para repeticiones diarias
             if (updatedData.dailyRepetitions && typeof updatedData.dailyRepetitions.max === 'number') {
                 const newMax = Math.max(1, parseInt(updatedData.dailyRepetitions.max, 10) || 1);
                 task.dailyRepetitions = task.dailyRepetitions || { max: 1 };
     
-                // Si cambió el máximo y las repeticiones actuales exceden, ajustar
                 if ((task.currentRepetitions || 0) > newMax) {
                     task.currentRepetitions = newMax;
                 }
                 task.dailyRepetitions.max = newMax;
     
-                // Si ahora max > current y estaba marcada como completed, desmarcar (si procede)
                 if (task.completed && (task.currentRepetitions || 0) < task.dailyRepetitions.max) {
                     task.completed = false;
                 }
@@ -156,58 +110,55 @@
         }
     }
     
-    function deleteTemporaryTask(taskId) {
-        // Reutilizamos la función existente deleteTodayTask pero sin pedir confirmación
+    function deleteTemporaryTask(taskId, targetDate = null) {
         if (typeof App.state.deleteTodayTask === 'function') {
-            App.state.deleteTodayTask(taskId, true);
+            App.state.deleteTodayTask(taskId, true, targetDate);
         } else {
-            // Fallback: eliminación manual por si no existe deleteTodayTask
             const state = _get();
-            const todayStr = App.utils.getFormattedDate();
-            const tasks = state.tasksByDate[todayStr] || [];
+            const dateStr = targetDate || App.utils.getFormattedDate();
+            const tasks = state.tasksByDate[dateStr] || [];
             const idx = tasks.findIndex(t => t.id === taskId);
             if (idx !== -1) {
                 const name = tasks[idx].name;
                 tasks.splice(idx, 1);
-                state.tasksByDate[todayStr] = tasks;
+                state.tasksByDate[dateStr] = tasks;
                 _save();
                 App.events.emit('todayTasksUpdated');
-                App.events.emit('shownotifyMessage', `Tarea "${name}" eliminada de Hoy.`);
+                App.events.emit('shownotifyMessage', `Tarea "${name}" eliminada.`);
             } else {
-                console.warn(`Intento de eliminar tarea temporal no encontradaaaa: ${taskId}`);
+                console.warn(`Intento de eliminar tarea temporal no encontrada: ${taskId}`);
             }
         }
     }
-    
 
-    // --- FUNCIONES AÑADIDAS PARA ORDENAR ---
-    function saveTodayTaskOrder(order) {
+    function saveTodayTaskOrder(order, dateStr = null) {
         const state = _get();
-        const today = App.utils.getFormattedDate();
+        const targetDate = dateStr || App.utils.getFormattedDate();
         if (!state.todayOrder) {
             state.todayOrder = {};
         }
-        state.todayOrder[today] = order;
+        state.todayOrder[targetDate] = order;
         _save();
     }
 
-    function getTodayTaskOrder() {
+    function getTodayTaskOrder(dateStr = null) {
         const state = _get();
-        const today = App.utils.getFormattedDate();
-        return (state.todayOrder && state.todayOrder[today]) || null;
+        const targetDate = dateStr || App.utils.getFormattedDate();
+        return (state.todayOrder && state.todayOrder[targetDate]) || null;
     }
 
-
-    function recordTaskRepetition(taskId) {
-        const tasks = App.state.getTodayTasks();
+    function recordTaskRepetition(taskId, targetDate = null) {
+        const state = _get();
+        const dateStr = targetDate || App.utils.getFormattedDate();
+        const tasks = state.tasksByDate[dateStr] || [];
         const task = tasks.find(t => t.id === taskId);
 
         if (!task || task.completed) {
-            return false; // No hacer nada si no hay tarea o ya está completada
+            return false;
         }
 
         if (task.currentRepetitions >= task.dailyRepetitions.max) {
-            return false; // Límite de repeticiones alcanzado
+            return false;
         }
 
         task.currentRepetitions += 1;
@@ -220,51 +171,44 @@
         }
         
         _save();
-        App.events.emit('taskCompleted', taskId); // Notifica que la tarea se actualizó
-        setTimeout(() => App.events.emit('todayTasksUpdated'), 1000); // Refresca la lista tras un segundo
+        App.events.emit('taskCompleted', taskId);
+        setTimeout(() => App.events.emit('todayTasksUpdated'), 1000);
         return true;
     }
-    // --- FIN DE FUNCIONES AÑADIDAS ---
 
     Object.assign(App.state, {
         unscheduleTaskForToday: unscheduleTaskForToday,
         addQuickTask: addQuickTask,
         updateTemporaryTask: updateTemporaryTask,
-        addTaskToToday: addTaskToToday,
-        deleteTemporaryTask: deleteTemporaryTask, // 👈 AÑADE ESTA LÍNEA AQUÍ
+        deleteTemporaryTask: deleteTemporaryTask,
         recordTaskRepetition: recordTaskRepetition,
 
-
-
-
-
         completeTaskRepetition: function(taskId, options = {}) {
-            const tasks = this.getTodayTasks();
+            const state = _get();
+            const targetDate = options.targetDate || App.utils.getFormattedDate();
+            const tasks = state.tasksByDate[targetDate] || [];
             const task = tasks.find(t => t.id === taskId);
         
             if (!task || task.completed) {
                 if (task && task.completed) {
-                    App.events.emit('shownotifyMessage', `"${task.name}" ya está completada para hoy.`);
+                    App.events.emit('shownotifyMessage', `"${task.name}" ya está completada.`);
                 }
                 return false;
             }
         
             if (task.currentRepetitions >= task.dailyRepetitions.max) {
-                App.events.emit('shownotifyMessage', `Ya has alcanzado el límite de repeticiones para "${task.name}" hoy.`);
+                App.events.emit('shownotifyMessage', `Ya has alcanzado el límite de repeticiones para "${task.name}".`);
                 return false;
             }
         
-            // INCREMENTAR REPETICIÓN
             task.currentRepetitions += 1;
         
-            // CALCULAR PUNTOS
             const bonusMissionId = App.state.getBonusMissionForToday();
             let pointsAwarded = task.points;
             if (task.missionId && task.missionId === bonusMissionId) {
                 pointsAwarded *= 2;
             }
         
-            // SUMAR PUNTOS - Si viene de la animación del botón, NO actualizar UI aún
             App.state.addPoints(pointsAwarded, { 
                 silentUI: options.silentUI || false 
             });
@@ -275,7 +219,6 @@
                 'tarea'
             );
         
-            // MARCAR COMO COMPLETADA SI ALCANZÓ EL MÁXIMO
             if (task.currentRepetitions >= task.dailyRepetitions.max) {
                 task.completed = true;
                 if (task.missionId) {
@@ -288,16 +231,13 @@
                     }, 100);
                 }
             } else {
-                // Solo mostrar notificación si NO es silenciosa
                 if (!options.silentUI) {
                     App.events.emit('shownotifyMessage', `¡${task.name} (${task.currentRepetitions}/${task.dailyRepetitions.max})! +${pointsAwarded}`);
                 }
             }
         
-            // GUARDAR TODO INMEDIATAMENTE
             _save();
             
-            // Emitir eventos
             App.events.emit('historyUpdated');
             App.events.emit('taskCompleted', taskId);
             setTimeout(() => App.events.emit('todayTasksUpdated'), 1000);
@@ -305,22 +245,21 @@
             return true;
         },
         
-    
-        deleteTodayTask: function(taskId, skipConfirm = false) {
+        deleteTodayTask: function(taskId, skipConfirm = false, targetDate = null) {
             const performDelete = () => {
                 const state = _get();
-                const todayStr = App.utils.getFormattedDate();
-                const tasks = state.tasksByDate[todayStr];
+                const dateStr = targetDate || App.utils.getFormattedDate();
+                const tasks = state.tasksByDate[dateStr];
                 const taskIndex = tasks ? tasks.findIndex(t => t.id === taskId) : -1;
     
                 if (taskIndex !== -1) {
                     const taskName = tasks[taskIndex].name;
                     tasks.splice(taskIndex, 1);
-                    state.tasksByDate[todayStr] = tasks;
+                    state.tasksByDate[dateStr] = tasks;
                     _save();
                     App.events.emit('todayTasksUpdated');
                     if (!skipConfirm) {
-                        App.events.emit('shownotifyMessage', `Tarea "${taskName}" eliminada de Hoy.`);
+                        App.events.emit('shownotifyMessage', `Tarea "${taskName}" eliminada.`);
                     }
                 } else {
                     console.warn(`Intento de eliminar tarea con ID ${taskId} no encontrada.`);
@@ -331,7 +270,7 @@
                 performDelete();
             } else {
                 App.events.emit('showCustomConfirm', {
-                    message: '¿Seguro que quieres eliminar esta tarea de la lista de hoy?',
+                    message: '¿Seguro que quieres eliminar esta tarea?',
                     callback: (confirmed) => {
                         if (confirmed) {
                             performDelete();
@@ -341,40 +280,13 @@
             }
         },
     
-        getTodayTasks: function() {
-            return _get().tasksByDate[App.utils.getFormattedDate()] || [];
+        getTodayTasks: function(targetDate = null) {
+            const dateStr = targetDate || App.utils.getFormattedDate();
+            return _get().tasksByDate[dateStr] || [];
         },
-    
-        rolloverUncompletedTasks: function() {
-            const state = _get();
-            const today = App.utils.getFormattedDate();
-            const yesterday = App.utils.getFormattedDate(App.utils.addDateUnit(new Date(), -1, 'day'));
-    
-            const yesterdayTasks = state.tasksByDate[yesterday] || [];
-            if (yesterdayTasks.length === 0) return;
-    
-            const uncompletedTasks = yesterdayTasks.filter(task => !task.completed);
-            if (uncompletedTasks.length === 0) return;
-    
-            const todayTasks = state.tasksByDate[today] || [];
-            const todayTaskIds = new Set(todayTasks.map(t => t.id));
-    
-            const tasksToRollover = uncompletedTasks.filter(task => !todayTaskIds.has(task.id)).map(task => ({
-                ...task,
-                completed: false,
-                currentRepetitions: 0
-            }));
-    
-            if (tasksToRollover.length > 0) {
-                state.tasksByDate[today] = [...tasksToRollover, ...todayTasks];
-                _save();
-                console.log(`${tasksToRollover.length} tarea(s) no completada(s) ha(n) sido movida(s) a hoy.`);
-            }
-        },
-    
+        
         saveTodayTaskOrder: saveTodayTaskOrder,
         getTodayTaskOrder: getTodayTaskOrder,
     });
-    
 
 })(window.App = window.App || {});

@@ -430,4 +430,20 @@
 }
 
 
+#prevDayBtnToday {
+    left: 0;
+    background-color: transparent;
+    color: var(--ff-accent);
+}
 
+#nextDayBtnToday {
+    right: 0;
+    background-color: transparent;
+    color: var(--ff-accent);
+}
+
+.date-nav-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.2;
+}

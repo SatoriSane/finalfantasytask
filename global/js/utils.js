@@ -1,25 +1,72 @@
-// global/js/utils.js
-// Contiene funciones de ayuda genéricas que no dependen del estado de la aplicación ni de la interfaz de usuario.
 (function(App) {
+    'use strict';
+
+    /**
+     * 📅 Convención general:
+     * - Internamente, las funciones usan objetos Date normalizados a la hora local 00:00:00.
+     * - Las conversiones a cadena usan formato "YYYY-MM-DD".
+     * - Ninguna función devuelve fechas con horas (todas están "limpias").
+     */
+
     App.utils = {
+
         /**
-         * @description Genera un ID único con un prefijo dado.
-         * @param {string} prefix Prefijo para el ID.
-         * @returns {string} ID único.
+         * Genera un ID único con un prefijo dado.
          */
-        genId: function(prefix) {
+        genId(prefix) {
             return prefix + "-" + Math.random().toString(36).slice(2, 9);
         },
 
+        // ---------------------------------------------------------------------
+        // 🧩 Normalización y creación de fechas
+        // ---------------------------------------------------------------------
+
         /**
-         * @description Obtiene una fecha formateada en YYYY-MM-DD.
-         * @param {Date} [dateObj=new Date()] Objeto Date opcional. Si no se provee, usa la fecha actual.
-         * @returns {string|null} Fecha formateada, o null si la fecha de entrada es inválida.
+         * Normaliza una fecha (string o Date) a un objeto Date local a las 00:00:00.
+         * @param {string|Date} date Fecha en formato YYYY-MM-DD o Date.
+         * @returns {Date|null} Nueva fecha normalizada o null si es inválida.
          */
-        getFormattedDate: function(dateObj = new Date()) {
-            // Asegurarse de que dateObj es una fecha válida antes de formatear
+        normalizeDateToStartOfDay(date) {
+            let d;
+            if (typeof date === 'string') {
+                // Forzar interpretación local, no UTC
+                d = new Date(date + "T00:00:00");
+            } else if (date instanceof Date) {
+                d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            } else {
+                console.warn("normalizeDateToStartOfDay: entrada no válida", date);
+                return null;
+            }
+
+            if (isNaN(d.getTime())) {
+                console.warn("normalizeDateToStartOfDay: fecha inválida detectada:", date);
+                return null;
+            }
+
+            return d;
+        },
+
+        /**
+         * Devuelve una fecha local normalizada de hoy.
+         * @returns {Date} Objeto Date correspondiente al día actual (00:00:00 local).
+         */
+        getTodayDate() {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        },
+
+        // ---------------------------------------------------------------------
+        // 🧾 Conversión entre Date y string
+        // ---------------------------------------------------------------------
+
+        /**
+         * Devuelve la fecha formateada como "YYYY-MM-DD".
+         * @param {Date} [dateObj=new Date()] Objeto Date (preferiblemente normalizado).
+         * @returns {string|null} Cadena formateada o null si es inválida.
+         */
+        getFormattedDate(dateObj = new Date()) {
             if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
-                console.error("getFormattedDate: Intentando formatear una fecha inválida.");
+                console.error("getFormattedDate: fecha inválida", dateObj);
                 return null;
             }
             const yyyy = dateObj.getFullYear();
@@ -29,76 +76,32 @@
         },
 
         /**
-         * @description Formatea una fecha a una cadena legible con el día de la semana.
-         * Ej: "Jueves, 12 de agosto de 2025"
-         * @param {Date|string} date La fecha a formatear. Puede ser un objeto Date o una cadena YYYY-MM-DD.
-         * @returns {string} Fecha en formato legible con día de la semana, o "Fecha inválida".
+         * Convierte una cadena YYYY-MM-DD a objeto Date local normalizado.
+         * @param {string} dateString
+         * @returns {Date|null}
          */
-        getFormattedDateWithDayOfWeek: function(date) {
-            let d;
-            if (typeof date === 'string') {
-                // Si es una cadena, intenta crear un objeto Date.
-                // Es importante parsear correctamente, especialmente si no es una cadena 'YYYY-MM-DD'.
-                // Para consistencia con getFormattedDate, asumimos YYYY-MM-DD.
-                d = new Date(date + 'T00:00:00'); // Añadir T00:00:00 para evitar problemas de zona horaria
-            } else if (date instanceof Date) {
-                d = date;
-            } else {
-                console.warn("getFormattedDateWithDayOfWeek: Entrada de fecha no reconocida o nula, devolviendo 'Fecha inválida'.", date);
-                return "Fecha inválida";
-            }
-
-            if (isNaN(d.getTime())) {
-                console.warn(`getFormattedDateWithDayOfWeek: Fecha inválida detectada: "${date}", devolviendo 'Fecha inválida'.`);
-                return "Fecha inválida";
-            }
-
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            // Capitalizar la primera letra del día de la semana para una mejor presentación
-            const formattedString = d.toLocaleDateString('es-ES', options);
-            return formattedString.charAt(0).toUpperCase() + formattedString.slice(1);
+        parseDateString(dateString) {
+            return App.utils.normalizeDateToStartOfDay(dateString);
         },
 
-        /**
-         * @description Normaliza una fecha a la medianoche (hora 00:00:00) para comparaciones.
-         * @param {string|Date} date La fecha en formato YYYY-MM-DD o un objeto Date.
-         * @returns {Date|null} Un objeto Date con la hora reseteada, o null si la fecha de entrada es inválida.
-         */
-        normalizeDateToStartOfDay: function(date) {
-            let d;
-            if (typeof date === 'string') {
-                d = new Date(date + 'T00:00:00'); // Asegurarse de parsear al inicio del día en UTC para evitar offsets
-            } else if (date instanceof Date) {
-                d = new Date(date.getFullYear(), date.getMonth(), date.getDate()); // Crear nueva fecha al inicio del día local
-            } else {
-                console.warn("normalizeDateToStartOfDay: Entrada de fecha no reconocida o nula, devolviendo null.");
-                return null;
-            }
-
-            // Verificar si el objeto Date es válido
-            if (isNaN(d.getTime())) {
-                console.warn(`normalizeDateToStartOfDay: Fecha inválida detectada: "${date}", devolviendo null.`);
-                return null;
-            }
-
-            return d; // Ya está normalizado a las 00:00:00
-        },
+        // ---------------------------------------------------------------------
+        // 🧮 Operaciones con fechas
+        // ---------------------------------------------------------------------
 
         /**
-         * @description Agrega una cantidad de días, meses o años a una fecha.
-         * @param {Date} dateObj El objeto de fecha inicial.
-         * @param {number} amount La cantidad a añadir (puede ser negativa).
-         * @param {string} unit La unidad a añadir ('day', 'week', 'month', 'year').
-         * @returns {Date|null} Un nuevo objeto Date con el tiempo añadido, o null si la fecha de entrada es inválida.
+         * Suma o resta unidades de tiempo a una fecha.
+         * @param {Date} dateObj Fecha base (se clonará internamente).
+         * @param {number} amount Cantidad a sumar (puede ser negativa).
+         * @param {'day'|'week'|'month'|'year'} unit Unidad de tiempo.
+         * @returns {Date|null} Nueva fecha resultante (normalizada).
          */
-        addDateUnit: function(dateObj, amount, unit) {
-            // Verificar si la fecha de entrada es válida
+        addDateUnit(dateObj, amount, unit) {
             if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
-                console.error("addDateUnit: Intentando añadir a una fecha inválida, devolviendo null.");
+                console.error("addDateUnit: fecha inválida", dateObj);
                 return null;
             }
 
-            const newDate = new Date(dateObj); // Crear una copia para no modificar el original
+            const newDate = new Date(dateObj); // copia
             switch (unit) {
                 case 'day':
                     newDate.setDate(newDate.getDate() + amount);
@@ -113,11 +116,31 @@
                     newDate.setFullYear(newDate.getFullYear() + amount);
                     break;
                 default:
-                    console.warn(`addDateUnit: Unidad de tiempo desconocida: "${unit}"`);
+                    console.warn(`addDateUnit: unidad desconocida "${unit}"`);
                     return null;
             }
-            return newDate;
+
+            // Asegurar que la salida también esté normalizada
+            return new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
         },
 
+        // ---------------------------------------------------------------------
+        // 🗓️ Formatos de presentación
+        // ---------------------------------------------------------------------
+
+        /**
+         * Formatea una fecha a una cadena legible con el día de la semana.
+         * Ej: "Jueves, 12 de agosto de 2025"
+         * @param {Date|string} date
+         * @returns {string}
+         */
+        getFormattedDateWithDayOfWeek(date) {
+            const d = App.utils.normalizeDateToStartOfDay(date);
+            if (!d) return "Fecha inválida";
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const formatted = d.toLocaleDateString('es-ES', options);
+            return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+        },
     };
 })(window.App = window.App || {});

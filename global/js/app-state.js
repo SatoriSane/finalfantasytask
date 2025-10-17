@@ -423,6 +423,73 @@
                 console.warn("Error saving last selected category:", e);
             }
         },
+        /**
+         * Devuelve todas las misiones visibles en una fecha dada.
+         * Incluye tanto tareas directas de tasksByDate como misiones programadas/recurrentes.
+         */
+        getTasksForDate: function(viewDate) {
+            const viewDateObj = App.utils.normalizeDateToStartOfDay(viewDate);
+            if (!viewDateObj) return [];
+            const viewDateStr = App.utils.getFormattedDate(viewDateObj);
+
+            const state = App.state.getState();
+            const tasksForDate = (state.tasksByDate && state.tasksByDate[viewDateStr])
+                ? [...state.tasksByDate[viewDateStr]]
+                : [];
+
+            const scheduled = state.scheduledMissions;
+            if (!Array.isArray(scheduled)) return tasksForDate;
+
+            scheduled.forEach(sch => {
+                // Normaliza las fechas
+                const startObj = App.utils.normalizeDateToStartOfDay(sch.scheduledDate);
+                const endObj = sch.repeatEndDate ? App.utils.normalizeDateToStartOfDay(sch.repeatEndDate) : null;
+
+                if (!sch.isRecurring) {
+                    const schDateStr = App.utils.getFormattedDate(startObj);
+                    if (schDateStr === viewDateStr) {
+                        tasksForDate.push({ ...sch, fromScheduled: true });
+                    }
+                    return;
+                }
+
+                // --- RECURRENCIA ---
+                if (startObj && viewDateObj < startObj) return;
+                if (endObj && viewDateObj > endObj) return;
+
+                switch (sch.repeatUnit) {
+                    case 'day': {
+                        const diffDays = Math.floor((viewDateObj - startObj) / (1000 * 60 * 60 * 24));
+                        if (diffDays % sch.repeatInterval === 0) {
+                            tasksForDate.push({ ...sch, fromScheduled: true });
+                        }
+                        break;
+                    }
+                    case 'week': {
+                        const dayNum = viewDateObj.getDay();
+                        if (Array.isArray(sch.daysOfWeek) && sch.daysOfWeek.map(Number).includes(dayNum)) {
+                            tasksForDate.push({ ...sch, fromScheduled: true });
+                        }
+                        break;
+                    }
+                    case 'month': {
+                        if (viewDateObj.getDate() === startObj.getDate()) {
+                            tasksForDate.push({ ...sch, fromScheduled: true });
+                        }
+                        break;
+                    }
+                    case 'year': {
+                        if (viewDateObj.getDate() === startObj.getDate() &&
+                            viewDateObj.getMonth() === startObj.getMonth()) {
+                            tasksForDate.push({ ...sch, fromScheduled: true });
+                        }
+                        break;
+                    }
+                }
+            });
+
+            return tasksForDate;
+        },
 
     };
 })(window.App = window.App || {});

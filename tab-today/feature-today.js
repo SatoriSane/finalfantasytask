@@ -224,77 +224,113 @@ function _formatDateTitle(dateString) {
         closeBtn.onclick = closeHandler;
     }
 
-    function _openQuickMissionModal() {
-        const modal = document.getElementById('quickMissionModal');
-        const form = document.getElementById('quickMissionForm');
-        const purposeGrid = document.getElementById('quickMissionPurposeGrid');
-        const nameInput = document.getElementById('quickMissionName');
-        const pointsInput = document.getElementById('quickMissionPoints');
-        const closeBtn = modal.querySelector('.cancel-btn');
-      
-        if (!modal || !form) return;
-      
-        let selectedCategoryId = App.state.getLastSelectedCategory?.() || null;
-      
-        const categories = App.state.getCategories();
-        purposeGrid.innerHTML = '';
-      
-        categories.forEach(cat => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'quick-mission-purpose-btn';
-            btn.textContent = cat.name;
-      
-            if (cat.id === selectedCategoryId) {
-                btn.classList.add('selected');
-            }
-      
-            btn.onclick = () => {
-                purposeGrid.querySelectorAll('.quick-mission-purpose-btn')
-                    .forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedCategoryId = cat.id;
-                App.state.setLastSelectedCategory?.(cat.id);
-            };
-      
-            purposeGrid.appendChild(btn);
-        });
-      
-        modal.classList.remove('hidden');
-        modal.classList.add('visible');
-        nameInput.value = '';
-        pointsInput.value = 1;
-      
-        const closeHandler = () => {
-            modal.classList.remove('visible');
-            modal.classList.add('hidden');
-            form.onsubmit = null;
-            closeBtn.onclick = null;
-        };
-        closeBtn.onclick = closeHandler;
-      
-        form.onsubmit = (e) => {
-            e.preventDefault();
-            const missionName = nameInput.value.trim();
-            const points = parseInt(pointsInput.value, 10) || 1;
-      
-            if (!selectedCategoryId || !missionName) {
-                alert("Por favor completa todos los campos y elige un propósito.");
-                return;
-            }
 
-            const targetDate = _getCurrentViewDate();
-      
-            App.state.addQuickTask({
-                name: missionName,
-                points: points,
-                categoryId: selectedCategoryId,
-                targetDate: targetDate
-            });
-      
-            closeHandler();
-        };
+function _openQuickMissionModal() {
+    const modal = document.getElementById('quickMissionModal');
+    const form = document.getElementById('quickMissionForm');
+    const purposeGrid = document.getElementById('quickMissionPurposeGrid');
+    const nameInput = document.getElementById('quickMissionName');
+    const pointsInput = document.getElementById('quickMissionPoints');
+    
+    // ⭐ FIX: Seleccionar AMBOS botones de cancelar
+    const closeXBtn = modal.querySelector('.modal-close-btn');
+    const cancelFormBtn = modal.querySelector('.modal-actions .cancel-btn');
+
+    if (!modal || !form) return;
+
+    let selectedCategoryId = App.state.getLastSelectedCategory?.() || null;
+
+    // Asegurar que "Propósito esporádico" existe
+    const state = App.state.get();
+    let sporadicCat = state.categories.find(c => c.name === "Propósito esporádico");
+    if (!sporadicCat) {
+        App.state.addCategory("Propósito esporádico");
+        sporadicCat = state.categories.find(c => c.name === "Propósito esporádico");
     }
+    
+    const categories = App.state.getCategories();
+    
+    // Si no hay ninguna categoría seleccionada y no hay otras categorías además de esporádico,
+    // preseleccionar "Propósito esporádico"
+    if (!selectedCategoryId && categories.length === 1 && sporadicCat) {
+        selectedCategoryId = sporadicCat.id;
+    }
+    
+    purposeGrid.innerHTML = '';
+
+    categories.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quick-mission-purpose-btn';
+        
+        if (cat.name === "Propósito esporádico") {
+            btn.textContent = `⚡ ${cat.name}`;
+            btn.title = "Para tareas ocasionales sin propósito específico";
+        } else {
+            btn.textContent = cat.name;
+        }
+
+        if (cat.id === selectedCategoryId) {
+            btn.classList.add('selected');
+        }
+
+        btn.onclick = () => {
+            purposeGrid.querySelectorAll('.quick-mission-purpose-btn')
+                .forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedCategoryId = cat.id;
+            App.state.setLastSelectedCategory?.(cat.id);
+        };
+
+        purposeGrid.appendChild(btn);
+    });
+
+    modal.classList.remove('hidden');
+    modal.classList.add('visible');
+    nameInput.value = '';
+    pointsInput.value = 1;
+
+    // ⭐ MEJORADO: Función de cierre que limpia todos los eventos
+    const closeHandler = () => {
+        modal.classList.remove('visible');
+        modal.classList.add('hidden');
+        form.onsubmit = null;
+        
+        // Limpiar eventos de ambos botones
+        if (closeXBtn) closeXBtn.onclick = null;
+        if (cancelFormBtn) cancelFormBtn.onclick = null;
+    };
+    
+    // ⭐ FIX: Asignar el evento a AMBOS botones
+    if (closeXBtn) {
+        closeXBtn.onclick = closeHandler;
+    }
+    if (cancelFormBtn) {
+        cancelFormBtn.onclick = closeHandler;
+    }
+
+    form.onsubmit = (e) => {
+        e.preventDefault();
+        const missionName = nameInput.value.trim();
+        const points = parseInt(pointsInput.value, 10) || 1;
+
+        if (!selectedCategoryId || !missionName) {
+            alert("Por favor completa todos los campos y elige un propósito.");
+            return;
+        }
+
+        const targetDate = _getCurrentViewDate();
+
+        App.state.addQuickTask({
+            name: missionName,
+            points: points,
+            categoryId: selectedCategoryId,
+            targetDate: targetDate
+        });
+
+        closeHandler();
+    };
+}
       
     // --- PUBLIC API ---
     App.ui.today = {

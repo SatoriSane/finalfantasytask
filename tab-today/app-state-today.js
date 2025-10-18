@@ -14,13 +14,17 @@
     
         const state = App.state.get();
     
+        // ⭐ MEJORADO: Asegurar que "Propósito esporádico" siempre exista
+        let sporadicCat = state.categories.find(c => c.name === "Propósito esporádico");
+        if (!sporadicCat) {
+            App.state.addCategory("Propósito esporádico");
+            sporadicCat = state.categories.find(c => c.name === "Propósito esporádico");
+        }
+    
         let catId = categoryId || state.lastQuickAddCategoryId || null;
+        
+        // Si no hay categoryId, usar "Propósito esporádico" como fallback
         if (!catId) {
-            let sporadicCat = state.categories.find(c => c.name === "Propósito esporádico");
-            if (!sporadicCat) {
-                App.state.addCategory("Propósito esporádico");
-                sporadicCat = state.categories.find(c => c.name === "Propósito esporádico");
-            }
             catId = sporadicCat.id;
         }
     
@@ -30,7 +34,7 @@
     
         const scheduleDate = targetDate || App.utils.getFormattedDate();
     
-        // Solo programar la misión, NO añadir manualmente a today
+        // Solo programar la misión
         App.state.scheduleMission(newMission.id, scheduleDate, false);
     
         state.lastQuickAddCategoryId = catId;

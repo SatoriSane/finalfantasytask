@@ -220,32 +220,31 @@
             _saveStateToLocalStorage();
         },
 
+
         load: function() {
             console.log("App.state: Attempting to load state from localStorage...");
             const s = localStorage.getItem("pointsAppState");
             let dataLoadedSuccessfully = false;
-
+        
             if (s) {
                 try {
                     state = JSON.parse(s);
                     dataLoadedSuccessfully = true;
-
+        
                     // --- Migración y retrocompatibilidad ---
-                    // Asegura que las nuevas propiedades existan para evitar errores con datos antiguos.
                     if (typeof state.missionStats === 'undefined') {
                         state.missionStats = {};
                     }
                     if (typeof state.dailyBonusMission === 'undefined') {
                         state.dailyBonusMission = null;
                     }
-                    // NUEVO: Asegura que todayOrder existe.
                     if (typeof state.todayOrder === 'undefined') {
                         state.todayOrder = {};
                     }
-
+        
                 } catch (e) {
                     console.error("App.state: Error parsing localStorage data:", e);
-                    this.resetAllData(); // Reinicia si hay un error de parseo
+                    this.resetAllData();
                     return false;
                 }
             } else {
@@ -253,16 +252,25 @@
                 this.resetAllData();
                 dataLoadedSuccessfully = true;
             }
-
+        
+            // ⭐ NUEVO: Asegurar que "Propósito esporádico" siempre exista
+            if (!state.categories.find(c => c.name === "Propósito esporádico")) {
+                state.categories.push({
+                    id: `cat-sporadic-${Date.now()}`,
+                    name: "Propósito esporádico"
+                });
+                _saveStateToLocalStorage();
+                console.log("App.state: Created default 'Propósito esporádico' category.");
+            }
+        
             const today = App.utils.getFormattedDate(new Date());
             if (state.lastDate !== today) {
                 console.log(`App.state: New day detected. Processing daily tasks for ${today}.`);
                 this.processDailyTasks();
             }
-
-            // Siempre procesar misiones programadas para hoy, incluso si no es un día nuevo
+        
             this.processScheduledMissionsForToday();
-
+        
             return dataLoadedSuccessfully;
         },
 

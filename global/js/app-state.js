@@ -198,25 +198,7 @@
                 state.tasksByDate[today] = [];
             }
 
-            // 2. Traspasar tareas no completadas de ayer
-            const yesterdayTasks = state.tasksByDate[yesterday] || [];
-            const uncompletedTasks = yesterdayTasks.filter(task => !task.completed);
-            if (uncompletedTasks.length > 0) {
-                const todayTaskMissionIds = new Set(state.tasksByDate[today].map(t => t.missionId));
-                uncompletedTasks.forEach(task => {
-                    if (task.missionId && !todayTaskMissionIds.has(task.missionId)) {
-                        state.tasksByDate[today].push({
-                            ...task,
-                            id: App.utils.genId("task"), // Nuevo ID para la nueva instancia de tarea
-                            completed: false,
-                            currentRepetitions: 0
-                        });
-                    }
-                });
-                console.log(`${uncompletedTasks.length} tarea(s) no completada(s) ha(n) sido movida(s) a hoy.`);
-            }
-
-            // 4. Reiniciar el estado de compra de los items de la tienda
+            // 2. Reiniciar el estado de compra de los items de la tienda
             state.shopItems.forEach(item => {
                 if (item.purchasedTodayDate) {
                     const purchasedDateOnly = App.utils.getFormattedDate(new Date(item.purchasedTodayDate));
@@ -226,12 +208,12 @@
                 }
             });
 
-            // 5. Limpiar la misión con bonus del día anterior
+            // 3. Limpiar la misión con bonus del día anterior
             if (state.dailyBonusMission && state.dailyBonusMission.date !== today) {
                 state.dailyBonusMission = null;
             }
 
-            // 6. Actualizar la fecha de última carga y guardar
+            // 3. Actualizar la fecha de última carga y guardar
             state.lastDate = today;
             _saveStateToLocalStorage();
         },

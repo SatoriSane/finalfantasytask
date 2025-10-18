@@ -213,7 +213,7 @@
                 state.dailyBonusMission = null;
             }
 
-            // 3. Actualizar la fecha de última carga y guardar
+            // 4. Actualizar la fecha de última carga y guardar
             state.lastDate = today;
             _saveStateToLocalStorage();
         },

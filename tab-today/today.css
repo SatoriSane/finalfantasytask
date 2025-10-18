@@ -5,6 +5,9 @@
     text-align: center;
     margin-bottom: 1rem;
 }
+.today-title-text {
+    text-transform: capitalize;
+}
 
 /* Wrapper de barra global de puntos */
 .today-points-bar-wrapper {

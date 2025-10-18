@@ -73,7 +73,7 @@ function _formatDateTitle(dateString) {
 
     const date = App.utils.normalizeDateToStartOfDay(dateString);
     const options = { weekday: 'long', day: 'numeric', month: 'long' };
-    return "Misiones del " + date.toLocaleDateString('es-ES', options);
+    return date.toLocaleDateString('es-ES', options);
 }
 
     /**

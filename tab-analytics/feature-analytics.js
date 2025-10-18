@@ -146,9 +146,10 @@
     /**
      * Renderiza una tarjeta de estadística
      */
-    function _renderStatCard(icon, label, value, subtitle = '') {
+    function _renderStatCard(icon, label, value, subtitle = '', isClickable = false) {
+        const clickableClass = isClickable ? 'stat-card-clickable' : '';
         return `
-            <div class="stat-card">
+            <div class="stat-card ${clickableClass}" ${isClickable ? 'data-action="show-incomplete"' : ''}>
                 <div class="stat-icon">${icon}</div>
                 <div class="stat-content">
                     <div class="stat-value">${value}</div>
@@ -157,6 +158,175 @@
                 </div>
             </div>
         `;
+    }
+
+    /**
+     * Obtiene lista detallada de misiones incompletas
+     */
+    function _getIncompleteMissions(days) {
+        const state = App.state.get();
+        const now = new Date();
+        const startDate = App.utils.addDateUnit(now, -days, 'day');
+        const incompleteMissions = [];
+
+        if (state.tasksByDate) {
+            Object.keys(state.tasksByDate).forEach(dateStr => {
+                const taskDate = App.utils.normalizeDateToStartOfDay(dateStr);
+                if (taskDate >= startDate && taskDate <= now) {
+                    const tasks = state.tasksByDate[dateStr];
+                    
+                    tasks.forEach(task => {
+                        if (!task.completed && task.missionId) {
+                            const mission = state.missions.find(m => m.id === task.missionId);
+                            
+                            // Determinar categoryId
+                            let categoryId = task.categoryId;
+                            if (!categoryId && mission) {
+                                categoryId = mission.categoryId;
+                            }
+                            if (!categoryId) {
+                                const scheduled = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
+                                if (scheduled) categoryId = scheduled.categoryId;
+                            }
+                            
+                            const category = categoryId ? state.categories.find(c => c.id === categoryId) : null;
+                            const isEsporadic = category && category.name === "Propósito esporádico";
+
+                            // Solo incluir si no es esporádica
+                            if (!isEsporadic) {
+                                incompleteMissions.push({
+                                    taskId: task.id,
+                                    missionId: task.missionId,
+                                    name: task.name,
+                                    date: dateStr,
+                                    purposeName: category ? category.name : 'Sin propósito',
+                                    points: task.points
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        // Ordenar por fecha (más reciente primero)
+        incompleteMissions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        return incompleteMissions;
+    }
+
+    /**
+     * Muestra modal con misiones incompletas
+     */
+    function _showIncompleteMissionsModal() {
+        const incompleteMissions = _getIncompleteMissions(_currentPeriod);
+        
+        if (incompleteMissions.length === 0) {
+            App.events.emit('showAlert', '¡Excelente! No tienes misiones pendientes en este periodo.');
+            return;
+        }
+
+        // Crear modal si no existe
+        let modal = document.getElementById('incompleteMissionsModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'incompleteMissionsModal';
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content incomplete-missions-modal-content">
+                    <button class="modal-close-btn" id="closeIncompleteMissionsModal">&times;</button>
+                    <h2>⏳ Misiones Pendientes</h2>
+                    <div id="incompleteMissionsContent"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        const content = document.getElementById('incompleteMissionsContent');
+        content.innerHTML = `
+            <div class="incomplete-missions-list">
+                ${incompleteMissions.map(mission => {
+                    const dateObj = new Date(mission.date);
+                    const formattedDate = dateObj.toLocaleDateString('es-ES', { 
+                        day: 'numeric', 
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                    
+                    return `
+                        <div class="incomplete-mission-item" data-task-id="${mission.taskId}" data-date="${mission.date}">
+                            <div class="incomplete-mission-info">
+                                <div class="incomplete-mission-name">${mission.name}</div>
+                                <div class="incomplete-mission-meta">
+                                    <span class="mission-date">📅 ${formattedDate}</span>
+                                    <span class="mission-purpose">🎯 ${mission.purposeName}</span>
+                                    <span class="mission-points">⭐ ${mission.points} pts</span>
+                                </div>
+                            </div>
+                            <button class="delete-incomplete-btn" title="Eliminar misión pendiente">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+
+        // Mostrar modal
+        modal.classList.add('visible');
+
+        // Event listeners
+        const closeBtn = document.getElementById('closeIncompleteMissionsModal');
+        closeBtn.onclick = () => modal.classList.remove('visible');
+
+        // Listeners para botones de eliminar
+        content.querySelectorAll('.delete-incomplete-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const item = e.target.closest('.incomplete-mission-item');
+                const taskId = item.dataset.taskId;
+                const date = item.dataset.date;
+                
+                App.ui.general.showCustomConfirm(
+                    '¿Seguro que quieres eliminar esta misión pendiente?',
+                    (confirmed) => {
+                        if (confirmed) {
+                            _deleteIncompleteTask(taskId, date);
+                            item.remove();
+                            
+                            // Si no quedan más misiones, cerrar modal
+                            if (content.querySelectorAll('.incomplete-mission-item').length === 0) {
+                                modal.classList.remove('visible');
+                                App.events.emit('shownotifyMessage', 'Todas las misiones pendientes han sido eliminadas.');
+                            } else {
+                                App.events.emit('shownotifyMessage', 'Misión pendiente eliminada.');
+                            }
+                            
+                            // Re-renderizar analytics
+                            App.ui.analytics.render();
+                        }
+                    }
+                );
+            };
+        });
+    }
+
+    /**
+     * Elimina una tarea incompleta
+     */
+    function _deleteIncompleteTask(taskId, dateStr) {
+        const state = App.state.get();
+        const tasks = state.tasksByDate[dateStr];
+        
+        if (tasks) {
+            const index = tasks.findIndex(t => t.id === taskId);
+            if (index !== -1) {
+                tasks.splice(index, 1);
+                state.tasksByDate[dateStr] = tasks;
+                App.state.saveState();
+                App.events.emit('todayTasksUpdated');
+            }
+        }
     }
 
     /**
@@ -175,7 +345,7 @@
             <div class="analytics-overview">
                 <div class="stats-grid">
                     ${_renderStatCard('✅', 'Misiones Completadas', stats.totalMissionsCompleted)}
-                    ${_renderStatCard('⏳', 'Misiones Pendientes', stats.totalMissionsIncomplete)}
+                    ${_renderStatCard('⏳', 'Misiones Pendientes', stats.totalMissionsIncomplete, 'Click para ver detalles', true)}
                     ${_renderStatCard('📊', 'Tasa de Completación', `${completionRate}%`)}
                     ${_renderStatCard('⭐', 'Puntos (Misiones)', stats.totalPointsFromMissions)}
                 </div>
@@ -405,6 +575,14 @@
                     const view = btn.dataset.view;
                     this.setView(view);
                 });
+            });
+
+            // Listener para tarjeta de misiones incompletas (delegación de eventos)
+            document.addEventListener('click', (e) => {
+                const statCard = e.target.closest('.stat-card-clickable[data-action="show-incomplete"]');
+                if (statCard) {
+                    _showIncompleteMissionsModal();
+                }
             });
 
             // Escuchar eventos de actualización

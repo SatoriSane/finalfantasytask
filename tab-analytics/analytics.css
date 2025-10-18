@@ -96,6 +96,22 @@
     border-color: var(--ff-primary);
 }
 
+/* Tarjeta clickeable */
+.stat-card-clickable {
+    cursor: pointer;
+}
+
+.stat-card-clickable:hover {
+    border-color: var(--ff-primary);
+    background: var(--ff-bg);
+}
+
+.stat-card-clickable .stat-subtitle {
+    color: var(--ff-primary);
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
 .stat-icon {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
@@ -418,6 +434,91 @@
     font-style: italic;
 }
 
+/* === MODAL DE MISIONES INCOMPLETAS === */
+.incomplete-missions-modal-content {
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.incomplete-missions-modal-content h2 {
+    color: var(--ff-text-light);
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.incomplete-missions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.incomplete-mission-item {
+    background: var(--ff-bg);
+    border: 2px solid var(--ff-border);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.incomplete-mission-item:hover {
+    border-color: var(--ff-primary);
+    transform: translateX(4px);
+}
+
+.incomplete-mission-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.incomplete-mission-name {
+    font-weight: 600;
+    color: var(--ff-text-light);
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.incomplete-mission-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--ff-text-dark);
+}
+
+.mission-date {
+    color: var(--ff-text-light);
+}
+
+.mission-purpose {
+    color: var(--ff-primary);
+}
+
+.mission-points {
+    color: var(--ff-text-light);
+    font-weight: 600;
+}
+
+.delete-incomplete-btn {
+    background: transparent;
+    border: 2px solid var(--ff-border);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.delete-incomplete-btn:hover {
+    background: #ff4444;
+    border-color: #ff4444;
+    transform: scale(1.1);
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
     .analytics-controls {
@@ -516,5 +617,20 @@
         flex-direction: column;
         gap: 0.25rem;
         align-items: center;
+    }
+
+    .incomplete-mission-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .incomplete-mission-meta {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .delete-incomplete-btn {
+        align-self: flex-end;
+        width: 100%;
     }
 }

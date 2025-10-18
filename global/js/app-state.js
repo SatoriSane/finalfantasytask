@@ -409,20 +409,41 @@
          * Devuelve todas las misiones visibles en una fecha dada.
          * Incluye tanto tareas directas de tasksByDate como misiones programadas/recurrentes.
          */
+
         getTasksForDate: function(viewDate) {
             const viewDateObj = App.utils.normalizeDateToStartOfDay(viewDate);
             if (!viewDateObj) return [];
             const viewDateStr = App.utils.getFormattedDate(viewDateObj);
 
             const state = App.state.getState();
+            
+            // Obtener las tareas directas de tasksByDate
             const tasksForDate = (state.tasksByDate && state.tasksByDate[viewDateStr])
                 ? [...state.tasksByDate[viewDateStr]]
                 : [];
+
+            // Crear un Set con los missionId que ya existen en tasksForDate
+            // para evitar duplicados
+            const existingMissionIds = new Set(
+                tasksForDate
+                    .filter(t => t.missionId)
+                    .map(t => t.missionId)
+            );
 
             const scheduled = state.scheduledMissions;
             if (!Array.isArray(scheduled)) return tasksForDate;
 
             scheduled.forEach(sch => {
+                // ⭐ CRÍTICO: Si esta misión ya existe en tasksByDate, NO agregarla
+                if (existingMissionIds.has(sch.missionId)) {
+                    return; // Skip - ya existe
+                }
+
+                // Verificar si está omitida para esta fecha
+                if (sch.skippedDates && sch.skippedDates.includes(viewDateStr)) {
+                    return; // Skip - fue omitida
+                }
+
                 // Normaliza las fechas
                 const startObj = App.utils.normalizeDateToStartOfDay(sch.scheduledDate);
                 const endObj = sch.repeatEndDate ? App.utils.normalizeDateToStartOfDay(sch.repeatEndDate) : null;

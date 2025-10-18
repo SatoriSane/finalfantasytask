@@ -505,15 +505,42 @@ function _formatDateTitle(dateString) {
             let categoryBadge = '';
             if (task.missionId) {
                 const mission = App.state.getMissions().find(m => m.id === task.missionId);
+                
+                // Descripción (solo si la misión aún existe)
                 if (mission && mission.description) {
                     descriptionIcon = `<span class="description-icon" title="Tiene descripción"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="description-icon-svg"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h12v2H4z"></path></svg></span>`;
                 }
-                const category = mission ? App.state.getCategoryById(mission.categoryId) : null;
+                
+                // ⭐ MEJORADO: Buscar categoryId en múltiples lugares
+                let categoryId = task.categoryId; // 1. Primero en la tarea misma
+                
+                if (!categoryId && mission) {
+                    categoryId = mission.categoryId; // 2. Si no, en la misión original
+                }
+                
+                if (!categoryId) {
+                    // 3. Como último recurso, buscar en scheduledMissions
+                    const scheduled = App.state.getScheduledMissions().find(sm => sm.missionId === task.missionId);
+                    if (scheduled) {
+                        categoryId = scheduled.categoryId;
+                    }
+                }
+                
+                const category = categoryId ? App.state.getCategoryById(categoryId) : null;
                 categoryBadge = category
                     ? `<span class="category-badge" data-cat-id="${category.id}" title="Propósito: ${category.name}">${category.name}</span>`
                     : `<span class="category-badge category-unknown" title="Sin propósito">Sin propósito</span>`;
+                    
             } else {
-                categoryBadge = `<span class="category-badge category-temp" title="Tarea rápida (sin propósito)">Rápida</span>`;
+                // ⭐ NUEVO: Para tareas sin missionId, verificar si tienen categoryId
+                if (task.categoryId) {
+                    const category = App.state.getCategoryById(task.categoryId);
+                    categoryBadge = category
+                        ? `<span class="category-badge" data-cat-id="${category.id}" title="Propósito: ${category.name}">${category.name}</span>`
+                        : `<span class="category-badge category-temp" title="Tarea rápida">Rápida</span>`;
+                } else {
+                    categoryBadge = `<span class="category-badge category-temp" title="Tarea rápida (sin propósito)">Rápida</span>`;
+                }
             }
         
             const taskNameDiv = document.createElement("div");

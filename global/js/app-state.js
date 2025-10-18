@@ -121,30 +121,32 @@
             if (!state.tasksByDate[todayStr]) {
                 state.tasksByDate[todayStr] = [];
             }
-
+        
             const todayDateObj = App.utils.normalizeDateToStartOfDay(new Date());
-
+        
             state.scheduledMissions.forEach(sm => {
                 const isScheduledForToday = _isMissionScheduledForDate(sm, todayDateObj);
-                // Comprobar si la misión ha sido omitida para hoy
                 if (!isScheduledForToday || (sm.skippedDates && sm.skippedDates.includes(todayStr))) {
-                    return; // No está programada o ha sido omitida, continuar.
+                    return;
                 }
-
+        
                 const existingTask = state.tasksByDate[todayStr].find(t => t.missionId === sm.missionId);
-
+        
                 if (!existingTask) {
-                    // Si no existe, añadirla a la lista de hoy.
+                    // ⭐ CRÍTICO: Obtener categoryId de la misión original para preservarlo
+                    const originalMission = state.missions.find(m => m.id === sm.missionId);
+                    const categoryId = originalMission ? originalMission.categoryId : null;
+                    
                     state.tasksByDate[todayStr].push({
                         id: App.utils.genId("task"),
                         name: sm.name,
                         points: sm.points,
                         missionId: sm.missionId,
+                        categoryId: categoryId, // ⭐ NUEVO: Guardar categoryId directamente en la tarea
                         completed: false,
                         currentRepetitions: 0,
                         dailyRepetitions: { max: sm.dailyRepetitions ? sm.dailyRepetitions.max : 1 }
                     });
-                    // Registrar la aparición de la misión
                     this.trackMissionAppearance(sm.missionId);
                 }
             });

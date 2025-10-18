@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v2.91'; // Incremented version
+const CACHE_NAME = 'final-fantasy-tasks-cache-v2.93'; // Incremented version
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear
@@ -12,16 +12,17 @@ const APP_FILES = [
     'global/js/app-events.js',
     'global/js/app-init.js',
     'global/js/app-state.js',
-    'global/js/script.js',
-    'global/js/utils.js',
     'global/js/feature-data.js',
     'global/js/feature-ui.js',
+    'global/js/script.js',
+    'global/js/utils.js',
 
     // Tab TODAY
     'tab-today/app-state-today.js',
     'tab-today/feature-today.js',
+    'tab-today/quick-mission-modal.css',
+    'tab-today/today-header.css',
     'tab-today/today.css',
-
     // Tab HABITS
     'tab-habits/app-state-habits.js',
     'tab-habits/feature-habits.js',

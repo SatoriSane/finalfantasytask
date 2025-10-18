@@ -120,6 +120,7 @@
             }
         },
 
+
         scheduleMission: function(missionId, initialDateString, isRecurring, recurringType) {
             const state = _get();
             const missionToProgram = state.missions.find(m => m.id === missionId);
@@ -127,18 +128,19 @@
                 App.ui.general.showCustomAlert("La misión que intentas programar no fue encontrada.");
                 return;
             }
-
+        
             const scheduledData = {
                 id: `sm-${Date.now()}`,
                 missionId: missionToProgram.id,
                 name: missionToProgram.name,
                 points: missionToProgram.points,
+                categoryId: missionToProgram.categoryId, // ⭐ NUEVO: Preservar categoryId
                 scheduledDate: initialDateString,
                 isRecurring: isRecurring,
                 dailyRepetitions: missionToProgram.dailyRepetitions,
                 lastProcessedDate: null
             };
-
+        
             if (isRecurring && recurringType) {
                 scheduledData.repeatInterval = parseInt(recurringType.interval, 10) || 1;
                 scheduledData.repeatUnit = recurringType.unit || 'day';
@@ -147,9 +149,9 @@
                     scheduledData.daysOfWeek = recurringType.daysOfWeek;
                 }
             }
-
+        
             state.scheduledMissions.push(scheduledData);
-
+        
             const todayFormatted = App.utils.getFormattedDate(new Date());
             if (initialDateString === todayFormatted) {
                 const todayTasks = state.tasksByDate[todayFormatted] || [];
@@ -158,7 +160,7 @@
                     existingTask.skippedForToday = false;
                 }
             }
-
+        
             _save();
             App.state.processScheduledMissionsForToday();
             App.events.emit('scheduledMissionsUpdated');

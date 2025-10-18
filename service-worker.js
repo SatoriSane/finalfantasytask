@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v2.93'; // Incremented version
+const CACHE_NAME = 'final-fantasy-tasks-cache-v3'; // Incremented version
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear
@@ -41,6 +41,10 @@ const APP_FILES = [
 
     // Tab HISTORY
     'tab-history/feature-history.js',
+
+    // Tab ANALYTICS
+    'tab-analytics/feature-analytics.js',
+    'tab-analytics/analytics.css',
 
     // Agenda (Scheduled)
     'agenda/feature-scheduled.js',

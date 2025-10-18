@@ -378,23 +378,6 @@ function _openQuickMissionModal() {
                     const mission = App.state.getMissions().find(m => m.id === task.missionId);
                     return mission && mission.categoryId === _currentCategoryFilter;
                 });
-            
-                const header = document.getElementById("todayTitle");
-                if (header && !document.getElementById("clearCategoryFilterBtn")) {
-                    const btn = document.createElement("button");
-                    btn.id = "clearCategoryFilterBtn";
-                    btn.className = "clear-filter-btn";
-                    btn.textContent = "Ver todas";
-                    btn.addEventListener("click", () => {
-                        _currentCategoryFilter = null;
-                        btn.remove();
-                        this.render();
-                    });
-                    header.appendChild(btn);
-                }
-            } else {
-                const existingBtn = document.getElementById("clearCategoryFilterBtn");
-                if (existingBtn) existingBtn.remove();
             }
 
             if (!viewDateTasks || viewDateTasks.length === 0) {
@@ -714,9 +697,22 @@ function _openQuickMissionModal() {
         
             const badgeEl = taskCard.querySelector('.category-badge');
             if (badgeEl && badgeEl.dataset.catId) {
+                // Añadir clase si está activamente filtrado
+                if (_currentCategoryFilter === badgeEl.dataset.catId) {
+                    badgeEl.classList.add('category-active-filter');
+                }
+                
                 badgeEl.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    App.ui.today.filterByCategory(badgeEl.dataset.catId);
+                    const clickedCatId = badgeEl.dataset.catId;
+                    
+                    // Toggle: si ya está filtrado por esta categoría, quitar filtro
+                    if (_currentCategoryFilter === clickedCatId) {
+                        _currentCategoryFilter = null;
+                        this.render();
+                    } else {
+                        App.ui.today.filterByCategory(clickedCatId);
+                    }
                 });
             }
         },

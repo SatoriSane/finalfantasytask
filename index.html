@@ -148,7 +148,32 @@
                 <tbody id="historyBody"></tbody>
             </table>
         </section>
-
+        <section id="tab-analytics" role="tabpanel" tabindex="0" aria-labelledby="navAnalytics" aria-hidden="true">
+            <h2 id="analyticsTitle">📊 Estadísticas y Análisis</h2>
+            
+            <!-- Controles de periodo y vista -->
+            <div class="analytics-controls">
+                <div class="period-selector">
+                    <button class="period-btn active" data-days="7">Últimos 7 días</button>
+                    <button class="period-btn" data-days="14">Últimos 14 días</button>
+                    <button class="period-btn" data-days="30">Últimos 30 días</button>
+                    <button class="period-btn" data-days="90">Últimos 90 días</button>
+                    <button class="period-btn" data-days="180">Últimos 6 meses</button>
+                    <button class="period-btn" data-days="365">Último año</button>
+                </div>
+                
+                <div class="view-selector">
+                    <button class="view-btn active" data-view="overview">📈 Resumen</button>
+                    <button class="view-btn" data-view="categories">🎯 Propósitos</button>
+                    <button class="view-btn" data-view="missions">🏆 Misiones</button>
+                </div>
+            </div>
+            
+            <!-- Contenedor donde se renderizarán las estadísticas -->
+            <div id="analyticsContent" aria-live="polite" aria-label="Contenido de estadísticas">
+                <!-- El contenido se generará dinámicamente -->
+            </div>
+        </section>
         <section id="tab-habits" role="tabpanel" tabindex="0" aria-labelledby="navHabits" aria-hidden="true">
             <h2 id="habitsTitle">Seguimiento de Hábitos</h2>
             <!-- El contenido dinámico de los hábitos se insertará aquí -->
@@ -495,6 +520,9 @@
         <button id="navHistory" role="tab" aria-selected="false" aria-controls="tab-history" tabindex="-1">
             <span class="icon">📈</span> Historial
         </button>
+        <button id="navAnalytics" role="tab" aria-selected="false" aria-controls="tab-analytics" tabindex="-1">
+            <span class="icon">📊</span> Stats
+        </button>
         <button id="navHabits" role="tab" aria-selected="false" aria-controls="tab-habits" tabindex="-1">
             <span class="icon">⚡</span> Hábitos
         </button>
@@ -516,6 +544,7 @@
     <script src="tab-missions/feature-missions.js"></script>
     <script src="tab-shop/feature-shop.js"></script>
     <script src="tab-history/feature-history.js"></script>
+    <script src="tab-analytics/feature-analytics.js"></script>
     <script src="tab-habits/feature-habits.js"></script>
     <script src="tab-habits/modal-abstinence-creation.js"></script>
     <script src="global/js/script.js"></script>

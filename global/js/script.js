@@ -19,6 +19,12 @@
             App.ui.history.initListeners();
             App.ui.scheduled.initListeners();
             App.ui.habits.init();
+            
+            // ⭐ NUEVO: Inicializar Analytics
+            if (App.ui.analytics) {
+                App.ui.analytics.initListeners();
+                console.log("✅ Analytics initialized");
+            }
 
             // Carga el estado inicial
             const loadSuccessful = App.state.load();
@@ -42,6 +48,11 @@
                 App.ui.scheduled.render();
                 App.ui.history.render();
                 App.ui.habits.render();
+                
+                // ⭐ NUEVO: Renderizar Analytics si existe
+                if (App.ui.analytics) {
+                    App.ui.analytics.render();
+                }
 
                 // Activa la pestaña inicial (restaurada o por defecto)
                 const lastTab = sessionStorage.getItem('lastActiveTab') || 'tab-today';

@@ -290,23 +290,21 @@ function _formatDateTitle(dateString) {
     // --- PUBLIC API ---
     App.ui.today = {
         
-        /**
-         * @description Renderiza las tareas del día actual y actualiza la UI relacionada.
-         */
         render: function() {
             const container = document.getElementById("todayTasksList");
             const todayTitleElement = document.getElementById("todayTitle");
             const totalPointsBtn = document.getElementById("totalPointsBtn");
             const state = App.state.get();
+    
             if (!container) {
                 console.warn("Contenedor #todayTasksList no encontrado.");
                 return;
             }
+    
             container.innerHTML = "";
-
             const viewDate = _getCurrentViewDate();
             const formattedTitle = _formatDateTitle(viewDate);
-
+    
             if (todayTitleElement) {
                 todayTitleElement.innerHTML = `
                     <button id="prevDayBtnToday" class="date-nav-btn" aria-label="Día anterior">
@@ -321,10 +319,11 @@ function _formatDateTitle(dateString) {
                         </svg>
                     </button>
                 `;
-
+                
                 document.getElementById('prevDayBtnToday').addEventListener('click', () => _navigatePrevDay());
                 document.getElementById('nextDayBtnToday').addEventListener('click', () => _navigateNextDay());
             }
+            
         
             let viewDateTasks = App.state.getTasksForDate(viewDate);
 

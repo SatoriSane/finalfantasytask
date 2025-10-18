@@ -1,0 +1,49 @@
+.today-header {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  /* Contenedor flex para distribuir los botones y el título */
+  #todayTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+  }
+  
+  .today-title-text {
+    text-transform: capitalize;
+    flex: 1; /* Permite que el texto ocupe el espacio central */
+    text-align: center;
+  }
+  
+/* Botones de navegación */
+.date-nav-btn {
+    background-color: transparent;
+    border: none;
+    color: var(--ff-accent);
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm, 4px);
+    transition: all 0.2s ease;
+    flex-shrink: 0; /* Evita que los botones se compriman */
+}
+
+.date-nav-btn:hover {
+    background-color: rgba(124, 58, 237, 0.1); /* Ajusta según tu variable --ff-accent */
+    transform: scale(1.05);
+}
+
+.date-nav-btn:active {
+    transform: scale(0.95);
+}
+
+.date-nav-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.2;
+}

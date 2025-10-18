@@ -66,14 +66,23 @@ function _formatDateTitle(dateString) {
     const yesterday = App.utils.getFormattedDate(
         App.utils.addDateUnit(App.utils.normalizeDateToStartOfDay(new Date()), -1, 'day')
     );
-
+    
     if (dateString === today) return "Misiones de Hoy";
-    if (dateString === tomorrow) return "Misiones de Mañana";
-    if (dateString === yesterday) return "Misiones de Ayer";
-
+    if (dateString === tomorrow) return "Mañana";
+    if (dateString === yesterday) return "Ayer";
+    
     const date = App.utils.normalizeDateToStartOfDay(dateString);
-    const options = { weekday: 'long', day: 'numeric', month: 'long' };
-    return date.toLocaleDateString('es-ES', options);
+    
+    // Obtener día de la semana
+    const weekdayOptions = { weekday: 'long' };
+    const weekday = date.toLocaleDateString('es-ES', weekdayOptions);
+    
+    // Obtener día y mes
+    const dateOptions = { day: 'numeric', month: 'long' };
+    const dateFormatted = date.toLocaleDateString('es-ES', dateOptions);
+    
+    // Retornar con salto de línea
+    return `${weekday}<br>${dateFormatted}`;
 }
 
     /**

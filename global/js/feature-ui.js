@@ -316,7 +316,17 @@
                     }
                 });
             });
-        
+            document.getElementById('resetAppExceptHabitsBtn')?.addEventListener('click', () => {
+                this.closeResetConfirmModal();
+                this.showCustomConfirm('¿Seguro que quieres reiniciar TODO excepto los hábitos?', (confirmed) => {
+                    if (confirmed) {
+                        App.state.resetAllExceptHabits();
+                        this.showCustomAlert('Se ha reiniciado todo excepto los hábitos.');
+                        this.switchTab('tab-today');
+                    }
+                });
+            });
+            
             document.getElementById('resetAppBtn')?.addEventListener('click', () => {
                 this.closeResetConfirmModal();
                 this.showCustomConfirm('¡ADVERTENCIA! Vas a ELIMINAR TODOS tus datos. ¿Seguro?', (confirmed) => {

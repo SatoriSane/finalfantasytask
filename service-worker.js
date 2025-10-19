@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v3'; // Incremented version
+const CACHE_NAME = 'final-fantasy-tasks-cache-v3.1'; // Incremented version
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear

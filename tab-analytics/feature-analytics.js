@@ -4,18 +4,118 @@
     'use strict';
 
     // --- PRIVATE STATE ---
-    let _currentPeriod = 7; // Periodo por defecto: últimos 7 días
+    let _currentPeriodType = 'week'; // 'week', 'month', 'quarter', 'year'
+    let _currentOffset = 0; // 0 = periodo actual, -1 = anterior, -2 = hace 2 periodos, etc.
     let _currentView = 'overview'; // 'overview', 'purposes', 'missions'
 
     // --- PRIVATE METHODS ---
 
     /**
-     * Calcula estadísticas para un periodo específico
+     * Calcula el rango de fechas según el tipo de periodo y offset
      */
-    function _calculateStats(days) {
-        const state = App.state.get();
+    function _getDateRange() {
         const now = new Date();
-        const startDate = App.utils.addDateUnit(now, -days, 'day');
+        let startDate, endDate;
+
+        switch (_currentPeriodType) {
+            case 'week':
+                // Calcular inicio y fin de la semana (lunes a domingo)
+                const currentDay = now.getDay();
+                const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+                
+                endDate = new Date(now);
+                endDate.setDate(endDate.getDate() + mondayOffset + (7 * _currentOffset) + 6);
+                endDate.setHours(23, 59, 59, 999);
+                
+                startDate = new Date(endDate);
+                startDate.setDate(startDate.getDate() - 6);
+                startDate.setHours(0, 0, 0, 0);
+                break;
+
+            case 'month':
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1 + _currentOffset, 0);
+                endDate.setHours(23, 59, 59, 999);
+                
+                startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+                startDate.setHours(0, 0, 0, 0);
+                break;
+
+            case 'quarter':
+                const currentQuarter = Math.floor(now.getMonth() / 3);
+                const targetQuarter = currentQuarter + _currentOffset;
+                const targetYear = now.getFullYear() + Math.floor(targetQuarter / 4);
+                const adjustedQuarter = ((targetQuarter % 4) + 4) % 4;
+                
+                startDate = new Date(targetYear, adjustedQuarter * 3, 1);
+                startDate.setHours(0, 0, 0, 0);
+                
+                endDate = new Date(targetYear, (adjustedQuarter + 1) * 3, 0);
+                endDate.setHours(23, 59, 59, 999);
+                break;
+
+            case 'year':
+                const targetYear2 = now.getFullYear() + _currentOffset;
+                startDate = new Date(targetYear2, 0, 1);
+                startDate.setHours(0, 0, 0, 0);
+                
+                endDate = new Date(targetYear2, 11, 31);
+                endDate.setHours(23, 59, 59, 999);
+                break;
+        }
+
+        return { startDate, endDate };
+    }
+
+    /**
+     * Obtiene el nombre del periodo actual
+     */
+    function _getPeriodName() {
+        const { startDate, endDate } = _getDateRange();
+        
+        const formatDate = (date) => {
+            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+        };
+
+        switch (_currentPeriodType) {
+            case 'week':
+                if (_currentOffset === 0) {
+                    return 'Esta semana';
+                } else if (_currentOffset === -1) {
+                    return 'Semana pasada';
+                }
+                return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+
+            case 'month':
+                if (_currentOffset === 0) {
+                    return 'Este mes';
+                } else if (_currentOffset === -1) {
+                    return 'Mes pasado';
+                }
+                return startDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+
+            case 'quarter':
+                const quarter = Math.floor(startDate.getMonth() / 3) + 1;
+                if (_currentOffset === 0) {
+                    return `Este trimestre (Q${quarter})`;
+                }
+                return `Q${quarter} ${startDate.getFullYear()}`;
+
+            case 'year':
+                if (_currentOffset === 0) {
+                    return 'Este año';
+                } else if (_currentOffset === -1) {
+                    return 'Año pasado';
+                }
+                return startDate.getFullYear().toString();
+        }
+    }
+
+    /**
+     * Calcula estadísticas para el rango de fechas actual
+     */
+    function _calculateStats() {
+        const state = App.state.get();
+        const { startDate, endDate } = _getDateRange();
         
         const stats = {
             totalMissionsCompleted: 0,
@@ -26,99 +126,99 @@
             missionsData: {}
         };
 
-        // Procesar todas las tareas en el rango de fechas
-        if (state.tasksByDate) {
-            Object.keys(state.tasksByDate).forEach(dateStr => {
-                const taskDate = App.utils.normalizeDateToStartOfDay(dateStr);
-                if (taskDate >= startDate && taskDate <= now) {
-                    const tasks = state.tasksByDate[dateStr];
+// Procesar todas las tareas en el rango de fechas
+if (state.tasksByDate) {
+    Object.keys(state.tasksByDate).forEach(dateStr => {
+        const taskDate = App.utils.normalizeDateToStartOfDay(dateStr);
+        if (taskDate >= startDate && taskDate <= endDate) {
+            const tasks = state.tasksByDate[dateStr];
+            
+            tasks.forEach(task => {
+                // Solo procesar tareas que tengan missionId (ignorar tareas rápidas sin misión)
+                if (task.missionId) {
+                    const mission = state.missions.find(m => m.id === task.missionId);
                     
-                    tasks.forEach(task => {
-                        // Solo procesar tareas que tengan missionId (ignorar tareas rápidas sin misión)
-                        if (task.missionId) {
-                            const mission = state.missions.find(m => m.id === task.missionId);
-                            
-                            // Determinar categoryId
-                            let categoryId = task.categoryId;
-                            if (!categoryId && mission) {
-                                categoryId = mission.categoryId;
-                            }
-                            if (!categoryId) {
-                                const scheduled = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
-                                if (scheduled) categoryId = scheduled.categoryId;
-                            }
-                            
-                            const category = categoryId ? state.categories.find(c => c.id === categoryId) : null;
-                            const categoryName = category ? category.name : 'Sin propósito';
-                            const isEsporadic = category && category.name === "Propósito esporádico";
+                    // Determinar categoryId
+                    let categoryId = task.categoryId;
+                    if (!categoryId && mission) {
+                        categoryId = mission.categoryId;
+                    }
+                    if (!categoryId) {
+                        const scheduled = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
+                        if (scheduled) categoryId = scheduled.categoryId;
+                    }
+                    
+                    const category = categoryId ? state.categories.find(c => c.id === categoryId) : null;
+                    const categoryName = category ? category.name : 'Sin propósito';
 
-                            // Contar completadas/incompletas
-                            if (task.completed) {
-                                stats.totalMissionsCompleted++;
-                            } else {
-                                stats.totalMissionsIncomplete++;
-                            }
+                    // Contar completadas/incompletas
+                    if (task.completed) {
+                        stats.totalMissionsCompleted++;
+                    } else {
+                        stats.totalMissionsIncomplete++;
+                    }
 
-                            // Calcular puntos ganados
-                            const pointsEarned = task.completed 
-                                ? task.points * (task.currentRepetitions || 1)
-                                : 0;
+                    // Calcular puntos ganados
+                    const pointsEarned = task.completed 
+                        ? task.points * (task.currentRepetitions || 1)
+                        : 0;
 
-                            // Solo contar puntos de misiones NO esporádicas
-                            if (pointsEarned > 0 && !isEsporadic) {
-                                stats.totalPointsFromMissions += pointsEarned;
-                            }
+                    // Contar todos los puntos, incluyendo los esporádicos
+                    if (pointsEarned > 0) {
+                        stats.totalPointsFromMissions += pointsEarned;
+                    }
 
-                            // Datos por propósito (solo si tiene propósito válido)
-                            if (category && !isEsporadic) {
-                                if (!stats.purposesData[categoryId]) {
-                                    stats.purposesData[categoryId] = {
-                                        name: categoryName,
-                                        points: 0,
-                                        missionsCompleted: 0,
-                                        missionsIncomplete: 0,
-                                        uniqueMissions: new Set()
-                                    };
-                                }
-                                
-                                stats.purposesData[categoryId].points += pointsEarned;
-                                
-                                if (task.completed) {
-                                    stats.purposesData[categoryId].missionsCompleted++;
-                                } else {
-                                    stats.purposesData[categoryId].missionsIncomplete++;
-                                }
-                                
-                                stats.purposesData[categoryId].uniqueMissions.add(task.missionId);
-                            }
-
-                            // Datos por misión individual
-                            if (mission && !isEsporadic) {
-                                if (!stats.missionsData[task.missionId]) {
-                                    stats.missionsData[task.missionId] = {
-                                        name: mission.name,
-                                        purposeName: categoryName,
-                                        points: 0,
-                                        completions: 0
-                                    };
-                                }
-                                
-                                stats.missionsData[task.missionId].points += pointsEarned;
-                                if (task.completed) {
-                                    stats.missionsData[task.missionId].completions++;
-                                }
-                            }
+                    // Datos por propósito (todas las categorías)
+                    if (category) {
+                        if (!stats.purposesData[categoryId]) {
+                            stats.purposesData[categoryId] = {
+                                name: categoryName,
+                                points: 0,
+                                missionsCompleted: 0,
+                                missionsIncomplete: 0,
+                                uniqueMissions: new Set()
+                            };
                         }
-                    });
+                        
+                        stats.purposesData[categoryId].points += pointsEarned;
+                        
+                        if (task.completed) {
+                            stats.purposesData[categoryId].missionsCompleted++;
+                        } else {
+                            stats.purposesData[categoryId].missionsIncomplete++;
+                        }
+                        
+                        stats.purposesData[categoryId].uniqueMissions.add(task.missionId);
+                    }
+
+                    // Datos por misión individual (todas las categorías)
+                    if (mission) {
+                        if (!stats.missionsData[task.missionId]) {
+                            stats.missionsData[task.missionId] = {
+                                name: mission.name,
+                                purposeName: categoryName,
+                                points: 0,
+                                completions: 0
+                            };
+                        }
+                        
+                        stats.missionsData[task.missionId].points += pointsEarned;
+                        if (task.completed) {
+                            stats.missionsData[task.missionId].completions++;
+                        }
+                    }
                 }
             });
         }
+    });
+}
+
 
         // Calcular puntos de hábitos desde el historial
         if (state.history && Array.isArray(state.history)) {
             const relevantHistory = state.history.filter(h => {
                 const histDate = App.utils.normalizeDateToStartOfDay(h.date);
-                return histDate >= startDate && histDate <= now;
+                return histDate >= startDate && histDate <= endDate;
             });
 
             relevantHistory.forEach(day => {
@@ -160,66 +260,63 @@
         `;
     }
 
-    /**
-     * Obtiene lista detallada de misiones incompletas
-     */
-    function _getIncompleteMissions(days) {
-        const state = App.state.get();
-        const now = new Date();
-        const startDate = App.utils.addDateUnit(now, -days, 'day');
-        const incompleteMissions = [];
+/**
+ * Obtiene lista detallada de misiones incompletas
+ */
+function _getIncompleteMissions() {
+    const state = App.state.get();
+    const { startDate, endDate } = _getDateRange();
+    const incompleteMissions = [];
 
-        if (state.tasksByDate) {
-            Object.keys(state.tasksByDate).forEach(dateStr => {
-                const taskDate = App.utils.normalizeDateToStartOfDay(dateStr);
-                if (taskDate >= startDate && taskDate <= now) {
-                    const tasks = state.tasksByDate[dateStr];
-                    
-                    tasks.forEach(task => {
-                        if (!task.completed && task.missionId) {
-                            const mission = state.missions.find(m => m.id === task.missionId);
-                            
-                            // Determinar categoryId
-                            let categoryId = task.categoryId;
-                            if (!categoryId && mission) {
-                                categoryId = mission.categoryId;
-                            }
-                            if (!categoryId) {
-                                const scheduled = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
-                                if (scheduled) categoryId = scheduled.categoryId;
-                            }
-                            
-                            const category = categoryId ? state.categories.find(c => c.id === categoryId) : null;
-                            const isEsporadic = category && category.name === "Propósito esporádico";
-
-                            // Solo incluir si no es esporádica
-                            if (!isEsporadic) {
-                                incompleteMissions.push({
-                                    taskId: task.id,
-                                    missionId: task.missionId,
-                                    name: task.name,
-                                    date: dateStr,
-                                    purposeName: category ? category.name : 'Sin propósito',
-                                    points: task.points
-                                });
-                            }
+    if (state.tasksByDate) {
+        Object.keys(state.tasksByDate).forEach(dateStr => {
+            const taskDate = App.utils.normalizeDateToStartOfDay(dateStr);
+            if (taskDate >= startDate && taskDate <= endDate) {
+                const tasks = state.tasksByDate[dateStr];
+                
+                tasks.forEach(task => {
+                    if (!task.completed && task.missionId) {
+                        const mission = state.missions.find(m => m.id === task.missionId);
+                        
+                        // Determinar categoryId
+                        let categoryId = task.categoryId;
+                        if (!categoryId && mission) {
+                            categoryId = mission.categoryId;
                         }
-                    });
-                }
-            });
-        }
+                        if (!categoryId) {
+                            const scheduled = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
+                            if (scheduled) categoryId = scheduled.categoryId;
+                        }
+                        
+                        const category = categoryId ? state.categories.find(c => c.id === categoryId) : null;
 
-        // Ordenar por fecha (más reciente primero)
-        incompleteMissions.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        return incompleteMissions;
+                        // Incluir TODAS las misiones (incluidas las esporádicas)
+                        incompleteMissions.push({
+                            taskId: task.id,
+                            missionId: task.missionId,
+                            name: task.name,
+                            date: dateStr,
+                            purposeName: category ? category.name : 'Sin propósito',
+                            points: task.points
+                        });
+                    }
+                });
+            }
+        });
     }
+
+    // Ordenar por fecha (más reciente primero)
+    incompleteMissions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    return incompleteMissions;
+}
+
 
     /**
      * Muestra modal con misiones incompletas
      */
     function _showIncompleteMissionsModal() {
-        const incompleteMissions = _getIncompleteMissions(_currentPeriod);
+        const incompleteMissions = _getIncompleteMissions();
         
         if (incompleteMissions.length === 0) {
             App.events.emit('showAlert', '¡Excelente! No tienes misiones pendientes en este periodo.');
@@ -235,11 +332,17 @@
             modal.innerHTML = `
                 <div class="modal-content incomplete-missions-modal-content">
                     <button class="modal-close-btn" id="closeIncompleteMissionsModal">&times;</button>
-                    <h2>⏳ Misiones Pendientes</h2>
+                    <h2 id="incompleteMissionsTitle">⏳ Misiones Pendientes</h2>
                     <div id="incompleteMissionsContent"></div>
                 </div>
             `;
             document.body.appendChild(modal);
+        }
+
+        // Actualizar título con el periodo
+        const titleEl = document.getElementById('incompleteMissionsTitle');
+        if (titleEl) {
+            titleEl.textContent = `⏳ Misiones Pendientes (${_getPeriodName()})`;
         }
 
         const content = document.getElementById('incompleteMissionsContent');
@@ -317,10 +420,22 @@
     function _deleteIncompleteTask(taskId, dateStr) {
         const state = App.state.get();
         const tasks = state.tasksByDate[dateStr];
-        
         if (tasks) {
             const index = tasks.findIndex(t => t.id === taskId);
             if (index !== -1) {
+                const task = tasks[index];
+    
+                // Marcar fecha como omitida si es misión programada
+                if (task.missionId) {
+                    const scheduled = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
+                    if (scheduled) {
+                        scheduled.skippedDates = scheduled.skippedDates || [];
+                        if (!scheduled.skippedDates.includes(dateStr)) {
+                            scheduled.skippedDates.push(dateStr);
+                        }
+                    }
+                }
+    
                 tasks.splice(index, 1);
                 state.tasksByDate[dateStr] = tasks;
                 App.state.saveState();
@@ -328,48 +443,7 @@
             }
         }
     }
-
-    /**
-     * Renderiza la vista general
-     */
-    function _renderOverview(stats) {
-        const container = document.getElementById('analyticsContent');
-        if (!container) return;
-
-        const totalMissions = stats.totalMissionsCompleted + stats.totalMissionsIncomplete;
-        const completionRate = totalMissions > 0 
-            ? Math.round((stats.totalMissionsCompleted / totalMissions) * 100)
-            : 0;
-
-        container.innerHTML = `
-            <div class="analytics-overview">
-                <div class="stats-grid">
-                    ${_renderStatCard('✅', 'Misiones Completadas', stats.totalMissionsCompleted)}
-                    ${_renderStatCard('⏳', 'Misiones Pendientes', stats.totalMissionsIncomplete, 'Click para ver detalles', true)}
-                    ${_renderStatCard('📊', 'Tasa de Completación', `${completionRate}%`)}
-                    ${_renderStatCard('⭐', 'Puntos (Misiones)', stats.totalPointsFromMissions)}
-                </div>
-
-                ${stats.totalPointsFromHabits > 0 ? `
-                    <div class="habits-points-section">
-                        <div class="habits-points-card">
-                            <div class="habits-icon">💪</div>
-                            <div class="habits-info">
-                                <div class="habits-label">Puntos de Hábitos</div>
-                                <div class="habits-value">${stats.totalPointsFromHabits} pts</div>
-                                <div class="habits-note">No incluidos en totales de propósitos</div>
-                            </div>
-                        </div>
-                    </div>
-                ` : ''}
-
-                <div class="purposes-summary-section">
-                    <h3>🎯 Resumen por Propósitos</h3>
-                    ${_renderPurposesSummary(stats.purposesData)}
-                </div>
-            </div>
-        `;
-    }
+    
 
     /**
      * Renderiza resumen compacto de propósitos
@@ -413,6 +487,76 @@
     }
 
     /**
+     * Renderiza la vista general
+     */
+    function _renderOverview(stats) {
+        const container = document.getElementById('analyticsContent');
+        if (!container) return;
+
+        const totalMissions = stats.totalMissionsCompleted + stats.totalMissionsIncomplete;
+        const completionRate = totalMissions > 0 
+            ? Math.round((stats.totalMissionsCompleted / totalMissions) * 100)
+            : 0;
+
+        container.innerHTML = `
+            <div class="analytics-overview">
+                <!-- Selector de periodo con navegación -->
+                <div class="period-navigation">
+                    <button class="period-nav-btn" id="prevPeriodBtn" ${_currentOffset <= -10 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    
+                    <div class="period-selector-dropdown">
+                        <select id="periodTypeSelect">
+                            <option value="week" ${_currentPeriodType === 'week' ? 'selected' : ''}>Semana</option>
+                            <option value="month" ${_currentPeriodType === 'month' ? 'selected' : ''}>Mes</option>
+                            <option value="quarter" ${_currentPeriodType === 'quarter' ? 'selected' : ''}>Trimestre</option>
+                            <option value="year" ${_currentPeriodType === 'year' ? 'selected' : ''}>Año</option>
+                        </select>
+                        <div class="period-name">${_getPeriodName()}</div>
+                    </div>
+                    
+                    <button class="period-nav-btn" id="nextPeriodBtn" ${_currentOffset >= 0 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="stats-grid">
+                    ${_renderStatCard('✅', 'Misiones Completadas', stats.totalMissionsCompleted)}
+                    ${_renderStatCard('⏳', 'Misiones Pendientes', stats.totalMissionsIncomplete, 'Click para ver detalles', true)}
+                    ${_renderStatCard('📊', 'Tasa de Completación', `${completionRate}%`)}
+                    ${_renderStatCard('⭐', 'Puntos (Misiones)', stats.totalPointsFromMissions)}
+                </div>
+
+                ${stats.totalPointsFromHabits > 0 ? `
+                    <div class="habits-points-section">
+                        <div class="habits-points-card">
+                            <div class="habits-icon">💪</div>
+                            <div class="habits-info">
+                                <div class="habits-label">Puntos de Hábitos</div>
+                                <div class="habits-value">${stats.totalPointsFromHabits} pts</div>
+                                <div class="habits-note">No incluidos en totales de propósitos</div>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div class="purposes-summary-section">
+                    <h3>🎯 Resumen por Propósitos</h3>
+                    ${_renderPurposesSummary(stats.purposesData)}
+                </div>
+            </div>
+        `;
+
+        // Añadir listeners para navegación de periodo
+        _initPeriodNavigationListeners();
+    }
+
+    /**
      * Renderiza la vista por propósitos (detallada)
      */
     function _renderPurposes(stats) {
@@ -423,7 +567,33 @@
             .sort((a, b) => b.points - a.points);
 
         if (purposesArray.length === 0) {
-            container.innerHTML = '<p class="empty-message">No hay datos de propósitos para este periodo</p>';
+            container.innerHTML = `
+                <div class="period-navigation">
+                    <button class="period-nav-btn" id="prevPeriodBtn" ${_currentOffset <= -10 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    
+                    <div class="period-selector-dropdown">
+                        <select id="periodTypeSelect">
+                            <option value="week" ${_currentPeriodType === 'week' ? 'selected' : ''}>Semana</option>
+                            <option value="month" ${_currentPeriodType === 'month' ? 'selected' : ''}>Mes</option>
+                            <option value="quarter" ${_currentPeriodType === 'quarter' ? 'selected' : ''}>Trimestre</option>
+                            <option value="year" ${_currentPeriodType === 'year' ? 'selected' : ''}>Año</option>
+                        </select>
+                        <div class="period-name">${_getPeriodName()}</div>
+                    </div>
+                    
+                    <button class="period-nav-btn" id="nextPeriodBtn" ${_currentOffset >= 0 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <p class="empty-message">No hay datos de propósitos para este periodo</p>
+            `;
+            _initPeriodNavigationListeners();
             return;
         }
 
@@ -431,6 +601,30 @@
 
         container.innerHTML = `
             <div class="analytics-purposes">
+                <div class="period-navigation">
+                    <button class="period-nav-btn" id="prevPeriodBtn" ${_currentOffset <= -10 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    
+                    <div class="period-selector-dropdown">
+                        <select id="periodTypeSelect">
+                            <option value="week" ${_currentPeriodType === 'week' ? 'selected' : ''}>Semana</option>
+                            <option value="month" ${_currentPeriodType === 'month' ? 'selected' : ''}>Mes</option>
+                            <option value="quarter" ${_currentPeriodType === 'quarter' ? 'selected' : ''}>Trimestre</option>
+                            <option value="year" ${_currentPeriodType === 'year' ? 'selected' : ''}>Año</option>
+                        </select>
+                        <div class="period-name">${_getPeriodName()}</div>
+                    </div>
+                    
+                    <button class="period-nav-btn" id="nextPeriodBtn" ${_currentOffset >= 0 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
                 <h3>🎯 Análisis Detallado por Propósito</h3>
                 <div class="purposes-list">
                     ${purposesArray.map((purpose, index) => {
@@ -478,6 +672,8 @@
                 </div>
             </div>
         `;
+
+        _initPeriodNavigationListeners();
     }
 
     /**
@@ -488,17 +684,67 @@
         if (!container) return;
 
         const missionsArray = Object.values(stats.missionsData)
-            .filter(m => m.points > 0) // Solo misiones con puntos
+            .filter(m => m.points > 0)
             .sort((a, b) => b.points - a.points)
-            .slice(0, 20); // Top 20
+            .slice(0, 20);
 
         if (missionsArray.length === 0) {
-            container.innerHTML = '<p class="empty-message">No hay datos de misiones para este periodo</p>';
+            container.innerHTML = `
+                <div class="period-navigation">
+                    <button class="period-nav-btn" id="prevPeriodBtn" ${_currentOffset <= -10 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    
+                    <div class="period-selector-dropdown">
+                        <select id="periodTypeSelect">
+                            <option value="week" ${_currentPeriodType === 'week' ? 'selected' : ''}>Semana</option>
+                            <option value="month" ${_currentPeriodType === 'month' ? 'selected' : ''}>Mes</option>
+                            <option value="quarter" ${_currentPeriodType === 'quarter' ? 'selected' : ''}>Trimestre</option>
+                            <option value="year" ${_currentPeriodType === 'year' ? 'selected' : ''}>Año</option>
+                        </select>
+                        <div class="period-name">${_getPeriodName()}</div>
+                    </div>
+                    
+                    <button class="period-nav-btn" id="nextPeriodBtn" ${_currentOffset >= 0 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <p class="empty-message">No hay datos de misiones para este periodo</p>
+            `;
+            _initPeriodNavigationListeners();
             return;
         }
 
         container.innerHTML = `
             <div class="analytics-missions">
+                <div class="period-navigation">
+                    <button class="period-nav-btn" id="prevPeriodBtn" ${_currentOffset <= -10 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    
+                    <div class="period-selector-dropdown">
+                        <select id="periodTypeSelect">
+                            <option value="week" ${_currentPeriodType === 'week' ? 'selected' : ''}>Semana</option>
+                            <option value="month" ${_currentPeriodType === 'month' ? 'selected' : ''}>Mes</option>
+                            <option value="quarter" ${_currentPeriodType === 'quarter' ? 'selected' : ''}>Trimestre</option>
+                            <option value="year" ${_currentPeriodType === 'year' ? 'selected' : ''}>Año</option>
+                        </select>
+                        <div class="period-name">${_getPeriodName()}</div>
+                    </div>
+                    
+                    <button class="period-nav-btn" id="nextPeriodBtn" ${_currentOffset >= 0 ? 'disabled' : ''}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
                 <h3>🏆 Top 20 Misiones Más Productivas</h3>
                 <div class="missions-table">
                     <div class="table-header">
@@ -520,14 +766,46 @@
                 </div>
             </div>
         `;
+
+        _initPeriodNavigationListeners();
+    }
+
+    /**
+     * Inicializa los listeners para la navegación de periodos
+     */
+    function _initPeriodNavigationListeners() {
+        const prevBtn = document.getElementById('prevPeriodBtn');
+        const nextBtn = document.getElementById('nextPeriodBtn');
+        const selectEl = document.getElementById('periodTypeSelect');
+
+        if (prevBtn) {
+            prevBtn.onclick = () => {
+                _currentOffset--;
+                App.ui.analytics.render();
+            };
+        }
+
+        if (nextBtn) {
+            nextBtn.onclick = () => {
+                _currentOffset++;
+                App.ui.analytics.render();
+            };
+        }
+
+        if (selectEl) {
+            selectEl.onchange = (e) => {
+                _currentPeriodType = e.target.value;
+                _currentOffset = 0;
+                App.ui.analytics.render();
+            };
+        }
     }
 
     // --- PUBLIC API ---
     App.ui.analytics = {
         render: function() {
-            const stats = _calculateStats(_currentPeriod);
+            const stats = _calculateStats();
 
-            // Renderizar según la vista actual
             switch (_currentView) {
                 case 'overview':
                     _renderOverview(stats);
@@ -541,15 +819,9 @@
             }
         },
 
-        setPeriod: function(days) {
-            _currentPeriod = days;
-            this.render();
-        },
-
         setView: function(view) {
             _currentView = view;
             
-            // Actualizar botones activos
             document.querySelectorAll('.view-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
@@ -559,17 +831,6 @@
         },
 
         initListeners: function() {
-            // Listeners para cambio de periodo
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    const days = parseInt(btn.dataset.days, 10);
-                    this.setPeriod(days);
-                });
-            });
-
-            // Listeners para cambio de vista
             document.querySelectorAll('.view-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const view = btn.dataset.view;
@@ -577,7 +838,6 @@
                 });
             });
 
-            // Listener para tarjeta de misiones incompletas (delegación de eventos)
             document.addEventListener('click', (e) => {
                 const statCard = e.target.closest('.stat-card-clickable[data-action="show-incomplete"]');
                 if (statCard) {
@@ -585,7 +845,6 @@
                 }
             });
 
-            // Escuchar eventos de actualización
             App.events.on('todayTasksUpdated', () => this.render());
             App.events.on('historyUpdated', () => this.render());
             App.events.on('stateRefreshed', () => this.render());

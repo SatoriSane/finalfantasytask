@@ -148,32 +148,23 @@
                 <tbody id="historyBody"></tbody>
             </table>
         </section>
-<section id="tab-analytics" role="tabpanel" tabindex="0" aria-labelledby="navAnalytics" aria-hidden="true">
-    <h2 id="analyticsTitle">📊 Estadísticas y Análisis</h2>
-    
-    <!-- Controles de periodo y vista -->
-    <div class="analytics-controls">
-        <div class="period-selector">
-            <button class="period-btn active" data-days="7">Últimos 7 días</button>
-            <button class="period-btn" data-days="14">Últimos 14 días</button>
-            <button class="period-btn" data-days="30">Últimos 30 días</button>
-            <button class="period-btn" data-days="90">Últimos 90 días</button>
-            <button class="period-btn" data-days="180">Últimos 6 meses</button>
-            <button class="period-btn" data-days="365">Último año</button>
-        </div>
-        
-        <div class="view-selector">
-            <button class="view-btn active" data-view="overview">📈 Resumen</button>
-            <button class="view-btn" data-view="purposes">🎯 Propósitos</button>
-            <button class="view-btn" data-view="missions">🏆 Top Misiones</button>
-        </div>
-    </div>
-    
-    <!-- Contenedor donde se renderizarán las estadísticas -->
-    <div id="analyticsContent" aria-live="polite" aria-label="Contenido de estadísticas">
-        <!-- El contenido se generará dinámicamente -->
-    </div>
-</section>
+        <section id="tab-analytics" role="tabpanel" tabindex="0" aria-labelledby="navAnalytics" aria-hidden="true">
+            <h2 id="analyticsTitle">📊 Estadísticas y Análisis</h2>
+            
+            <!-- Controles de vista (el selector de periodo está integrado en cada vista) -->
+            <div class="analytics-controls">
+                <div class="view-selector">
+                    <button class="view-btn active" data-view="overview">📈 Resumen</button>
+                    <button class="view-btn" data-view="purposes">🎯 Propósitos</button>
+                    <button class="view-btn" data-view="missions">🏆 Top Misiones</button>
+                </div>
+            </div>
+            
+            <!-- Contenedor donde se renderizarán las estadísticas -->
+            <div id="analyticsContent" aria-live="polite" aria-label="Contenido de estadísticas">
+                <!-- El contenido se generará dinámicamente -->
+            </div>
+        </section>
         <section id="tab-habits" role="tabpanel" tabindex="0" aria-labelledby="navHabits" aria-hidden="true">
             <h2 id="habitsTitle">Seguimiento de Hábitos</h2>
             <!-- El contenido dinámico de los hábitos se insertará aquí -->
@@ -261,7 +252,9 @@
         <div class="modal-content">
             <button class="modal-close-btn" id="closeResetConfirmModal" aria-label="Cerrar opciones de reinicio">&times;</button>
             <h2 id="resetConfirmTitle">Opciones de Reinicio</h2>
-            <p style="margin-bottom: 1.5rem; text-align: center; color: var(--ff-text-light);">Elige cómo deseas reiniciar la aplicación. ¡Estas acciones son irreversibles!</p>
+            <p style="margin-bottom: 1.5rem; text-align: center; color: var(--ff-text-light);">
+                Elige cómo deseas reiniciar la aplicación. ¡Estas acciones son irreversibles!
+            </p>
             <div class="reset-options-container">
                 <button id="exportDataBtn" class="secondary reset-option-btn" aria-label="Exportar datos de la aplicación" title="Guardar una copia de seguridad de tus datos">
                     <span class="icon">💾</span> Exportar Datos
@@ -270,16 +263,23 @@
                     <span class="icon">📂</span> Importar Datos
                 </button>
                 <input type="file" id="importFile" accept=".json" style="display: none;">
-
+    
                 <button id="resetHistoryBtn" class="secondary reset-option-btn" aria-label="Reiniciar solo historial" title="Reiniciar solo historial">
                     <span class="icon">🧹</span> Reiniciar Historial
                 </button>
+    
+                <!-- NUEVO BOTÓN: Reiniciar todo excepto hábitos -->
+                <button id="resetAppExceptHabitsBtn" class="secondary reset-option-btn" aria-label="Reiniciar todo excepto hábitos" title="Reiniciar toda la app excepto tus hábitos">
+                    <span class="icon">♻️</span> Reiniciar TODO excepto Hábitos
+                </button>
+    
                 <button id="resetAppBtn" class="primary reset-option-btn" aria-label="Reiniciar aplicación (eliminar todos los datos)" title="Reiniciar aplicación (eliminar todos los datos)">
                     <span class="icon">🗑️</span> Reiniciar TODO
                 </button>
             </div>
         </div>
     </div>
+    
 
     <div id="editTemporaryTaskModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="editTemporaryTaskTitle" aria-hidden="true">
         <div class="modal-content">
@@ -545,6 +545,7 @@
     <script src="tab-shop/feature-shop.js"></script>
     <script src="tab-history/feature-history.js"></script>
     <script src="tab-analytics/feature-analytics.js"></script>
+    <script src="tab-analytics/feature-incomplete-missions.js"></script>
     <script src="tab-habits/feature-habits.js"></script>
     <script src="tab-habits/modal-abstinence-creation.js"></script>
     <script src="global/js/script.js"></script>

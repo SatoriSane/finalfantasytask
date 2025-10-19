@@ -68,6 +68,30 @@
     }
 
     App.state = {
+        resetAllExceptHabits: function() {
+            const currentState = App.state.get();
+        
+            const habits = currentState.habits || { challenges: [], routines: [] };
+        
+            const newState = {
+                points: 0,
+                missions: [],
+                categories: [],
+                history: [],
+                scheduledMissions: [],
+                shopItems: [],
+                missionStats: {},
+                dailyBonusMission: null,
+                todayOrder: {},
+                tasksByDate: {},
+                habits: habits
+            };
+        
+            App.state.loadState(newState);
+            App.events.emit('stateRefreshed');
+        },
+        
+        
         getState: function() {
             return state;
         },

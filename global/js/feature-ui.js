@@ -69,8 +69,6 @@
 
     App.ui.general = {
 
-        // --- Métodos de Renderizado (de ui-render-general.js) ---
-
         switchTab: function(tabId) {
             document.querySelectorAll('main section').forEach(sec => {
                 sec.classList.remove('active');

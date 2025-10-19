@@ -99,7 +99,6 @@
 }
 
 #todayTasksList .task-card.completed .task-name {
-    text-decoration: line-through;
     color: var(--ff-text-dark);
     font-style: italic;
     font-size: 1rem;

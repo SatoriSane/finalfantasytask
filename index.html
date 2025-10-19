@@ -149,20 +149,11 @@
             </table>
         </section>
         <section id="tab-analytics" role="tabpanel" tabindex="0" aria-labelledby="navAnalytics" aria-hidden="true">
-            <h2 id="analyticsTitle">📊 Estadísticas y Análisis</h2>
+            <h2 id="analyticsTitle">Análisis</h2>
             
-            <!-- Controles de vista (el selector de periodo está integrado en cada vista) -->
-            <div class="analytics-controls">
-                <div class="view-selector">
-                    <button class="view-btn active" data-view="overview">📈 Resumen</button>
-                    <button class="view-btn" data-view="purposes">🎯 Propósitos</button>
-                    <button class="view-btn" data-view="missions">🏆 Top Misiones</button>
-                </div>
-            </div>
-            
-            <!-- Contenedor donde se renderizarán las estadísticas -->
-            <div id="analyticsContent" aria-live="polite" aria-label="Contenido de estadísticas">
-                <!-- El contenido se generará dinámicamente -->
+            <!-- Contenedor dinámico donde se renderiza el contenido -->
+            <div id="analyticsContent" aria-live="polite" aria-label="Contenido de análisis">
+                <!-- El contenido se genera dinámicamente desde feature-analytics.js -->
             </div>
         </section>
         <section id="tab-habits" role="tabpanel" tabindex="0" aria-labelledby="navHabits" aria-hidden="true">
@@ -517,14 +508,16 @@
         <button id="navShop" role="tab" aria-selected="false" aria-controls="tab-shop" tabindex="-1">
             <span class="icon">🛒</span> Tienda
         </button>
+        <!--
         <button id="navHistory" role="tab" aria-selected="false" aria-controls="tab-history" tabindex="-1">
             <span class="icon">📈</span> Historial
         </button>
-        <button id="navAnalytics" role="tab" aria-selected="false" aria-controls="tab-analytics" tabindex="-1">
-            <span class="icon">📊</span> Stats
-        </button>
+        -->
         <button id="navHabits" role="tab" aria-selected="false" aria-controls="tab-habits" tabindex="-1">
             <span class="icon">⚡</span> Hábitos
+        </button>
+        <button id="navAnalytics" role="tab" aria-selected="false" aria-controls="tab-analytics" tabindex="-1">
+            <span class="icon">📊</span> Resumen
         </button>
     </nav>
     <script src="global/js/app-init.js"></script>

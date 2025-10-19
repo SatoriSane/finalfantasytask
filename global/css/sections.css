@@ -67,17 +67,7 @@
     transform: scale(1.15);
 }
 
-#todayTasksList .task-card.completed {
-    opacity: 0.5;
-    background-color: var(--ff-bg-dark);
-    border-color: transparent;
-}
 
-#todayTasksList .task-card.completed .task-name {
-    text-decoration: line-through;
-    color: var(--ff-text-dark);
-    font-style: italic;
-}
 
 #todayTasksList .task-card.completed .completed-message {
     color: var(--ff-text-dark);

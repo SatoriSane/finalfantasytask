@@ -1,623 +1,525 @@
-/* === RESPONSIVE === */
-@media (max-width: 768px) {
-    .period-navigation {
-        padding: 0.75rem;
-        gap: 0.5rem;
-    }
+/* ------------------------------------------------ */
+/* FEATURE-ANALYTICS.CSS (Estadísticas)     */
+/* ------------------------------------------------ */
 
-    .period-nav-btn {
-        min-width: 36px;
-        height: 36px;
-        padding: 0.4rem;
-    }
-
-    .period-selector-dropdown select {
-        font-size: 0.9rem;
-    }
-
-    .period-name {
-        font-size: 0.8rem;
-    }
-
-    .view-selector {
-        flex-direction: column;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.75rem;
-    }
-
-    .stat-card {
-        padding: 1rem;
-    }
-
-    .stat-icon {
-        font-size: 2rem;
-    }
-
-    .analytics-stat-value {
-        font-size: 1.5rem;
-    }
-
-    .habits-points-card {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .table-header,
-    .table-row {
-        grid-template-columns: 40px 1fr 70px;
-        font-size: 0.85rem;
-    }
-
-    .col-purpose,
-    .col-completions {
-        display: none;
-    }
-
-    .purpose-item {
-        padding: 0.75rem;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .purpose-rank-large {
-        font-size: 1.5rem;
-        min-width: auto;
-    }
-
-    .purpose-header {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .purpose-detailed-stats {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
-
-    .purpose-summary-item {
-        padding: 0.75rem;
-    }
-
-    .purpose-rank {
-        font-size: 1.2rem;
-        min-width: 30px;
-    }
-
-    .incomplete-mission-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .incomplete-mission-meta {
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-    .delete-incomplete-btn {
-        align-self: flex-end;
-        width: 100%;
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .view-btn {
-        padding: 0.6rem;
-        font-size: 0.85rem;
-    }
-
-    .purpose-mini-stats {
-        flex-direction: column;
-        gap: 0.25rem;
-        align-items: center;
-    }
-
-    .period-navigation {
-        flex-wrap: wrap;
-    }
-
-    .period-selector-dropdown {
-        order: -1;
-        width: 100%;
-    }
-}/* tab-analytics/analytics.css - Versión simplificada */
-
-/* === CONTROLES DE VISTA === */
-.analytics-controls {
+/* --- Contenedor Principal --- */
+#analyticsContent {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    /* Un gap generoso entre las secciones principales */
+    gap: 2.25rem; 
+    padding: 1rem 1.5rem 2rem 1.5rem;
+    max-width: 1300px;
+    margin: 0 auto;
 }
 
-/* === NAVEGACIÓN DE PERIODO === */
+/* --- 1. Navegación de Periodo --- */
 .period-navigation {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--ff-secondary);
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-}
-
-.period-nav-btn {
-    background: var(--ff-bg);
-    border: 2px solid var(--ff-border);
-    border-radius: 8px;
-    padding: 0.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    height: 40px;
-}
-
-.period-nav-btn:hover:not(:disabled) {
-    background: var(--ff-primary);
-    border-color: var(--ff-primary);
-}
-
-.period-nav-btn:hover:not(:disabled) svg {
-    stroke: white;
-}
-
-.period-nav-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.period-nav-btn svg {
-    stroke: var(--ff-text-light);
-}
-
-.period-selector-dropdown {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.period-selector-dropdown select {
-    background: var(--ff-bg);
-    color: var(--ff-text-light);
-    border: 2px solid var(--ff-border);
-    border-radius: 8px;
-    padding: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.period-selector-dropdown select:hover {
-    border-color: var(--ff-primary);
-}
-
-.period-selector-dropdown select:focus {
-    outline: none;
-    border-color: var(--ff-primary);
-}
-
-.period-name {
-    font-size: 0.9rem;
-    color: var(--ff-text-dark);
-    text-align: center;
-    font-weight: 500;
-}
-
-.view-selector {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.view-btn {
-    flex: 1;
-    padding: 0.75rem;
-    background: var(--ff-bg);
-    color: var(--ff-text-light);
-    border: 2px solid var(--ff-border);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.view-btn:hover {
-    background: var(--ff-secondary);
-    border-color: var(--ff-primary);
-}
-
-.view-btn.active {
-    background: var(--ff-primary);
-    color: white;
-    border-color: var(--ff-primary);
-}
-
-/* === TARJETAS DE ESTADÍSTICAS === */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background: var(--ff-secondary);
-    border: 2px solid var(--ff-border);
-    border-radius: 12px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    border-color: var(--ff-primary);
-}
-
-/* Tarjeta clickeable */
-.stat-card-clickable {
-    cursor: pointer;
-}
-
-.stat-card-clickable:hover {
-    border-color: var(--ff-primary);
-    background: var(--ff-bg);
-}
-
-.stat-card-clickable .stat-subtitle {
-    color: var(--ff-primary);
-    font-weight: 600;
-    margin-top: 0.5rem;
-}
-
-.stat-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.analytics-stat-value {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--ff-primary);
-    margin-bottom: 0.25rem;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    color: var(--ff-text-light);
-    font-weight: 500;
-}
-
-.stat-subtitle {
-    font-size: 0.75rem;
-    color: var(--ff-text-dark);
-    margin-top: 0.25rem;
-}
-
-/* === SECCIÓN DE PUNTOS DE HÁBITOS === */
-.habits-points-section {
-    margin-bottom: 2rem;
-}
-
-.habits-points-card {
-    background: var(--ff-secondary);
-    border: 2px solid #4CAF50;
-    border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.habits-icon {
-    font-size: 3rem;
-}
-
-.habits-info {
-    flex: 1;
-}
-
-.habits-label {
-    font-size: 0.9rem;
-    color: var(--ff-text-dark);
-    margin-bottom: 0.25rem;
-}
-
-.habits-value {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #4CAF50;
-    margin-bottom: 0.25rem;
-}
-
-.habits-note {
-    font-size: 0.75rem;
-    color: var(--ff-text-dark);
-    font-style: italic;
-}
-
-/* === RESUMEN DE PROPÓSITOS === */
-.purposes-summary-section {
-    background: var(--ff-secondary);
-    border: 2px solid var(--ff-border);
-    border-radius: 12px;
-    padding: 1.5rem;
-}
-
-.purposes-summary-section h3 {
-    color: var(--ff-text-light);
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-}
-
-.purposes-summary-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.purpose-summary-item {
-    background: var(--ff-bg);
-    border: 2px solid var(--ff-border);
-    border-radius: 10px;
-    padding: 1rem;
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    transition: all 0.3s ease;
-}
-
-.purpose-summary-item:hover {
-    border-color: var(--ff-primary);
-    transform: translateX(4px);
-}
-
-.purpose-rank {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--ff-primary);
-    min-width: 40px;
-    text-align: center;
-}
-
-.purpose-details {
-    flex: 1;
-}
-
-.purpose-name {
-    font-weight: 600;
-    color: var(--ff-text-light);
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.purpose-progress {
-    margin: 0.5rem 0;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background: var(--ff-bg);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--ff-primary), #ff8787);
-    border-radius: 4px;
-    transition: width 0.5s ease;
-}
-
-.purpose-mini-stats {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.85rem;
-    color: var(--ff-text-dark);
-    margin-top: 0.5rem;
-}
-
-/* === VISTA DETALLADA DE PROPÓSITOS === */
-.analytics-purposes {
-    background: var(--ff-secondary);
-    border: 2px solid var(--ff-border);
-    border-radius: 12px;
-    padding: 1.5rem;
-}
-
-.analytics-purposes h3 {
-    color: var(--ff-text-light);
-    margin-bottom: 1.5rem;
-    font-size: 1.2rem;
-}
-
-.purposes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.purpose-item {
-    background: var(--ff-bg);
-    border: 2px solid var(--ff-border);
-    border-radius: 10px;
-    padding: 1.25rem;
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-    transition: all 0.3s ease;
-}
-
-.purpose-item:hover {
-    border-color: var(--ff-primary);
-    transform: translateX(4px);
-}
-
-.purpose-rank-large {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--ff-primary);
-    min-width: 50px;
-    text-align: center;
-}
-
-.purpose-info {
-    flex: 1;
-}
-
-.purpose-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.75rem;
+    background-color: var(--ff-bg-medium);
+    border-radius: var(--border-radius-md);
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--ff-border);
+    box-shadow: var(--shadow-sm);
 }
 
-.purpose-name-large {
+/* Botones de flecha (Prev/Next) */
+.period-nav-btn {
+    /* Reutilizamos el estilo .icon-btn de base.css */
+    background: transparent;
+    color: var(--ff-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-speed);
+    cursor: pointer;
+}
+.period-nav-btn:hover:not(:disabled) {
+    color: var(--ff-bg-dark);
+    background-color: var(--ff-accent);
+    transform: scale(1.1);
+    box-shadow: var(--shadow-md);
+}
+.period-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: var(--ff-bg-light);
+    color: var(--ff-text-dark);
+}
+.period-nav-btn svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Selector central (Semana, Mes...) */
+.period-selector-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+#periodTypeSelect {
+    /* Quitamos la apariencia nativa */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    
+    /* Estilos base */
+    background-color: transparent;
+    border: none;
+    color: var(--ff-accent);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    padding: 0 20px 0 0; /* Espacio para el icono */
+    
+    /* Icono de flecha (SVG inline) */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300E4FF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: 16px 16px;
+}
+#periodTypeSelect:focus {
+    outline: none;
+    text-shadow: 0 0 5px rgba(var(--ff-accent-rgb), 0.5);
+}
+#periodTypeSelect option {
+    background-color: var(--ff-bg-medium);
+    color: var(--ff-text-light);
+    font-family: 'Montserrat', sans-serif;
+}
+
+.period-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ff-text-light);
+}
+/* --- 2. Grid de Estadísticas (KPIs) --- */
+.stats-grid {
+    display: grid;
+    /* 2 columnas en móvil, 4 en escritorio */
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+.stat-card {
+    background-color: var(--ff-bg-light);
+    border: 1px solid var(--ff-border);
+    border-radius: var(--border-radius-md);
+    padding: 1.25rem; /* Un padding uniforme */
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-speed);
+    /* Ya no necesitamos flex aquí, 
+       .stat-content es el único hijo */
+}
+
+/* Eliminamos la media query de @media (min-width: 1024px) 
+   que cambiaba .stat-card a 'row' */
+
+.stat-card-clickable {
+    cursor: pointer;
+}
+.stat-card-clickable:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(var(--ff-accent-rgb), 0.6);
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    /* Espacio entre el (wrapper) y el (label) */
+    gap: 0.25rem; 
+}
+
+/* ¡NUEVO! Wrapper para icono y valor */
+.stat-value-wrapper {
+    display: flex;
+    flex-direction: row; /* Horizontal */
+    align-items: center;  /* Alinea verticalmente el icono y el número */
+    gap: 0.75rem;         /* Espacio entre icono y número */
+    margin-bottom: 0.25rem; /* Pequeño espacio antes del label */
+}
+
+.stat-icon {
+    font-size: 2rem; /* Ajusta el tamaño del icono como gustes */
+    line-height: 1;
+    color: var(--ff-accent); /* Opcional: darle color de acento */
+    opacity: 0.8;
+}
+
+.analytics-stat-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    font-weight: 800;
+    color: var(--ff-text-light);
+    line-height: 1.1;
+}
+
+.stat-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ff-text-dark);
+    text-transform: uppercase;
+}
+
+.stat-subtitle {
+    font-size: 0.8rem;
+    color: var(--ff-accent);
+    opacity: 0.8;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+/* --- 3. Tarjeta de Puntos de Hábitos --- */
+.habits-points-card {
+    background: linear-gradient(135deg, var(--ff-bg-light), var(--ff-bg-medium));
+    border: 1px solid var(--ff-accent);
+    border-radius: var(--border-radius-md);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    /* Sombra de neón sutil */
+    box-shadow: 0 0 15px rgba(var(--ff-accent-rgb), 0.15), var(--shadow-sm);
+}
+.habits-icon {
+    font-size: 2.5rem;
+}
+.habits-info {
+    flex-grow: 1;
+}
+.habits-label {
+    font-family: 'Montserrat', sans-serif;
     font-weight: 600;
     color: var(--ff-text-light);
     font-size: 1.1rem;
 }
-
-.purpose-points-large {
-    font-weight: bold;
-    color: var(--ff-primary);
-    font-size: 1.3rem;
+.habits-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--positive-color); /* Color positivo de base.css */
+    text-shadow: 0 0 8px rgba(var(--positive-color), 0.3);
 }
-
-.purpose-progress-large {
-    margin: 0.75rem 0;
-}
-
-.purpose-detailed-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 0.75rem;
-    margin-top: 1rem;
-}
-
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: var(--ff-text-light);
-}
-
-.stat-item .stat-icon {
-    font-size: 1.2rem;
-}
-
-/* === VISTA DE MISIONES === */
-.analytics-missions {
-    background: var(--ff-secondary);
-    border: 2px solid var(--ff-border);
-    border-radius: 12px;
-    padding: 1.5rem;
-}
-
-.analytics-missions h3 {
-    color: var(--ff-text-light);
-    margin-bottom: 1.5rem;
-    font-size: 1.2rem;
-}
-
-.missions-table {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.table-header,
-.table-row {
-    display: grid;
-    grid-template-columns: 50px 2fr 1.5fr 80px 100px;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    align-items: center;
-}
-
-.table-header {
-    background: var(--ff-bg);
-    border-radius: 8px;
-    font-weight: 600;
-    color: var(--ff-text-light);
+.habits-note {
     font-size: 0.85rem;
-}
-
-.table-row {
-    background: var(--ff-bg);
-    border: 2px solid var(--ff-border);
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.table-row:hover {
-    border-color: var(--ff-primary);
-    transform: translateX(4px);
-}
-
-.col-rank {
-    font-weight: bold;
-    color: var(--ff-primary);
-    text-align: center;
-}
-
-.col-name {
-    color: var(--ff-text-light);
-    font-weight: 500;
-}
-
-.col-purpose {
     color: var(--ff-text-dark);
-    font-size: 0.85rem;
-}
-
-.col-completions {
-    color: var(--ff-text-light);
-    text-align: center;
-}
-
-.col-points {
-    color: var(--ff-primary);
-    font-weight: bold;
-    text-align: right;
-}
-
-/* === MENSAJES VACÍOS === */
-.empty-message {
-    text-align: center;
-    color: var(--ff-text-dark);
-    padding: 2rem;
     font-style: italic;
 }
 
-/* === MODAL DE MISIONES INCOMPLETAS === */
-.incomplete-missions-modal-content {
-    max-width: 700px;
-    max-height: 80vh;
-    overflow-y: auto;
+
+/* --- 4. Secciones de Listas (Propósitos y Misiones) --- */
+.analytics-section {
+    background-color: var(--ff-bg-medium);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--ff-border);
+    overflow: hidden; /* Para contener los bordes internos */
+    box-shadow: var(--shadow-md);
 }
 
-.incomplete-missions-modal-content h2 {
+.analytics-section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    /* Borde sutil que combina con el fondo del item */
+    border-bottom: 2px solid var(--ff-border); 
+    background-color: rgba(var(--ff-bg-light-rgb), 0.5);
+}
+
+.section-icon {
+    font-size: 1.75rem;
+}
+
+/* Título de sección (Propósitos, Top Misiones) */
+.section-title {
+    /* Sobreescribimos h3 de base.css */
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    color: var(--ff-accent);
+    text-shadow: 0 0 5px rgba(var(--ff-accent-rgb), 0.4);
+    margin: 0; 
+    padding: 0;
+    border: none; 
+    text-align: left; 
+}
+
+.empty-message {
+    color: var(--ff-text-dark);
+    text-align: center;
+    padding: 2.5rem;
+    font-style: italic;
+    font-size: 1.1rem;
+}
+
+/* --- 4a. Lista de Propósitos --- */
+.purposes-list-elegant {
+    display: flex;
+    flex-direction: column;
+}
+
+.purpose-elegant-item {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--ff-border);
+    transition: background-color var(--transition-speed);
+}
+.purpose-elegant-item:last-child {
+    border-bottom: none;
+}
+.purpose-elegant-item:hover {
+    background-color: var(--ff-bg-light);
+}
+
+.purpose-elegant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+}
+.purpose-elegant-left {
+    display: flex;
+    align-items: baseline; /* Alinear #1 y Nombre */
+    gap: 0.75rem;
+    flex-shrink: 1; /* Permitir que se encoja */
+    min-width: 0; /* Importante para que text-overflow funcione */
+}
+.purpose-elegant-rank {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ff-text-dark);
+}
+.purpose-elegant-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
     color: var(--ff-text-light);
+    /* Evitar que el texto largo rompa el layout */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.purpose-elegant-right {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-shrink: 0; /* Evitar que se encoja */
+}
+
+/* Tasas de completado (reutilizable) */
+.purpose-elegant-rate,
+.mission-elegant-rate {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+}
+.purpose-elegant-rate.excellent,
+.mission-elegant-rate.excellent {
+    color: var(--positive-color);
+}
+.purpose-elegant-rate.good,
+.mission-elegant-rate.good {
+    color: var(--ff-orange);
+}
+.purpose-elegant-rate.needs-work,
+.mission-elegant-rate.needs-work {
+    color: var(--negative-color);
+}
+
+.purpose-elegant-points {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+}
+
+/* Barra de Progreso */
+.purpose-elegant-progress {
+    width: 100%;
+    height: 10px;
+    background-color: var(--ff-bg-dark); /* Fondo de la barra */
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--ff-border);
+    margin-bottom: 0.75rem;
+}
+.purpose-elegant-bar {
+    height: 100%;
+    /* Usamos el gradiente de base.css */
+    background: var(--positive-gradient); 
+    border-radius: var(--border-radius-sm);
+    position: relative;
+    transition: width 0.5s ease-out;
+}
+/* Efecto de brillo en la barra */
+.purpose-elegant-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--ff-accent);
+    opacity: 0.3;
+    filter: blur(4px);
+}
+
+/* Métricas inferiores (✅ 5 ⏳ 2 🎯 3) */
+.purpose-elegant-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+}
+.purpose-metric {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ff-text-dark);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+
+/* --- 4b. Lista de Top Misiones --- */
+.missions-list-elegant {
+    display: flex;
+    flex-direction: column;
+}
+.mission-elegant-item {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--ff-border);
+    transition: background-color var(--transition-speed);
+}
+.mission-elegant-item:last-child {
+    border-bottom: none;
+}
+.mission-elegant-item:hover {
+    background-color: var(--ff-bg-light);
+}
+
+.mission-elegant-rank {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--ff-text-dark);
+}
+.mission-elegant-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0; /* Para text-overflow */
+}
+.mission-elegant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+.mission-elegant-name {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ff-text-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mission-elegant-points {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+    flex-shrink: 0;
+}
+.mission-elegant-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap; /* Para móviles pequeños */
+}
+.mission-elegant-purpose {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ff-text-dark);
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mission-elegant-stats {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+.mission-stat {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ff-text-dark);
+}
+
+
+/* --- 5. Modal de Misiones Pendientes --- */
+
+/* Asumiendo que .modal-overlay y .modal-content existen en otra parte */
+/* Esto estiliza el *interior* de ese modal */
+.incomplete-missions-modal-content {
+    max-width: 650px;
+}
+
+#incompleteMissionsTitle {
+    /* Estilo de título de modal, no de página */
+    font-size: 1.6rem;
+    border-bottom: 2px solid var(--ff-border);
+    padding-bottom: 0.75rem;
     margin-bottom: 1.5rem;
-    font-size: 1.5rem;
+    color: var(--ff-text-light);
+    text-align: left; /* Sobreescribir el centrado de h2 */
+}
+
+#incompleteMissionsContent {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 0.5rem; /* Espacio para el scrollbar */
+
+    /* Estilo de scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--ff-accent) var(--ff-bg-dark);
+}
+#incompleteMissionsContent::-webkit-scrollbar {
+    width: 8px;
+}
+#incompleteMissionsContent::-webkit-scrollbar-track {
+    background: var(--ff-bg-dark);
+    border-radius: 4px;
+}
+#incompleteMissionsContent::-webkit-scrollbar-thumb {
+    background-color: var(--ff-accent);
+    border-radius: 4px;
 }
 
 .incomplete-missions-list {
@@ -627,183 +529,68 @@
 }
 
 .incomplete-mission-item {
-    background: var(--ff-bg);
-    border: 2px solid var(--ff-border);
-    border-radius: 10px;
-    padding: 1rem;
+    background-color: var(--ff-bg-light);
+    border: 1px solid var(--ff-border);
+    border-radius: var(--border-radius-md);
+    padding: 1rem 1.25rem;
     display: flex;
+    justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    transition: all 0.3s ease;
+    transition: all var(--transition-speed);
 }
-
 .incomplete-mission-item:hover {
-    border-color: var(--ff-primary);
-    transform: translateX(4px);
+    border-color: rgba(var(--ff-accent-rgb), 0.7);
+    background-color: var(--ff-bg-medium);
 }
 
 .incomplete-mission-info {
-    flex: 1;
-    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0; /* Para text-overflow */
 }
-
 .incomplete-mission-name {
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--ff-text-light);
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-
 .incomplete-mission-meta {
     display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    font-size: 0.85rem;
+    flex-wrap: wrap; /* Para móviles */
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 0.9rem;
     color: var(--ff-text-dark);
 }
-
-.mission-date {
-    color: var(--ff-text-light);
+.incomplete-mission-meta > span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }
-
-.mission-purpose {
-    color: var(--ff-primary);
-}
-
 .mission-points {
-    color: var(--ff-text-light);
+    color: var(--ff-orange); /* Diferenciar los puntos */
     font-weight: 600;
 }
 
+/* Botón de eliminar (papelera) */
 .delete-incomplete-btn {
-    background: transparent;
-    border: 2px solid var(--ff-border);
-    border-radius: 8px;
-    padding: 0.5rem 0.75rem;
-    font-size: 1.2rem;
+    /* Adaptado de .icon-btn.discreet */
+    background: none;
+    border: none;
+    color: var(--ff-text-dark);
+    font-size: 1.5rem; /* Tamaño del emoji */
     cursor: pointer;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
+    transition: all var(--transition-speed);
+    padding: 0.5rem;
+    border-radius: 50%;
+    line-height: 1;
 }
-
 .delete-incomplete-btn:hover {
-    background: #ff4444;
-    border-color: #ff4444;
+    color: var(--negative-color);
+    background-color: rgba(var(--negative-color), 0.1);
     transform: scale(1.1);
-}
-
-/* === RESPONSIVE === */
-@media (max-width: 768px) {
-    .analytics-controls {
-        padding: 0.75rem;
-    }
-
-    .period-selector {
-        justify-content: flex-start;
-    }
-
-    .period-btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.85rem;
-    }
-
-    .view-selector {
-        flex-direction: column;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.75rem;
-    }
-
-    .stat-card {
-        padding: 1rem;
-    }
-
-    .stat-icon {
-        font-size: 2rem;
-    }
-
-    .analytics-stat-value {
-        font-size: 1.5rem;
-    }
-
-    .habits-points-card {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .table-header,
-    .table-row {
-        grid-template-columns: 40px 1fr 70px;
-        font-size: 0.85rem;
-    }
-
-    .col-purpose,
-    .col-completions {
-        display: none;
-    }
-
-    .purpose-item {
-        padding: 0.75rem;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .purpose-rank-large {
-        font-size: 1.5rem;
-        min-width: auto;
-    }
-
-    .purpose-header {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .purpose-detailed-stats {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
-
-    .purpose-summary-item {
-        padding: 0.75rem;
-    }
-
-    .purpose-rank {
-        font-size: 1.2rem;
-        min-width: 30px;
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .view-btn {
-        padding: 0.6rem;
-        font-size: 0.85rem;
-    }
-
-    .purpose-mini-stats {
-        flex-direction: column;
-        gap: 0.25rem;
-        align-items: center;
-    }
-
-    .incomplete-mission-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .incomplete-mission-meta {
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-    .delete-incomplete-btn {
-        align-self: flex-end;
-        width: 100%;
-    }
 }

@@ -7,7 +7,7 @@
     display: flex;
     flex-direction: column;
     /* Un gap generoso entre las secciones principales */
-    gap: 2.25rem; 
+    gap: 1.75rem; 
     padding: 0rem;
     max-width: 1300px;
     margin: 0 auto;

@@ -471,7 +471,7 @@ function _calculateStats() {
                             <div class="habit-stat-icon">🏆</div>
                             <div class="habit-stat-content">
                                 <div class="habit-stat-value">${stats.habitsData.totalAuctionWins}</div>
-                                <div class="habit-stat-label">Subastas ganadas</div>
+                                <div class="habit-stat-label">Subastas realizadas</div>
                                 <div class="habit-stat-points">${stats.habitsData.pointsFromAuctions} pts</div>
                             </div>
                         </div>

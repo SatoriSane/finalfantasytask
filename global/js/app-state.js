@@ -100,14 +100,25 @@
             return state.pointsHistory;
         },
 
-        // Record resistance to a temptation
-        recordResistance: function(challengeId, challengeName) {
-            this.addPoints(1);
-            this.addHistoryAction(`Resistencia a ${challengeName}`, 1, 'resistencia');
-            if (App.ui && App.ui.general && App.ui.general.shownotifyMessage) {
-                App.ui.general.shownotifyMessage('¡+1 punto por resistir! 💪');
-            }
-        },
+// ============================================
+// Record resistance to a temptation
+// ============================================
+recordResistance: function(challengeId, challengeName) {
+    const challenge = this.getChallengeById(challengeId);
+    if (challenge) {
+        challenge.secondChanceUsed = true;
+        this.addPoints(1);
+        
+        // ✅ MEJORADO: Usar tipo específico en lugar de texto genérico
+        this.addHistoryAction(
+            `Resistencia: ${challengeName}`, 
+            1, 
+            'habit_resistance'
+        );
+        
+        this.saveState();
+    }
+},
 
         getTodayPoints: function() {
             const todayStr = App.utils.getFormattedDate();

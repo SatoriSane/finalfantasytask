@@ -187,31 +187,45 @@
             const state = App.state.get();
             const challenge = state.habits.challenges.find(c => c.id === challengeId);
             if (!challenge || !challenge.isActive || challenge.availableTickets <= 0) return;
-
+        
             const stats = this.getChallengeStats(challengeId);
             let points = challenge.baseTicketPoints;
             
             if (stats && stats.hasX2Bonus) {
                 points *= 2;
             }
-
+        
             challenge.availableTickets--;
             App.state.addPoints(points);
-
+        
+            // ✅ NUEVO: Registrar en historial con tipo específico
+            const actionName = stats && stats.hasX2Bonus 
+                ? `Ticket subastado: ${challenge.name}` 
+                : `Ticket vendido: ${challenge.name}`;
+            
+            App.state.addHistoryAction(actionName, points, 'habit_ticket_sale');
+        
             const bonusMsg = stats && stats.hasX2Bonus ? ' ¡Con bonus x2!' : '';
             App.events.emit("shownotifyMessage", `Ticket vendido por ${points} puntos.${bonusMsg}`);
             _saveStateToLocalStorage();
             App.events.emit("habitsUpdated");
         },
-
+        
         sellConsumption: function(challengeId, finalPrice) {
             const state = App.state.get();
             const challenge = state.habits.challenges.find(c => c.id === challengeId);
             if (!challenge || !challenge.isActive || challenge.availableTickets <= 0) return;
-
+        
             challenge.availableTickets--;
             App.state.addPoints(finalPrice);
-
+        
+            // ✅ NUEVO: Registrar en historial con tipo específico
+            App.state.addHistoryAction(
+                `Subasta ganada: ${challenge.name}`, 
+                finalPrice, 
+                'habit_auction_win'
+            );
+        
             _saveStateToLocalStorage();
             App.events.emit("habitsUpdated");
         },

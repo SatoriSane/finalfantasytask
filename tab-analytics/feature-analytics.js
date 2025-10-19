@@ -82,125 +82,215 @@
         }
     }
 
-    function _calculateStats() {
-        const state = App.state.get();
-        const { startDate, endDate } = _getDateRange();
-        
-        const stats = {
-            totalMissionsCompleted: 0,
-            totalMissionsIncomplete: 0,
-            totalPointsFromMissions: 0,
-            totalPointsFromHabits: 0,
-            purposesData: {},
-            missionsData: {}
-        };
+// ============================================
+// PARCHE: Mejorar análisis de hábitos
+// ============================================
+// Reemplazar la función _calculateStats en feature-analytics.js
 
-        if (state.tasksByDate) {
-            Object.keys(state.tasksByDate).forEach(dateStr => {
-                const taskDate = App.utils.normalizeDateToStartOfDay(dateStr);
-                if (taskDate >= startDate && taskDate <= endDate) {
-                    const tasks = state.tasksByDate[dateStr];
-                    
-                    tasks.forEach(task => {
-                        if (task.missionId) {
-                            const mission = state.missions.find(m => m.id === task.missionId);
-                            
-                            let categoryId = task.categoryId;
-                            if (!categoryId && mission) {
-                                categoryId = mission.categoryId;
-                            }
-                            if (!categoryId) {
-                                const scheduled = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
-                                if (scheduled) categoryId = scheduled.categoryId;
-                            }
-                            
-                            const category = categoryId ? state.categories.find(c => c.id === categoryId) : null;
-                            const categoryName = category ? category.name : 'Sin propósito';
+function _calculateStats() {
+    const state = App.state.get();
+    const { startDate, endDate } = _getDateRange();
+    
+    const stats = {
+        totalMissionsCompleted: 0,
+        totalMissionsIncomplete: 0,
+        totalPointsFromMissions: 0,
+        totalPointsFromHabits: 0,
+        purposesData: {},
+        missionsData: {},
+        // ✅ NUEVO: Estadísticas detalladas de hábitos
+        habitsData: {
+            totalTicketsSold: 0,
+            totalAuctionWins: 0,
+            totalResistances: 0,
+            pointsFromTickets: 0,
+            pointsFromAuctions: 0,
+            pointsFromResistances: 0,
+            challengeBreakdown: {} // Por cada reto
+        }
+    };
 
+    // Procesar misiones (código existente sin cambios)
+    if (state.tasksByDate) {
+        Object.keys(state.tasksByDate).forEach(dateStr => {
+            const taskDate = App.utils.normalizeDateToStartOfDay(dateStr);
+            if (taskDate >= startDate && taskDate <= endDate) {
+                const tasks = state.tasksByDate[dateStr];
+                
+                tasks.forEach(task => {
+                    if (task.missionId) {
+                        const mission = state.missions.find(m => m.id === task.missionId);
+                        
+                        let categoryId = task.categoryId;
+                        if (!categoryId && mission) {
+                            categoryId = mission.categoryId;
+                        }
+                        if (!categoryId) {
+                            const scheduled = state.scheduledMissions.find(sm => sm.missionId === task.missionId);
+                            if (scheduled) categoryId = scheduled.categoryId;
+                        }
+                        
+                        const category = categoryId ? state.categories.find(c => c.id === categoryId) : null;
+                        const categoryName = category ? category.name : 'Sin propósito';
+
+                        if (task.completed) {
+                            stats.totalMissionsCompleted++;
+                        } else {
+                            stats.totalMissionsIncomplete++;
+                        }
+
+                        const pointsEarned = task.completed 
+                            ? task.points * (task.currentRepetitions || 1)
+                            : 0;
+
+                        if (pointsEarned > 0) {
+                            stats.totalPointsFromMissions += pointsEarned;
+                        }
+
+                        if (category) {
+                            if (!stats.purposesData[categoryId]) {
+                                stats.purposesData[categoryId] = {
+                                    name: categoryName,
+                                    points: 0,
+                                    missionsCompleted: 0,
+                                    missionsIncomplete: 0,
+                                    uniqueMissions: new Set()
+                                };
+                            }
+                            
+                            stats.purposesData[categoryId].points += pointsEarned;
+                            
                             if (task.completed) {
-                                stats.totalMissionsCompleted++;
+                                stats.purposesData[categoryId].missionsCompleted++;
                             } else {
-                                stats.totalMissionsIncomplete++;
+                                stats.purposesData[categoryId].missionsIncomplete++;
                             }
+                            
+                            stats.purposesData[categoryId].uniqueMissions.add(task.missionId);
+                        }
 
-                            const pointsEarned = task.completed 
-                                ? task.points * (task.currentRepetitions || 1)
-                                : 0;
-
-                            if (pointsEarned > 0) {
-                                stats.totalPointsFromMissions += pointsEarned;
+                        if (mission) {
+                            if (!stats.missionsData[task.missionId]) {
+                                stats.missionsData[task.missionId] = {
+                                    name: mission.name,
+                                    purposeName: categoryName,
+                                    points: 0,
+                                    completions: 0,
+                                    totalOccurrences: 0
+                                };
                             }
-
-                            if (category) {
-                                if (!stats.purposesData[categoryId]) {
-                                    stats.purposesData[categoryId] = {
-                                        name: categoryName,
-                                        points: 0,
-                                        missionsCompleted: 0,
-                                        missionsIncomplete: 0,
-                                        uniqueMissions: new Set()
-                                    };
-                                }
-                                
-                                stats.purposesData[categoryId].points += pointsEarned;
-                                
-                                if (task.completed) {
-                                    stats.purposesData[categoryId].missionsCompleted++;
-                                } else {
-                                    stats.purposesData[categoryId].missionsIncomplete++;
-                                }
-                                
-                                stats.purposesData[categoryId].uniqueMissions.add(task.missionId);
-                            }
-
-                            if (mission) {
-                                if (!stats.missionsData[task.missionId]) {
-                                    stats.missionsData[task.missionId] = {
-                                        name: mission.name,
-                                        purposeName: categoryName,
-                                        points: 0,
-                                        completions: 0,
-                                        totalOccurrences: 0
-                                    };
-                                }
-                                
-                                stats.missionsData[task.missionId].totalOccurrences++;
-                                stats.missionsData[task.missionId].points += pointsEarned;
-                                if (task.completed) {
-                                    stats.missionsData[task.missionId].completions++;
-                                }
+                            
+                            stats.missionsData[task.missionId].totalOccurrences++;
+                            stats.missionsData[task.missionId].points += pointsEarned;
+                            if (task.completed) {
+                                stats.missionsData[task.missionId].completions++;
                             }
                         }
-                    });
-                }
-            });
-        }
-
-        if (state.history && Array.isArray(state.history)) {
-            const relevantHistory = state.history.filter(h => {
-                const histDate = App.utils.normalizeDateToStartOfDay(h.date);
-                return histDate >= startDate && histDate <= endDate;
-            });
-
-            relevantHistory.forEach(day => {
-                if (day.actions && Array.isArray(day.actions)) {
-                    day.actions.forEach(action => {
-                        if (action.type === 'resistencia' || action.type === 'abstinencia' || 
-                            action.name.includes('Resistencia') || action.name.includes('Ticket')) {
-                            stats.totalPointsFromHabits += action.points || 0;
-                        }
-                    });
-                }
-            });
-        }
-
-        Object.keys(stats.purposesData).forEach(catId => {
-            stats.purposesData[catId].uniqueMissionsCount = stats.purposesData[catId].uniqueMissions.size;
-            delete stats.purposesData[catId].uniqueMissions;
+                    }
+                });
+            }
         });
-        
-        return stats;
     }
+
+    // ✅ MEJORADO: Procesar hábitos con tipos estructurados
+    if (state.history && Array.isArray(state.history)) {
+        const relevantHistory = state.history.filter(h => {
+            const histDate = App.utils.normalizeDateToStartOfDay(h.date);
+            return histDate >= startDate && histDate <= endDate;
+        });
+
+        relevantHistory.forEach(day => {
+            if (day.actions && Array.isArray(day.actions)) {
+                day.actions.forEach(action => {
+                    const points = action.points || 0;
+                    
+                    // Procesar por tipo de acción
+                    switch (action.type) {
+                        case 'habit_ticket_sale':
+                            stats.habitsData.totalTicketsSold++;
+                            stats.habitsData.pointsFromTickets += points;
+                            stats.totalPointsFromHabits += points;
+                            
+                            // Extraer nombre del reto del action.name
+                            const ticketMatch = action.name.match(/: (.+)$/);
+                            if (ticketMatch) {
+                                const challengeName = ticketMatch[1];
+                                if (!stats.habitsData.challengeBreakdown[challengeName]) {
+                                    stats.habitsData.challengeBreakdown[challengeName] = {
+                                        tickets: 0,
+                                        auctions: 0,
+                                        resistances: 0,
+                                        points: 0
+                                    };
+                                }
+                                stats.habitsData.challengeBreakdown[challengeName].tickets++;
+                                stats.habitsData.challengeBreakdown[challengeName].points += points;
+                            }
+                            break;
+                            
+                        case 'habit_auction_win':
+                            stats.habitsData.totalAuctionWins++;
+                            stats.habitsData.pointsFromAuctions += points;
+                            stats.totalPointsFromHabits += points;
+                            
+                            const auctionMatch = action.name.match(/: (.+)$/);
+                            if (auctionMatch) {
+                                const challengeName = auctionMatch[1];
+                                if (!stats.habitsData.challengeBreakdown[challengeName]) {
+                                    stats.habitsData.challengeBreakdown[challengeName] = {
+                                        tickets: 0,
+                                        auctions: 0,
+                                        resistances: 0,
+                                        points: 0
+                                    };
+                                }
+                                stats.habitsData.challengeBreakdown[challengeName].auctions++;
+                                stats.habitsData.challengeBreakdown[challengeName].points += points;
+                            }
+                            break;
+                            
+                        case 'habit_resistance':
+                            stats.habitsData.totalResistances++;
+                            stats.habitsData.pointsFromResistances += points;
+                            stats.totalPointsFromHabits += points;
+                            
+                            const resistanceMatch = action.name.match(/: (.+)$/);
+                            if (resistanceMatch) {
+                                const challengeName = resistanceMatch[1];
+                                if (!stats.habitsData.challengeBreakdown[challengeName]) {
+                                    stats.habitsData.challengeBreakdown[challengeName] = {
+                                        tickets: 0,
+                                        auctions: 0,
+                                        resistances: 0,
+                                        points: 0
+                                    };
+                                }
+                                stats.habitsData.challengeBreakdown[challengeName].resistances++;
+                                stats.habitsData.challengeBreakdown[challengeName].points += points;
+                            }
+                            break;
+                            
+                        // Retrocompatibilidad con datos antiguos
+                        case 'resistencia':
+                        case 'abstinencia':
+                            if (action.name.includes('Resistencia') || action.name.includes('Ticket')) {
+                                stats.totalPointsFromHabits += points;
+                            }
+                            break;
+                    }
+                });
+            }
+        });
+    }
+
+    // Limpiar datos de propósitos
+    Object.keys(stats.purposesData).forEach(catId => {
+        stats.purposesData[catId].uniqueMissionsCount = stats.purposesData[catId].uniqueMissions.size;
+        delete stats.purposesData[catId].uniqueMissions;
+    });
+    
+    return stats;
+}
 
     function _renderStatCard(icon, label, value, subtitle = '', isClickable = false) {
         const clickableClass = isClickable ? 'stat-card-clickable' : '';
@@ -275,18 +365,7 @@
                 ${_renderStatCard('⭐', 'Puntos', stats.totalPointsFromMissions)}
             </div>
 
-            ${stats.totalPointsFromHabits > 0 ? `
-                <div class="habits-points-section">
-                    <div class="habits-points-card">
-                        <div class="habits-icon">💪</div>
-                        <div class="habits-info">
-                            <div class="habits-label">Puntos de Hábitos</div>
-                            <div class="habits-value">${stats.totalPointsFromHabits} pts</div>
-                            <div class="habits-note">No incluidos en propósitos</div>
-                        </div>
-                    </div>
-                </div>
-            ` : ''}
+
 
             <!-- Todos los Propósitos -->
             ${allPurposes.length > 0 ? `
@@ -369,6 +448,76 @@
                     </div>
                 </div>
             ` : '<p class="empty-message">No hay datos de misiones</p>'}
+
+                        ${stats.totalPointsFromHabits > 0 ? `
+                <div class="analytics-section">
+                    <div class="analytics-section-header">
+                        <span class="section-icon">💪</span>
+                        <h3 class="section-title">Hábitos y Abstinencias</h3>
+                    </div>
+                    
+                    <div class="habits-summary-grid">
+                        <div class="habit-stat-card">
+                            <div class="habit-stat-icon">🎫</div>
+                            <div class="habit-stat-content">
+                                <div class="habit-stat-value">${stats.habitsData.totalTicketsSold}</div>
+                                <div class="habit-stat-label">Tickets vendidos</div>
+                                <div class="habit-stat-points">${stats.habitsData.pointsFromTickets} pts</div>
+                            </div>
+                        </div>
+                        
+                        ${stats.habitsData.totalAuctionWins > 0 ? `
+                        <div class="habit-stat-card highlight">
+                            <div class="habit-stat-icon">🏆</div>
+                            <div class="habit-stat-content">
+                                <div class="habit-stat-value">${stats.habitsData.totalAuctionWins}</div>
+                                <div class="habit-stat-label">Subastas ganadas</div>
+                                <div class="habit-stat-points">${stats.habitsData.pointsFromAuctions} pts</div>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${stats.habitsData.totalResistances > 0 ? `
+                        <div class="habit-stat-card">
+                            <div class="habit-stat-icon">🛡️</div>
+                            <div class="habit-stat-content">
+                                <div class="habit-stat-value">${stats.habitsData.totalResistances}</div>
+                                <div class="habit-stat-label">Resistencias</div>
+                                <div class="habit-stat-points">${stats.habitsData.pointsFromResistances} pts</div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    ${Object.keys(stats.habitsData.challengeBreakdown).length > 0 ? `
+                    <div class="habits-challenges-breakdown">
+                        <h4 class="breakdown-title">Desglose por Reto</h4>
+                        <div class="challenges-list">
+                            ${Object.entries(stats.habitsData.challengeBreakdown)
+                                .sort((a, b) => b[1].points - a[1].points)
+                                .map(([name, data]) => `
+                                <div class="challenge-breakdown-item">
+                                    <div class="challenge-breakdown-header">
+                                        <span class="challenge-name">${name}</span>
+                                        <span class="challenge-points">${data.points} pts</span>
+                                    </div>
+                                    <div class="challenge-breakdown-stats">
+                                        ${data.tickets > 0 ? `<span class="breakdown-stat">🎫 ${data.tickets}</span>` : ''}
+                                        ${data.auctions > 0 ? `<span class="breakdown-stat">🏆 ${data.auctions}</span>` : ''}
+                                        ${data.resistances > 0 ? `<span class="breakdown-stat">🛡️ ${data.resistances}</span>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="habits-total">
+                        <span class="habits-total-label">Total de Hábitos:</span>
+                        <span class="habits-total-value">${stats.totalPointsFromHabits} pts</span>
+                    </div>
+                </div>
+            ` : ''}
         `;
 
         _initNavigationListeners();

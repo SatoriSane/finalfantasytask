@@ -8,7 +8,7 @@
     flex-direction: column;
     /* Un gap generoso entre las secciones principales */
     gap: 2.25rem; 
-    padding: 1rem 1.5rem 2rem 1.5rem;
+    padding: 0rem;
     max-width: 1300px;
     margin: 0 auto;
 }
@@ -155,7 +155,7 @@
 }
 
 .stat-icon {
-    font-size: 2rem; /* Ajusta el tamaño del icono como gustes */
+    font-size: 1.5rem; /* Ajusta el tamaño del icono como gustes */
     line-height: 1;
     color: var(--ff-accent); /* Opcional: darle color de acento */
     opacity: 0.8;
@@ -163,7 +163,7 @@
 
 .analytics-stat-value {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(2rem, 5vw, 2.5rem);
+    font-size: clamp(1.5rem, 4vw, 2rem);
     font-weight: 800;
     color: var(--ff-text-light);
     line-height: 1.1;

@@ -154,7 +154,6 @@ function _calculateStats() {
                                     points: 0,
                                     missionsCompleted: 0,
                                     missionsIncomplete: 0,
-                                    uniqueMissions: new Set()
                                 };
                             }
                             
@@ -166,7 +165,6 @@ function _calculateStats() {
                                 stats.purposesData[categoryId].missionsIncomplete++;
                             }
                             
-                            stats.purposesData[categoryId].uniqueMissions.add(task.missionId);
                         }
 
                         if (mission) {
@@ -282,13 +280,6 @@ function _calculateStats() {
             }
         });
     }
-
-    // Limpiar datos de propósitos
-    Object.keys(stats.purposesData).forEach(catId => {
-        stats.purposesData[catId].uniqueMissionsCount = stats.purposesData[catId].uniqueMissions.size;
-        delete stats.purposesData[catId].uniqueMissions;
-    });
-    
     return stats;
 }
 
@@ -371,7 +362,7 @@ function _calculateStats() {
             ${allPurposes.length > 0 ? `
                 <div class="analytics-section">
                     <div class="analytics-section-header">
-                        <span class="section-icon">🎯</span>
+                        <span class="section-icon">🧭</span>
                         <h3 class="section-title">Propósitos</h3>
                     </div>
                     <div class="purposes-list-elegant">
@@ -404,7 +395,6 @@ function _calculateStats() {
                                     <div class="purpose-elegant-footer">
                                         <span class="purpose-metric">✅ ${purpose.missionsCompleted}</span>
                                         <span class="purpose-metric">⏳ ${purpose.missionsIncomplete}</span>
-                                        <span class="purpose-metric">🎯 ${purpose.uniqueMissionsCount}</span>
                                     </div>
                                 </div>
                             `;
@@ -435,7 +425,7 @@ function _calculateStats() {
                                             <span class="mission-elegant-points">${mission.points} pts</span>
                                         </div>
                                         <div class="mission-elegant-footer">
-                                            <span class="mission-elegant-purpose">🎯 ${mission.purposeName}</span>
+                                            <span class="mission-elegant-purpose">🧭 ${mission.purposeName}</span>
                                             <div class="mission-elegant-stats">
                                                 <span class="mission-stat">✅ ${mission.completions}/${mission.totalOccurrences}</span>
                                                 <span class="mission-elegant-rate ${completionRate >= 80 ? 'excellent' : completionRate >= 50 ? 'good' : 'needs-work'}">${completionRate}%</span>
@@ -645,7 +635,7 @@ function _calculateStats() {
                                 <div class="incomplete-mission-name">${mission.name}</div>
                                 <div class="incomplete-mission-meta">
                                     <span class="mission-date">📅 ${formattedDate}</span>
-                                    <span class="mission-purpose">🎯 ${mission.purposeName}</span>
+                                    <span class="mission-purpose">${mission.purposeName}</span>
                                     <span class="mission-points">⭐ ${mission.points} pts</span>
                                 </div>
                             </div>

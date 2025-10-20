@@ -472,7 +472,7 @@
 .mission-elegant-stats {
     display: flex;
     align-items: baseline;
-    gap: 1rem;
+    gap: 0.4rem;
     flex-shrink: 0;
 }
 .mission-stat {
@@ -766,4 +766,74 @@
     .habit-stat-value {
         font-size: 1.25rem;
     }
+}
+
+/* ===================== MINI CHECK (solo diseño) ===================== */
+.mini-check {
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    border: 2px solid var(--positive-color);
+    background: linear-gradient(135deg, var(--ff-bg-medium) 0%, var(--ff-bg-light) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--positive-color);
+    font-size: 1.1rem;
+    box-shadow: 0 2px 6px rgba(88, 228, 120, 0.3);
+    transition: all var(--transition-speed);
+    cursor: default; /* No parece un botón */
+}
+
+/* Efecto hover opcional (puramente visual) */
+.mini-check:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(88, 228, 120, 0.45);
+}
+
+/* Variante “completado” o activo */
+.mini-check.active {
+    background: var(--positive-color);
+    color: var(--ff-bg-dark);
+    box-shadow: 0 4px 10px rgba(88, 228, 120, 0.5);
+}
+
+/* Si quieres un icono check dentro (por ejemplo: ✓ o usando ::before) */
+.mini-check::before {
+    content: "✓";
+    font-weight: 800;
+    line-height: 1;
+    transform: scale(0.9);
+}
+/* ===================== MINI CHECK (solo diseño) ===================== */
+.non-mini-check {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 3px solid var(--positive-color);
+    background: linear-gradient(135deg, var(--ff-bg-medium) 0%, var(--ff-bg-light) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--positive-color);
+    font-size: 1.5rem;
+    box-shadow: 0 2px 6px rgba(88, 228, 120, 0.3);
+    transition: all var(--transition-speed);
+    cursor: default; /* No parece un botón */
+}
+
+
+/* Variante “completado” o activo */
+.non-mini-check.active {
+    background: var(--positive-color);
+    color: var(--ff-bg-dark);
+    box-shadow: 0 4px 10px rgba(88, 228, 120, 0.5);
+}
+
+/* Si quieres un icono check dentro (por ejemplo: ✓ o usando ::before) */
+.non-mini-check::before {
+    content: "✓";
+    font-weight: 800;
+    line-height: 1;
+    transform: scale(0.9);
 }

@@ -350,7 +350,7 @@ function _calculateStats() {
 
             <!-- Grid de Estadísticas -->
             <div class="stats-grid">
-                ${_renderStatCard('✅', 'Completadas', stats.totalMissionsCompleted)}
+                ${_renderStatCard('<span class="non-mini-check"></span>', 'Completadas', stats.totalMissionsCompleted)}
                 ${_renderStatCard('⏳', 'Pendientes', stats.totalMissionsIncomplete, 'Ver detalles', true)}
                 ${_renderStatCard('📊', 'Tasa', `${completionRate}%`)}
                 ${_renderStatCard('⭐', 'Puntos', stats.totalPointsFromMissions)}
@@ -393,7 +393,7 @@ function _calculateStats() {
                                         </div>
                                     </div>
                                     <div class="purpose-elegant-footer">
-                                        <span class="purpose-metric">✅ ${purpose.missionsCompleted}</span>
+                                        <span class="purpose-metric"><span class="mini-check"></span> ${purpose.missionsCompleted}</span>
                                         <span class="purpose-metric">⏳ ${purpose.missionsIncomplete}</span>
                                     </div>
                                 </div>
@@ -425,9 +425,9 @@ function _calculateStats() {
                                             <span class="mission-elegant-points">${mission.points} pts</span>
                                         </div>
                                         <div class="mission-elegant-footer">
-                                            <span class="mission-elegant-purpose">🧭 ${mission.purposeName}</span>
+                                            <span class="mission-elegant-purpose">${mission.purposeName}</span>
                                             <div class="mission-elegant-stats">
-                                                <span class="mission-stat">✅ ${mission.completions}/${mission.totalOccurrences}</span>
+                                                <span class="mission-stat"><span class="mini-check"></span> ${mission.completions}/${mission.totalOccurrences}</span>
                                                 <span class="mission-elegant-rate ${completionRate >= 80 ? 'excellent' : completionRate >= 50 ? 'good' : 'needs-work'}">${completionRate}%</span>
                                             </div>
                                         </div>

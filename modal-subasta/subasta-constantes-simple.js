@@ -7,10 +7,10 @@
         MAX_BIDDERS: 10,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
-            MESSAGE_DELAY: 3500,
+            MESSAGE_DELAY: 3000,
             PRICE_ANIMATION_DURATION: 1200,
-            BID_INTERVAL_MIN: 2500,
-            BID_INTERVAL_MAX: 5000,
+            BID_INTERVAL_MIN: 2000,
+            BID_INTERVAL_MAX: 4500,
             HAMMER_PAUSE: 3000,
             FINAL_DELAY: 500,
             HAMMER_FIRST_DELAY: 4500,
@@ -18,31 +18,31 @@
         // 🔥 Rango de puja extrema en puntos
         EXTREME_BID_RANGE: {
             min: 2,
-            max: 10
+            max: 8
         },
         PROBABILITIES: {
-            HAMMER_CHANCE: 0.05,
-            HAMMER_BONUS_INCREMENT: 0.05,
+            HAMMER_CHANCE: 0.06,
+            HAMMER_BONUS_INCREMENT: 0.06,
             HAMMER_RESUME_CHANCES: [0.5, 0.5, 0.4],
             HAMMER_RESUME_DECREMENT: 0.15,
-            EXTREME_BID_CHANCE: 0.15,
+            EXTREME_BID_CHANCE: 0.16,
             EXTREME_BID_RETREAT_CHANCES: {
-                strategic: 0.7,
+                strategic: 0.8,
                 calculated: 0.8,
-                impulsive: 0.6,
-                passionate: 0.6,
-                aggressive: 0.4,
+                impulsive: 0.7,
+                aggressive: 0.7,
+                passionate: 0.5,
                 default: 0.7
             },
             NORMAL_BID_RETREAT_CHANCES: {
-                aggressive: 0.13,
-                impulsive: 0.12,
-                passionate: 0.1,
-                strategic: 0.08,
-                calculated: 0.07,
-                default: 0.1
+                aggressive: 0.2,
+                impulsive: 0.18,
+                passionate: 0.16,
+                strategic: 0.14,
+                calculated: 0.12,
+                default: 0.15
             },
-            FEAR_MESSAGE_DELAY_MAX: 5000,
+            FEAR_MESSAGE_DELAY_MAX: 4000,
             FEAR_MESSAGE_DELAY_MIN: 1000
         },
 

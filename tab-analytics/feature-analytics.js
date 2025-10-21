@@ -353,7 +353,7 @@ function _calculateStats() {
                 ${_renderStatCard('<span class="non-mini-check"></span>', 'Completadas', stats.totalMissionsCompleted)}
                 ${_renderStatCard('⏳', 'Pendientes', stats.totalMissionsIncomplete, 'Ver detalles', true)}
                 ${_renderStatCard('📊', 'Tasa', `${completionRate}%`)}
-                ${_renderStatCard('⭐', 'Puntos', stats.totalPointsFromMissions)}
+                ${_renderStatCard('⭐', 'Puntos misiones', stats.totalPointsFromMissions)}
             </div>
 
 

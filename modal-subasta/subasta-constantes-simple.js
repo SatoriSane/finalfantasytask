@@ -4,7 +4,7 @@
     
     global.SubastaConstantes = {
         MIN_BIDDERS: 3,
-        MAX_BIDDERS: 10,
+        MAX_BIDDERS: 8,
         // ⚙️ CONFIGURACIÓN SIMPLE DE TIMING
         TIMING_CONFIG: {
             MESSAGE_DELAY: 3000,

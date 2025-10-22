@@ -373,11 +373,17 @@ function _openQuickMissionModal() {
             let viewDateTasks = App.state.getTasksForDate(viewDate);
 
             if (_currentCategoryFilter) {
-                viewDateTasks = viewDateTasks.filter(task => {
-                    if (!task.missionId) return false;
-                    const mission = App.state.getMissions().find(m => m.id === task.missionId);
-                    return mission && mission.categoryId === _currentCategoryFilter;
-                });
+                            viewDateTasks = viewDateTasks.filter(task => {
+                                // Si la tarea tiene categoryId directo (tareas rápidas), úsalo
+                                if (task.categoryId) {
+                                    return task.categoryId === _currentCategoryFilter;
+                                }
+                                
+                                // Si no, buscar en la misión original
+                                if (!task.missionId) return false;
+                                const mission = App.state.getMissions().find(m => m.id === task.missionId);
+                                return mission && mission.categoryId === _currentCategoryFilter;
+                            });
             }
 
             if (!viewDateTasks || viewDateTasks.length === 0) {

@@ -488,7 +488,7 @@
             // Determinar si puede subastar o solo vender
             const canAuction = stats.hasX2Bonus;
             const sellPoints = challenge.baseTicketPoints;
-            const buttonText = canAuction ? 'Subastar ticket' : 'Vender ticket';
+            const buttonText = canAuction ? 'Subastar' : 'Vender ticket';
             const buttonClass = canAuction ? 'auction-btn' : 'sell-btn';
             return `
                 <div class="abstinence-card ${statusClass}" data-id="${id}">

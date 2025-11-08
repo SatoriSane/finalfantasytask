@@ -115,7 +115,7 @@
      */
     const hasX2Bonus = (recentAverage, totalAverage) => {
         if (totalAverage === 0) return false;
-        return recentAverage > totalAverage;
+        return recentAverage > totalAverage+(totalAverage*0.01);
     };
 
 

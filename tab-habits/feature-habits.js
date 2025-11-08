@@ -203,7 +203,7 @@
             .slice(-20); // Máximo 20 semanas (~5 meses)
     };
 
-    /**
+/**
      * Renderiza el gráfico de consumo como barras SVG
      * @param {Array} chartData - Datos del gráfico
      * @param {number} maxInterval - Intervalo máximo para normalizar
@@ -216,21 +216,38 @@
         
         const width = 280;
         const height = 80;
-        const barWidth = Math.max(2, Math.floor(width / Math.max(chartData.length, 20)));
         const gap = 1;
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        
+        // 1. Determinar cuántos "slots" (barras) vamos a dibujar
+        const totalSlots = Math.max(chartData.length, 20);
+        
+        // 2. Calcular el ancho de cada "slot" (barra + gap)
+        //    Esto nos da el espaciado total para cada punto de datos.
+        const slotWidth = width / totalSlots;
+        
+        // 3. El ancho real de la barra es el ancho del slot MENOS el gap
+        //    Nos aseguramos de que sea al menos 1px de ancho.
+        const barWidth = Math.max(1, slotWidth - gap);
+        
+        // --- FIN DE LA CORRECCIÓN ---
         
         let bars = '';
         
         // Renderizar barras
         chartData.forEach((point, index) => {
             const normalizedHeight = Math.max(2, (point.interval / maxInterval) * height);
-            const x = index * (barWidth + gap);
+            
+            // 4. La posición 'x' es simplemente el índice por el ancho del slot
+            const x = index * slotWidth;
             const y = height - normalizedHeight;
             
             let barClass = 'chart-bar';
             if (point.isCurrent) barClass += ' current';
             else if (point.isConsumption) barClass += ' consumption';
             
+            // Usamos el 'barWidth' corregido aquí
             bars += `<rect class="${barClass}" x="${x}" y="${y}" width="${barWidth}" height="${normalizedHeight}"></rect>`;
         });
         
@@ -241,7 +258,6 @@
             </svg>
         `;
     };
-
     /**
      * Formatea tiempo restante para el próximo ticket
      * @param {number} ms - Milisegundos restantes

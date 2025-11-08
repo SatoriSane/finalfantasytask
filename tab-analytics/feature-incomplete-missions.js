@@ -123,7 +123,7 @@
         content.innerHTML = `
             <div class="incomplete-missions-list">
                 ${incompleteMissions.map(mission => {
-                    const dateObj = new Date(mission.date);
+                    const dateObj = App.utils.normalizeDateToStartOfDay(mission.date);
                     const formattedDate = dateObj.toLocaleDateString('es-ES', { 
                         day: 'numeric', 
                         month: 'short',

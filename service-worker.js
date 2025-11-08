@@ -66,7 +66,6 @@ const APP_FILES = [
     'global/css/components.css',
     'global/css/forms-modals.css',
     'global/css/layout.css',
-    'global/css/sections.css',
     'global/css/notify.css',
     'style.css',
 ];

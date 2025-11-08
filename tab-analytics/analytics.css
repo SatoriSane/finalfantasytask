@@ -13,6 +13,78 @@
     margin: 0 auto;
 }
 
+/* --- Selector de Vista (Propósitos/Misiones/Hábitos) --- */
+.view-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.view-selector-btn {
+    background-color: var(--ff-bg-light);
+    border: 2px solid var(--ff-border);
+    border-radius: var(--border-radius-md);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all var(--transition-speed);
+    box-shadow: var(--shadow-sm);
+}
+
+.view-selector-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(var(--ff-accent-rgb), 0.5);
+}
+
+.view-selector-btn.active {
+    background: linear-gradient(135deg, var(--ff-bg-medium), var(--ff-bg-light));
+    border-color: var(--ff-accent);
+    box-shadow: 0 0 15px rgba(var(--ff-accent-rgb), 0.3), var(--shadow-md);
+}
+
+.view-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.view-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ff-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.view-selector-btn.active .view-label {
+    color: var(--ff-accent);
+    text-shadow: 0 0 5px rgba(var(--ff-accent-rgb), 0.4);
+}
+
+/* Responsive para móviles pequeños */
+@media (max-width: 480px) {
+    .view-selector {
+        gap: 0.5rem;
+    }
+    
+    .view-selector-btn {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .view-icon {
+        font-size: 1.5rem;
+    }
+    
+    .view-label {
+        font-size: 0.75rem;
+    }
+}
+
 /* --- 1. Navegación de Periodo --- */
 .period-navigation {
     display: flex;

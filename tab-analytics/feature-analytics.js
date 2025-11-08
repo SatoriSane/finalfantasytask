@@ -6,6 +6,7 @@
     // --- PRIVATE STATE ---
     let _currentPeriodType = 'week';
     let _currentOffset = 0;
+    let _currentView = 'purposes'; // 'purposes', 'missions', 'habits'
 
     // --- PRIVATE METHODS ---
 
@@ -323,6 +324,22 @@ function _calculateStats() {
             .slice(0, 20);
 
         container.innerHTML = `
+            <!-- Selector de Vista -->
+            <div class="view-selector">
+                <button class="view-selector-btn ${_currentView === 'purposes' ? 'active' : ''}" data-view="purposes">
+                    <span class="view-icon">🧭</span>
+                    <span class="view-label">Propósitos</span>
+                </button>
+                <button class="view-selector-btn ${_currentView === 'missions' ? 'active' : ''}" data-view="missions">
+                    <span class="view-icon">🏆</span>
+                    <span class="view-label">Misiones</span>
+                </button>
+                <button class="view-selector-btn ${_currentView === 'habits' ? 'active' : ''}" data-view="habits">
+                    <span class="view-icon">💪</span>
+                    <span class="view-label">Hábitos</span>
+                </button>
+            </div>
+
             <!-- Navegación de Periodo -->
             <div class="period-navigation">
                 <button class="period-nav-btn" id="prevPeriodBtn" ${_currentOffset <= -10 ? 'disabled' : ''}>
@@ -348,18 +365,18 @@ function _calculateStats() {
                 </button>
             </div>
 
-            <!-- Grid de Estadísticas -->
+            <!-- Grid de Estadísticas (solo para propósitos y misiones) -->
+            ${_currentView !== 'habits' ? `
             <div class="stats-grid">
                 ${_renderStatCard('<span class="non-mini-check"></span>', 'Completadas', stats.totalMissionsCompleted)}
                 ${_renderStatCard('⏳', 'Pendientes', stats.totalMissionsIncomplete, 'Ver detalles', true)}
                 ${_renderStatCard('📊', 'Tasa', `${completionRate}%`)}
                 ${_renderStatCard('⭐', 'Puntos misiones', stats.totalPointsFromMissions)}
             </div>
-
-
+            ` : ''}
 
             <!-- Todos los Propósitos -->
-            ${allPurposes.length > 0 ? `
+            ${_currentView === 'purposes' && allPurposes.length > 0 ? `
                 <div class="analytics-section">
                     <div class="analytics-section-header">
                         <span class="section-icon">🧭</span>
@@ -401,10 +418,11 @@ function _calculateStats() {
                         }).join('')}
                     </div>
                 </div>
-            ` : '<p class="empty-message">No hay datos de propósitos</p>'}
+            ` : ''}
+            ${_currentView === 'purposes' && allPurposes.length === 0 ? '<p class="empty-message">No hay datos de propósitos</p>' : ''}
 
             <!-- Top Misiones -->
-            ${topMissions.length > 0 ? `
+            ${_currentView === 'missions' && topMissions.length > 0 ? `
                 <div class="analytics-section">
                     <div class="analytics-section-header">
                         <span class="section-icon">🏆</span>
@@ -437,9 +455,11 @@ function _calculateStats() {
                         }).join('')}
                     </div>
                 </div>
-            ` : '<p class="empty-message">No hay datos de misiones</p>'}
+            ` : ''}
+            ${_currentView === 'missions' && topMissions.length === 0 ? '<p class="empty-message">No hay datos de misiones</p>' : ''}
 
-                        ${stats.totalPointsFromHabits > 0 ? `
+            <!-- Hábitos y Abstinencias -->
+            ${_currentView === 'habits' && stats.totalPointsFromHabits > 0 ? `
                 <div class="analytics-section">
                     <div class="analytics-section-header">
                         <span class="section-icon">💪</span>
@@ -508,9 +528,21 @@ function _calculateStats() {
                     </div>
                 </div>
             ` : ''}
+            ${_currentView === 'habits' && stats.totalPointsFromHabits === 0 ? '<p class="empty-message">No hay datos de hábitos</p>' : ''}
         `;
 
         _initNavigationListeners();
+        _initViewSelectorListeners();
+    }
+
+    function _initViewSelectorListeners() {
+        const viewButtons = document.querySelectorAll('.view-selector-btn');
+        viewButtons.forEach(btn => {
+            btn.onclick = () => {
+                _currentView = btn.dataset.view;
+                _renderAnalytics();
+            };
+        });
     }
 
     function _initNavigationListeners() {

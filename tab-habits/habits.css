@@ -206,27 +206,27 @@
 
 .metric-change {
     position: absolute;
-    top: -6px;
-    right: -6px;
-    font-size: 0.55rem;
+    bottom: -8px;
+    right: 50%;
+    transform: translateX(50%);
+    font-size: 0.75em;
     font-weight: 700;
-    padding: 0.15rem 0.4rem;
+    padding: 0.05rem 0.25rem;
     border-radius: 10px;
     text-align: center;
-    border: 1px solid var(--ff-border);
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     z-index: 1;
 }
 
 .metric-change.improvement {
-    background: #2ecc71;
-    color: white;
+    background: #27ae6022;
+    color: var(--positive-color);
     border-color: #27ae60;
 }
 
 .metric-change.decline {
-    background: #e74c3c;
-    color: white;
+    background: #e74c3c22;
+    color: var(--negative-color);
     border-color: #c0392b;
 }
 
@@ -237,6 +237,13 @@
     border-radius: var(--border-radius-sm);
     border: 1px solid var(--ff-border);
     margin-top: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.chart-section:hover {
+    border-color: var(--ff-accent);
 }
 
 .chart-title {
@@ -248,6 +255,12 @@
     text-align: center;
     margin-bottom: 0.8rem;
     opacity: 0.9;
+    transition: all 0.2s ease;
+}
+
+.chart-section:hover .chart-title {
+    opacity: 1;
+    color: var(--ff-primary);
 }
 
 .chart-container {

@@ -28,15 +28,50 @@
 
 
     /**
-     * ✅ NUEVO: Calcula promedio reciente INCLUYENDO abstinencia actual
-     * Se usa para mostrar estadísticas dinámicas al usuario
+     * Calcula el promedio total histórico INCLUYENDO abstinencia actual
+     * Usa TODOS los consumos desde el inicio del reto
+     */
+    const calculateTotalAverageWithCurrent = (consumptionHistory, currentAbstinenceTime, initialInterval) => {
+        if (consumptionHistory.length === 0) return initialInterval;
+        
+        // Filtrar solo consumos reales
+        const realConsumptions = consumptionHistory.filter(c => c.type === 'real');
+        
+        if (realConsumptions.length === 0) {
+            // Si no hay consumos reales, el promedio es la abstinencia actual
+            return currentAbstinenceTime > 0 ? currentAbstinenceTime : initialInterval;
+        }
+        
+        let totalTime = 0;
+        let intervals = 0;
+        
+        // Calcular intervalos entre todos los consumos reales
+        for (let i = 1; i < realConsumptions.length; i++) {
+            const prevTime = new Date(realConsumptions[i - 1].timestamp).getTime();
+            const currentTime = new Date(realConsumptions[i].timestamp).getTime();
+            totalTime += (currentTime - prevTime);
+            intervals++;
+        }
+        
+        // Agregar abstinencia actual como intervalo adicional
+        if (currentAbstinenceTime > 0) {
+            totalTime += currentAbstinenceTime;
+            intervals++;
+        }
+        
+        return intervals > 0 ? Math.floor(totalTime / intervals) : initialInterval;
+    };
+
+    /**
+     * Calcula promedio reciente INCLUYENDO abstinencia actual
+     * Usa solo los consumos de los últimos X días
      */
     const calculateRecentAverageWithCurrent = (consumptionHistory, days, currentAbstinenceTime, initialInterval) => {
         if (consumptionHistory.length === 0) return initialInterval;
         
         const cutoffTime = Date.now() - (days * 24 * 60 * 60 * 1000);
         const recentConsumptions = consumptionHistory.filter(c => 
-            new Date(c.timestamp).getTime() >= cutoffTime
+            c.type === 'real' && new Date(c.timestamp).getTime() >= cutoffTime
         );
         
         if (recentConsumptions.length === 0) {
@@ -64,32 +99,6 @@
         return intervals > 0 ? Math.floor(totalTime / intervals) : initialInterval;
     };
 
-    /**
-     * Calcula promedio de período anterior (sin abstinencia actual)
-     */
-    const calculatePreviousAverage = (consumptionHistory, days, initialInterval) => {
-        if (consumptionHistory.length <= 1) return initialInterval;
-        
-        const now = Date.now();
-        const recentCutoff = now - (days * 24 * 60 * 60 * 1000);
-        const previousCutoff = now - (2 * days * 24 * 60 * 60 * 1000);
-        
-        const previousConsumptions = consumptionHistory.filter(c => {
-            const timestamp = new Date(c.timestamp).getTime();
-            return timestamp >= previousCutoff && timestamp < recentCutoff;
-        });
-        
-        if (previousConsumptions.length <= 1) return initialInterval;
-        
-        let totalTime = 0;
-        for (let i = 1; i < previousConsumptions.length; i++) {
-            const prevTime = new Date(previousConsumptions[i - 1].timestamp).getTime();
-            const currentTime = new Date(previousConsumptions[i].timestamp).getTime();
-            totalTime += (currentTime - prevTime);
-        }
-        
-        return Math.floor(totalTime / (previousConsumptions.length - 1));
-    };
 
     const calculatePercentageChange = (current, previous) => {
         if (previous === 0) return { percentage: 0, isImprovement: false };
@@ -100,10 +109,13 @@
         return { percentage: Math.abs(percentage), isImprovement };
     };
 
-    const hasX2Bonus = (recentAverage, previousAverage) => {
-        if (previousAverage === 0) return false;
-        const percentage = ((recentAverage - previousAverage) / previousAverage) * 100;
-        return percentage >= 1;
+    /**
+     * Determina si el usuario merece el bonus x2 en subastas
+     * Se activa cuando el promedio reciente supera el promedio histórico total
+     */
+    const hasX2Bonus = (recentAverage, totalAverage) => {
+        if (totalAverage === 0) return false;
+        return recentAverage > totalAverage;
     };
 
 
@@ -349,7 +361,14 @@
 
             const currentAbstinenceTime = Date.now() - new Date(challenge.lastConsumptionTime).getTime();
 
-            // Promedio reciente INCLUYE abstinencia actual (para mostrar progreso dinámico)
+            // Promedio total histórico INCLUYENDO abstinencia actual
+            const totalAverage = calculateTotalAverageWithCurrent(
+                challenge.consumptionHistory,
+                currentAbstinenceTime,
+                challenge.initialInterval
+            );
+            
+            // Promedio reciente (últimos X días) INCLUYENDO abstinencia actual
             const recentAverage = calculateRecentAverageWithCurrent(
                 challenge.consumptionHistory, 
                 challenge.successDays, 
@@ -357,26 +376,40 @@
                 challenge.initialInterval
             );
             
-            // Promedio anterior NO incluye abstinencia actual (es histórico)
-            const previousAverage = calculatePreviousAverage(
-                challenge.consumptionHistory, 
-                challenge.successDays, 
-                challenge.initialInterval
-            );
+            // Calcular cambios porcentuales
+            const totalChange = calculatePercentageChange(totalAverage, challenge.initialInterval);
+            const recentChange = calculatePercentageChange(recentAverage, totalAverage);
             
-            const recentChange = calculatePercentageChange(recentAverage, previousAverage);
-            const previousChange = calculatePercentageChange(previousAverage, challenge.initialInterval);
-            const hasBonus = hasX2Bonus(recentAverage, previousAverage);
+            // Bonus x2 cuando promedio reciente supera promedio histórico
+            const hasBonus = hasX2Bonus(recentAverage, totalAverage);
 
             return {
                 initialInterval: challenge.initialInterval,
+                totalAverage,
                 recentAverage,
-                previousAverage,
+                totalChange,
                 recentChange,
-                previousChange,
                 hasX2Bonus: hasBonus,
                 currentAbstinenceTime
             };
+        },
+
+        // Métodos para gestionar la temporalidad del gráfico
+        setChartTimeframe: function(challengeId, timeframe) {
+            const state = App.state.get();
+            if (!state.habits.chartTimeframes) {
+                state.habits.chartTimeframes = {};
+            }
+            state.habits.chartTimeframes[challengeId] = timeframe;
+            _saveStateToLocalStorage();
+        },
+
+        getChartTimeframe: function(challengeId) {
+            const state = App.state.get();
+            if (!state.habits.chartTimeframes) {
+                return 0; // Default: sin agrupamiento (individual)
+            }
+            return state.habits.chartTimeframes[challengeId] || 0;
         }
     });
 })(window.App = window.App || {});

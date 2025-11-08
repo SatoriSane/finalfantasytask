@@ -51,11 +51,40 @@
 
 
     /**
+     * Obtiene el título del gráfico según la temporalidad
+     * @param {number} groupingDays - Días de agrupamiento
+     * @returns {string} - Título del gráfico
+     */
+    const getChartTitle = (groupingDays) => {
+        switch(groupingDays) {
+            case 0: return 'Tiempo entre consumos';
+            case 1: return 'Tiempo promedio entre consumos (1d)';
+            case 3: return 'Tiempo promedio entre consumos (3d)';
+            case 7: return 'Tiempo promedio entre consumos (1w)';
+            case 30: return 'Tiempo promedio entre consumos (1M)';
+            default: return 'Tiempo entre consumos';
+        }
+    };
+
+    /**
+     * Cicla a la siguiente temporalidad
+     * @param {number} currentTimeframe - Temporalidad actual
+     * @returns {number} - Nueva temporalidad
+     */
+    const cycleTimeframe = (currentTimeframe) => {
+        const cycle = [0, 1, 3, 7, 30];
+        const currentIndex = cycle.indexOf(currentTimeframe);
+        const nextIndex = (currentIndex + 1) % cycle.length;
+        return cycle[nextIndex];
+    };
+
+    /**
      * Genera datos para el gráfico de consumo histórico real con agrupamiento automático
      * @param {Object} challenge - El reto de abstinencia
+     * @param {number} groupingDays - Días de agrupamiento (0=individual, 1=diario, 3=3días, 7=semanal, 30=mensual)
      * @returns {Array} - Array de puntos para el gráfico
      */
-    const generateConsumptionChart = (challenge) => {
+    const generateConsumptionChart = (challenge, groupingDays = 0) => {
         const history = challenge.consumptionHistory;
         
         // Filtrar solo consumos reales (cuando el usuario gasta tickets)
@@ -90,25 +119,31 @@
             });
         }
         
-        // Agrupamiento inteligente basado en número de intervalos y tiempo transcurrido
-        const challengeStart = new Date(challenge.createdAt).getTime();
-        const daysSinceStart = Math.floor((now - challengeStart) / (24 * 60 * 60 * 1000));
-
         let chartData;
-
-        if (intervals.length < 30) {
-            // Siempre vista individual si hay pocos intervalos
-            chartData = intervals;
-        } else if (daysSinceStart > 30) {
-            // Bastantes intervalos y ha pasado más de un mes → vista semanal
-            chartData = groupIntervalsByWeek(intervals);
-        } else {
-            // Bastantes intervalos pero aún dentro de los 30 días → vista diaria
-            chartData = groupIntervalsByDay(intervals);
-        }
-
         
-        // Agregar abstinencia actual
+        // Si groupingDays es 0, mostrar intervalos individuales
+        if (groupingDays === 0) {
+            chartData = intervals;
+        } else if (groupingDays === 1) {
+            // Vista diaria (agrupar de 1 en 1, máx 30 barras)
+            chartData = groupIntervalsByPeriod(intervals, 1, 30);
+        } else if (groupingDays === 3) {
+            // Vista de 3 días (agrupar de 3 en 3, máx 30 barras)
+            chartData = groupIntervalsByPeriod(intervals, 3, 30);
+        } else if (groupingDays === 7) {
+            // Vista semanal (agrupar de 7 en 7, máx 20 barras)
+            chartData = groupIntervalsByPeriod(intervals, 7, 20);
+        } else if (groupingDays === 30) {
+            // Vista mensual (agrupar de 30 en 30, máx 12 barras)
+            chartData = groupIntervalsByPeriod(intervals, 30, 12);
+        } else {
+            // Vista personalizada
+            chartData = groupIntervalsByPeriod(intervals, groupingDays, 30);
+        }
+        
+        // --- FIN DE LA LÓGICA MODIFICADA ---
+        
+        // Agregar abstinencia actual (Sin cambios)
         const lastRealConsumption = new Date(realConsumptions[realConsumptions.length - 1].timestamp).getTime();
         const currentAbstinence = now - lastRealConsumption;
         
@@ -121,76 +156,54 @@
         return chartData;
     };
 
-    /**
-     * Agrupa intervalos por día calculando el promedio diario
+/**
+     * Agrupa intervalos en períodos de 'daysPerGroup' días, calculando el promedio.
+     * @param {Array} intervals - Los intervalos de consumo.
+     * @param {number} daysPerGroup - Número de días por cada barra (ej: 1 para diario, 7 para semanal).
+     * @param {number} maxBars - Número máximo de barras a devolver.
+     * @returns {Array} - Array de datos agrupados.
      */
-    const groupIntervalsByDay = (intervals) => {
-        const dailyGroups = {};
+    const groupIntervalsByPeriod = (intervals, daysPerGroup, maxBars) => {
+        const groups = {};
+        const dayMs = 24 * 60 * 60 * 1000;
         
-        // Agrupar por día
-        intervals.forEach(item => {
-            const date = new Date(item.timestamp);
-            const dayKey = date.toDateString(); // "Mon Oct 01 2025"
-            
-            if (!dailyGroups[dayKey]) {
-                dailyGroups[dayKey] = {
-                    intervals: [],
-                    timestamp: item.timestamp
-                };
-            }
-            
-            dailyGroups[dayKey].intervals.push(item.interval);
-        });
-        
-        // Convertir a array con promedios
-        return Object.keys(dailyGroups)
-            .map(dayKey => {
-                const group = dailyGroups[dayKey];
-                const avgInterval = group.intervals.reduce((sum, val) => sum + val, 0) / group.intervals.length;
-                
-                return {
-                    interval: avgInterval,
-                    isConsumption: true,
-                    timestamp: group.timestamp
-                };
-            })
-            .sort((a, b) => a.timestamp - b.timestamp)
-            .slice(-30); // Máximo 30 días
-    };
+        // El "período" de tiempo en milisegundos
+        const periodMs = daysPerGroup * dayMs;
 
-    /**
-     * Agrupa intervalos por semana calculando el promedio semanal
-     */
-    const groupIntervalsByWeek = (intervals) => {
-        const weeklyGroups = {};
-        
-        // Agrupar por semana (lunes a domingo)
         intervals.forEach(item => {
             const date = new Date(item.timestamp);
+            date.setHours(0, 0, 0, 0); // Normalizar a medianoche
             
-            // Calcular el lunes de esa semana
-            const dayOfWeek = date.getDay(); // 0 = domingo, 1 = lunes, etc.
-            const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Ajustar para que lunes sea 0
-            const monday = new Date(date);
-            monday.setDate(date.getDate() - daysToMonday);
-            monday.setHours(0, 0, 0, 0);
+            let groupStartTimestamp;
+
+            // Lógica especial para mantener el alineamiento de semanas con Lunes
+            if (daysPerGroup === 7) {
+                const dayOfWeek = date.getDay(); // 0 = domingo, 1 = lunes
+                const daysToMonday = (dayOfWeek === 0) ? 6 : (dayOfWeek - 1);
+                groupStartTimestamp = date.getTime() - (daysToMonday * dayMs);
+            } else {
+                // Agrupamiento genérico (incluyendo 1 día)
+                // Redondea el timestamp al bloque de 'periodMs' más cercano
+                groupStartTimestamp = Math.floor(date.getTime() / periodMs) * periodMs;
+            }
             
-            const weekKey = monday.toISOString().split('T')[0]; // "2025-09-29"
-            
-            if (!weeklyGroups[weekKey]) {
-                weeklyGroups[weekKey] = {
+            // Usamos el timestamp de inicio como clave
+            const groupKey = groupStartTimestamp.toString();
+
+            if (!groups[groupKey]) {
+                groups[groupKey] = {
                     intervals: [],
-                    timestamp: monday.getTime()
+                    timestamp: groupStartTimestamp
                 };
             }
             
-            weeklyGroups[weekKey].intervals.push(item.interval);
+            groups[groupKey].intervals.push(item.interval);
         });
-        
+
         // Convertir a array con promedios
-        return Object.keys(weeklyGroups)
-            .map(weekKey => {
-                const group = weeklyGroups[weekKey];
+        return Object.keys(groups)
+            .map(key => {
+                const group = groups[key];
                 const avgInterval = group.intervals.reduce((sum, val) => sum + val, 0) / group.intervals.length;
                 
                 return {
@@ -199,8 +212,8 @@
                     timestamp: group.timestamp
                 };
             })
-            .sort((a, b) => a.timestamp - b.timestamp)
-            .slice(-20); // Máximo 20 semanas (~5 meses)
+            .sort((a, b) => a.timestamp - b.timestamp) // Ordenar por fecha
+            .slice(-maxBars); // Limitar al número de barras
     };
 
 /**
@@ -379,7 +392,8 @@
                 const lastUpdate = parseInt(chartContainer.dataset.lastUpdate || '0');
                 
                 if (currentMinute !== lastUpdate) {
-                    const chartData = generateConsumptionChart(challenge);
+                    const timeframe = App.state.getChartTimeframe(challengeId);
+                    const chartData = generateConsumptionChart(challenge, timeframe);
                     const maxInterval = Math.max(...chartData.map(p => p.interval), challenge.initialInterval);
                     chartContainer.innerHTML = renderConsumptionChart(chartData, maxInterval);
                     chartContainer.dataset.lastUpdate = currentMinute.toString();
@@ -392,22 +406,22 @@
                 const valueElement = item.querySelector('.metric-value');
                 if (!valueElement) return;
                 
-                if (index === 0) { // Frecuencia inicial
+                if (index === 0) { // Inicial
                     valueElement.textContent = formatDuration(stats.initialInterval);
-                } else if (index === 1) { // Frecuencia anterior
-                    valueElement.textContent = formatDuration(stats.previousAverage);
-                } else if (index === 2) { // Frecuencia actual/reciente
+                } else if (index === 1) { // Promedio histórico
+                    valueElement.textContent = formatDuration(stats.totalAverage);
+                } else if (index === 2) { // Últimos X días
                     valueElement.textContent = formatDuration(stats.recentAverage);
                 }
             });
     
             // ✅ ACTUALIZAR METRIC-CHANGE CON SELECCIÓN ESPECÍFICA
             // Usamos nth-child para evitar ambigüedades
-            const previousChangeElement = card.querySelector('.metric-item:nth-child(2) .metric-change');
-            if (previousChangeElement) {
-                const sign = stats.previousChange.isImprovement ? '+' : '-';
-                previousChangeElement.textContent = `${sign}${stats.previousChange.percentage}%`;
-                previousChangeElement.className = `metric-change ${stats.previousChange.isImprovement ? 'improvement' : 'decline'}`;
+            const totalChangeElement = card.querySelector('.metric-item:nth-child(2) .metric-change');
+            if (totalChangeElement) {
+                const sign = stats.totalChange.isImprovement ? '+' : '-';
+                totalChangeElement.textContent = `${sign}${stats.totalChange.percentage}%`;
+                totalChangeElement.className = `metric-change ${stats.totalChange.isImprovement ? 'improvement' : 'decline'}`;
             }
     
             const recentChangeElement = card.querySelector('.metric-item:nth-child(3) .metric-change');
@@ -500,10 +514,10 @@
                                     <span class="metric-value">${formatDuration(stats.initialInterval)}</span>
                                 </div>
                                 <div class="metric-item">
-                                    <span class="metric-label">HACE ${challenge.successDays} DÍAS</span>
-                                    <span class="metric-value">${formatDuration(stats.previousAverage)}</span>
-                                    <span class="metric-change ${stats.previousChange.isImprovement ? 'improvement' : 'decline'}">
-                                        ${stats.previousChange.isImprovement ? '+' : '-'}${stats.previousChange.percentage}%
+                                    <span class="metric-label">PROMEDIO HISTÓRICO</span>
+                                    <span class="metric-value">${formatDuration(stats.totalAverage)}</span>
+                                    <span class="metric-change ${stats.totalChange.isImprovement ? 'improvement' : 'decline'}">
+                                        ${stats.totalChange.isImprovement ? '+' : '-'}${stats.totalChange.percentage}%
                                     </span>
                                 </div>
                                 <div class="metric-item">
@@ -518,10 +532,14 @@
                         
                         ${isActive ? `
                         <div class="chart-section">
-                            <div class="chart-title">Camino hacia la libertad</div>
+                            <div class="chart-title">${(() => {
+                                const timeframe = App.state.getChartTimeframe(id);
+                                return getChartTitle(timeframe);
+                            })()}</div>
                             <div class="chart-container">
                                 ${(() => {
-                                    const chartData = generateConsumptionChart(challenge);
+                                    const timeframe = App.state.getChartTimeframe(id);
+                                    const chartData = generateConsumptionChart(challenge, timeframe);
                                     const maxInterval = Math.max(...chartData.map(p => p.interval), challenge.initialInterval);
                                     return renderConsumptionChart(chartData, maxInterval);
                                 })()}
@@ -703,6 +721,35 @@
                     const challengeId = deleteBtn.dataset.challengeId;
                     if (challengeId) {
                         App.state.deleteAbstinenceChallenge(challengeId);
+                    }
+                    return;
+                }
+
+                // Manejar click en toda la sección del gráfico para cambiar temporalidad
+                const chartSection = target.closest('.chart-section');
+                if (chartSection) {
+                    const card = chartSection.closest('.abstinence-card');
+                    const challengeId = card?.dataset.id;
+                    
+                    if (challengeId) {
+                        const currentTimeframe = App.state.getChartTimeframe(challengeId);
+                        const nextTimeframe = cycleTimeframe(currentTimeframe);
+                        App.state.setChartTimeframe(challengeId, nextTimeframe);
+                        
+                        // Actualizar el título
+                        const chartTitle = chartSection.querySelector('.chart-title');
+                        if (chartTitle) {
+                            chartTitle.textContent = getChartTitle(nextTimeframe);
+                        }
+                        
+                        // Regenerar el gráfico
+                        const chartContainer = chartSection.querySelector('.chart-container');
+                        if (chartContainer) {
+                            const challenge = App.state.getAbstinenceChallengeById(challengeId);
+                            const chartData = generateConsumptionChart(challenge, nextTimeframe);
+                            const maxInterval = Math.max(...chartData.map(p => p.interval), challenge.initialInterval);
+                            chartContainer.innerHTML = renderConsumptionChart(chartData, maxInterval);
+                        }
                     }
                     return;
                 }

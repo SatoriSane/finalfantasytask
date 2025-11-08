@@ -1,6 +1,14 @@
 // modal-abstinence-creation.js
 // Modal simplificado para creación de retos de abstinencia
 
+// Cargar estilos específicos del modal
+const modalStyleLink = document.createElement('link');
+modalStyleLink.rel = 'stylesheet';
+modalStyleLink.href = 'tab-habits/modal-abstinence-creation.css';
+if (!document.querySelector('link[href="tab-habits/modal-abstinence-creation.css"]')) {
+    document.head.appendChild(modalStyleLink);
+}
+
 (function() {
     'use strict';
 
@@ -77,7 +85,7 @@
                         <span class="stat-label">Límite de acumulación:</span>
                         <span class="stat-value">${dailyLimit} tickets máx</span>
                     </div>
-                    <div class="stat-item success-goal">
+                    <div class="stat-item challenge-goal">
                         <span class="stat-label">Meta de éxito:</span>
                         <span class="stat-value">${successDays} ${dayText}</span>
                     </div>
@@ -244,18 +252,19 @@
                             <div class="form-group">
                                 <label for="weeklyFrequency">¿Cuántas veces por semana lo haces?</label>
                                 <input id="weeklyFrequency" type="number" min="1" max="9999" value="50" required />
+                                <small class="form-help">Obtendrás un ticket de consumo que podrás usar o vender por puntos según tu frecuencia actual</small>
+
                             </div>
 
                             <div class="form-group">
-                                <label for="successDays">¿Cuántos días sin el hábito consideras un éxito?</label>
-                                <input id="successDays" type="number" min="1" step="1" value="14" required />
-                                <small class="form-hint">Número de días consecutivos sin el hábito para completar el reto</small>
+                                <label for="successDays">¿Cuántos días sin el hábito para completar el reto de forma exitosa?</label>
+                                <input id="successDays" type="number" min="1" step="1" value="7" required />
                             </div>
 
                             <div class="form-group">
-                                <label for="baseTicketPoints">¿Cuántos puntos vale cada ticket?</label>
-                                <input id="baseTicketPoints" type="number" min="1" max="1000" value="10" required />
-                                <small class="form-help">Más puntos = mayor motivación para no consumir</small>
+                                <label for="baseTicketPoints">¿Cuántos puntos quieres ganar por vender un ticket (no consumido)?</label>
+                                <input id="baseTicketPoints" type="number" min="1" max="1000" value="5" required />
+                                <small class="form-help">Si reduces tu consumo promedio ganarás más subastando</small>
                             </div>
                             
                             <div class="form-error" id="challengeFormError" style="display: none;"></div>
@@ -294,13 +303,14 @@
      * Muestra la explicación de cómo desbloquear subastas
      */
     function showBonusExplanation() {
-        const successDays = parseInt(document.getElementById('successDays').value) || 30;
+        const successDays = parseInt(document.getElementById('successDays').value) || 7;
         const weeklyFrequency = parseInt(document.getElementById('weeklyFrequency').value) || 50;
         
         const dayText = successDays === 1 ? 'día' : 'días';
         
         const intervalMs = calculateInitialInterval(weeklyFrequency);
         const formattedInterval = formatDuration(intervalMs);
+        const basePoints = document.querySelector('#baseTicketPoints')?.value || 5;
         
         // Ocultar botones de previsualización y mostrar botón de volver
         document.getElementById('previewActions').style.display = 'none';
@@ -310,36 +320,36 @@
             <div class="info-detail">
                 <h3>🚀 ¿Cómo Desbloquear Subastas?</h3>
                 
-                <p class="info-intro">El sistema compara automáticamente tu progreso en dos períodos:</p>
+                <p class="info-intro">El sistema compara tu tendencia reciente vs tu promedio histórico total:</p>
                 
                 <div class="comparison-box">
                     <div class="period-item">
-                        <strong>📅 Hace ${successDays} ${dayText}</strong>
-                        <p>Tu tiempo promedio entre consumos en ese período</p>
+                        <strong>📊 Promedio histórico</strong>
+                        <p>Tu tiempo promedio desde que iniciaste el reto</p>
                     </div>
                     <div class="period-item">
                         <strong>📈 Últimos ${successDays} ${dayText}</strong>
-                        <p>Tu tiempo promedio actual (incluye tu abstinencia en curso)</p>
+                        <p>Tu tiempo promedio reciente (incluye abstinencia actual)</p>
                     </div>
                 </div>
                 
-                <p class="unlock-condition"><strong>✨ Condición:</strong> Si mejoras <strong>≥1%</strong>, desbloqueas las subastas</p>
+                <p class="unlock-condition"><strong>✨ Condición:</strong> Si tu promedio reciente <strong>supera</strong> tu promedio histórico, desbloqueas subastas</p>
                 
                 <div class="example-box">
-                    <p><strong>Ejemplo con tus datos:</strong></p>
-                    <p>Antes: cada ${formattedInterval} → Ahora: cada ${formatDuration(intervalMs * 1.02)} = <strong>+2% ✅</strong></p>
+                    <p><strong>Ejemplo:</strong></p>
+                    <p>Histórico: cada ${formattedInterval} → Reciente: cada ${formatDuration(intervalMs * 1.5)} = <strong>✅ Subasta desbloqueada</strong></p>
                 </div>
                 
                 <div class="rewards-comparison">
                     <div class="reward-option">
                         <span class="reward-icon">💡</span>
                         <strong>Sin mejora</strong>
-                        <p>Vender: ${document.querySelector('#baseTicketPoints')?.value || 10} pts fijos</p>
+                        <p>Vender: ${basePoints} pts fijos</p>
                     </div>
                     <div class="reward-option highlight">
                         <span class="reward-icon">🚀</span>
-                        <strong>Con mejora ≥1%</strong>
-                        <p>Subastar: 2x-4x más puntos</p>
+                        <strong>Con mejora</strong>
+                        <p>Subastar: precio base ${basePoints} pts</p>
                     </div>
                 </div>
             </div>
@@ -347,20 +357,81 @@
     }
 
     /**
-     * Muestra cómo funciona el sistema
+     * Muestra la explicación de cómo funciona el sistema
      */
     function showHowItWorks() {
+        const weeklyFrequency = parseInt(document.getElementById('weeklyFrequency').value) || 50;
+        const successDays = parseInt(document.getElementById('successDays').value) || 7;
+        
+        const intervalMs = calculateInitialInterval(weeklyFrequency);
+        const formattedInterval = formatDuration(intervalMs);
+        const dailyLimit = Math.max(1, Math.ceil(weeklyFrequency / 7));
+        const basePoints = document.querySelector('#baseTicketPoints')?.value || 5;
+        
+        const dayText = successDays === 1 ? 'día' : 'días';
+        
         // Ocultar botones de previsualización y mostrar botón de volver
         document.getElementById('previewActions').style.display = 'none';
         document.getElementById('backToPreviewActions').style.display = 'flex';
         
         document.getElementById('previewContent').innerHTML = `
             <div class="info-detail">
-                <h3>🎮 ¿Cómo funciona?</h3>
-                <p><strong>🎫 Tickets:</strong> Recibes tickets automáticamente según tu frecuencia. Puedes gastarlo (registrar consumo) o venderlo por puntos. ¡Si mejoras tu tiempo entre consumos podrás subastar los tickets empezando con el precio base!.</p>
-                <p><strong>📈 Estadísticas:</strong> El sistema muestra tu progreso con gráficos y métricas en tiempo real.</p>
-                <p><strong>🎯 Objetivo:</strong> ¡Vende y subasta tantos tickets como puedas hasta completar el reto!</p>
-                <p><strong>🏆 Estrategia:</strong> Cada vez que resistes la tentación, no solo ganas puntos sino que mejoras tu capacidad de ganar más en el futuro.</p>
+                <h3>🎮 ¿Cómo Funciona el Sistema?</h3>
+                
+                <div class="how-it-works-section">
+                    <div class="step-item">
+                        <span class="step-number">1</span>
+                        <div class="step-content">
+                            <strong>🎫 Generación de Tickets</strong>
+                            <p>Cada <strong>${formattedInterval}</strong> se genera 1 ticket automáticamente</p>
+                            <p class="step-note">Límite: ${dailyLimit} tickets acumulados</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-item">
+                        <span class="step-number">2</span>
+                        <div class="step-content">
+                            <strong>🎯 Usa tus Tickets</strong>
+                            <p>Tienes 2 opciones:</p>
+                            <ul>
+                                <li><strong>Gastar:</strong> Consumir el hábito (se registra)</li>
+                                <li><strong>Vender:</strong> Ganar ${basePoints} puntos por NO consumir</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="step-item">
+                        <span class="step-number">3</span>
+                        <div class="step-content">
+                            <strong>📈 Seguimiento de Progreso</strong>
+                            <p>Verás 3 métricas:</p>
+                            <ul>
+                                <li><strong>Inicial:</strong> Tu frecuencia al empezar</li>
+                                <li><strong>Promedio histórico:</strong> Tu promedio total</li>
+                                <li><strong>Últimos ${successDays} ${dayText}:</strong> Tu tendencia reciente</li>
+                            </ul>
+                            <p class="step-note">Si tu tendencia reciente supera tu promedio histórico, desbloqueas subastas</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-item">
+                        <span class="step-number">4</span>
+                        <div class="step-content">
+                            <strong>🏆 Completa el Reto</strong>
+                            <p>Meta: <strong>${successDays} ${dayText}</strong> sin consumir</p>
+                            <p>El reto se completa automáticamente al alcanzar esta meta</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tips-box">
+                    <strong>💡 Consejos:</strong>
+                    <ul>
+                        <li>Los tickets se generan incluso con la app cerrada</li>
+                        <li>Vender tickets te da puntos inmediatos</li>
+                        <li>Mejora sostenida = acceso a subastas con más puntos</li>
+                    </ul>
+                </div>
             </div>
         `;
     }

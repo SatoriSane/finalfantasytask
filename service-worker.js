@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v3.2'; // Incremented version
+const CACHE_NAME = 'final-fantasy-tasks-cache-v3.3'; // Incremented version
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear
@@ -28,6 +28,7 @@ const APP_FILES = [
     'tab-habits/feature-habits.js',
     'tab-habits/habits.css',
     'tab-habits/modal-abstinence-creation.js',
+    'tab-habits/modal-abstinence-creation.css',
 
     // Tab MISSIONS
     'tab-missions/app-state-missions.js',

@@ -514,14 +514,14 @@
                                     <span class="metric-value">${formatDuration(stats.initialInterval)}</span>
                                 </div>
                                 <div class="metric-item">
-                                    <span class="metric-label">PROMEDIO HISTÓRICO</span>
+                                    <span class="metric-label">PROMEDIO</span>
                                     <span class="metric-value">${formatDuration(stats.totalAverage)}</span>
                                     <span class="metric-change ${stats.totalChange.isImprovement ? 'improvement' : 'decline'}">
                                         ${stats.totalChange.isImprovement ? '+' : '-'}${stats.totalChange.percentage}%
                                     </span>
                                 </div>
                                 <div class="metric-item">
-                                    <span class="metric-label">ÚLTIMOS ${challenge.successDays} DÍAS</span>
+                                    <span class="metric-label">LAST ${challenge.successDays} DAYS</span>
                                     <span class="metric-value">${formatDuration(stats.recentAverage)}</span>
                                     <span class="metric-change ${stats.recentChange.isImprovement ? 'improvement' : 'decline'}">
                                         ${stats.recentChange.isImprovement ? '+' : '-'}${stats.recentChange.percentage}%

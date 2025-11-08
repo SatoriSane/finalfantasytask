@@ -337,7 +337,7 @@ if (!document.querySelector('link[href="tab-habits/modal-abstinence-creation.css
                 
                 <div class="example-box">
                     <p><strong>Ejemplo:</strong></p>
-                    <p>Histórico: cada ${formattedInterval} → Reciente: cada ${formatDuration(intervalMs * 1.5)} = <strong>✅ Subasta desbloqueada</strong></p>
+                    <p>Histórico: cada ${formattedInterval} → Reciente: cada ${formatDuration(intervalMs * 1.22)} <p><strong>✅ Subasta desbloqueada</strong></p></p>
                 </div>
                 
                 <div class="rewards-comparison">

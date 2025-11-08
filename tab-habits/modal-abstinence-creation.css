@@ -73,7 +73,7 @@
 }
 
 /* Grid compacto de estadísticas */
-.preview-stats {
+#abstinenceChallengeModal .preview-stats {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
@@ -84,30 +84,30 @@
     border: 1px solid var(--ff-border);
 }
 
-.stat-item {
+#abstinenceChallengeModal .stat-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1;
+    padding: 0.4rem 0;
     border-bottom: 1px solid rgba(42, 60, 107, 0.3);
 }
 
-.stat-item:last-child {
+#abstinenceChallengeModal .stat-item:last-child {
     border-bottom: none;
 }
 
-.stat-item.challenge-goal {
+#abstinenceChallengeModal .stat-item.challenge-goal {
     padding-top: 0.6rem;
     margin-top: 0.2rem;
 }
 
-.stat-label {
+#abstinenceChallengeModal .stat-label {
     font-size: 0.8rem;
     color: var(--ff-text-dark);
     font-weight: 500;
 }
 
-.stat-value {
+#abstinenceChallengeModal .stat-value {
     font-size: 0.85rem;
     font-weight: 700;
     color: var(--ff-accent);
@@ -117,14 +117,14 @@
 
 
 /* --- BOTONES DE INFORMACIÓN --- */
-.info-links {
+#abstinenceChallengeModal .info-links {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
     margin-top: 0.75rem;
 }
 
-.info-link {
+#abstinenceChallengeModal .info-link {
     background: var(--ff-bg-dark);
     border: 1px solid var(--ff-border);
     color: var(--ff-text-light);
@@ -136,19 +136,19 @@
     text-align: center;
 }
 
-.info-link:hover {
+#abstinenceChallengeModal .info-link:hover {
     border-color: var(--ff-accent);
     background: rgba(0, 228, 255, 0.05);
     color: var(--ff-accent);
 }
 
 /* --- EXPLICACIONES DEL SISTEMA (REDISEÑADAS) --- */
-.info-detail {
+#abstinenceChallengeModal .info-detail {
     font-size: 0.8rem;
     line-height: 1.4;
 }
 
-.info-detail h3 {
+#abstinenceChallengeModal .info-detail h3 {
     margin: 0 0 0.75rem 0;
     font-size: 0.95rem;
     color: var(--ff-accent);
@@ -156,7 +156,7 @@
     font-family: 'Orbitron', sans-serif;
 }
 
-.info-intro {
+#abstinenceChallengeModal .info-intro {
     margin-bottom: 0.75rem;
     color: var(--ff-text-dark);
     text-align: center;
@@ -164,7 +164,7 @@
 }
 
 /* --- COMPARACIÓN SIMPLIFICADA --- */
-.comparison-box {
+#abstinenceChallengeModal .comparison-box {
     background: var(--ff-bg-dark);
     padding: 0.75rem;
     border-radius: var(--border-radius-sm);
@@ -172,17 +172,17 @@
     margin: 0.75rem 0;
 }
 
-.period-item {
+#abstinenceChallengeModal .period-item {
     padding: 0.5rem 0;
     border-bottom: 1px solid rgba(42, 60, 107, 0.3);
 }
 
-.period-item:last-child {
+#abstinenceChallengeModal .period-item:last-child {
     border-bottom: none;
     padding-bottom: 0;
 }
 
-.period-item strong {
+#abstinenceChallengeModal .period-item strong {
     display: block;
     color: var(--ff-accent);
     font-size: 0.75rem;
@@ -190,7 +190,7 @@
     font-family: 'Orbitron', sans-serif;
 }
 
-.period-item p {
+#abstinenceChallengeModal .period-item p {
     margin: 0;
     color: var(--ff-text-dark);
     font-size: 0.75rem;
@@ -198,8 +198,8 @@
 }
 
 /* --- CONDICIÓN Y EJEMPLO --- */
-.unlock-condition,
-.example-box {
+#abstinenceChallengeModal .unlock-condition,
+#abstinenceChallengeModal .example-box {
     background: var(--ff-bg-dark);
     padding: 0.6rem;
     border-radius: var(--border-radius-sm);
@@ -209,32 +209,32 @@
     line-height: 1.4;
 }
 
-.unlock-condition {
+#abstinenceChallengeModal .unlock-condition {
     border-left: 3px solid var(--ff-accent);
 }
 
-.example-box {
+#abstinenceChallengeModal .example-box {
     border-left: 3px solid var(--positive-color);
 }
 
-.unlock-condition strong,
-.example-box strong {
+#abstinenceChallengeModal .unlock-condition strong,
+#abstinenceChallengeModal .example-box strong {
     color: var(--ff-text-light);
 }
 
-.example-box p {
+#abstinenceChallengeModal .example-box p {
     margin: 0.25rem 0;
 }
 
 /* --- RECOMPENSAS SIMPLIFICADAS --- */
-.rewards-comparison {
+#abstinenceChallengeModal .rewards-comparison {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
     margin-top: 0.75rem;
 }
 
-.reward-option {
+#abstinenceChallengeModal .reward-option {
     background: var(--ff-bg-dark);
     padding: 0.6rem 0.4rem;
     border-radius: var(--border-radius-sm);
@@ -242,34 +242,33 @@
     text-align: center;
 }
 
-
-.reward-icon {
+#abstinenceChallengeModal .reward-icon {
     font-size: 1.3rem;
     margin-bottom: 0.25rem;
 }
 
-.reward-option strong {
+#abstinenceChallengeModal .reward-option strong {
     display: block;
     margin: 0.25rem 0;
     color: var(--ff-text-light);
     font-size: 0.8rem;
 }
 
-.reward-option p {
+#abstinenceChallengeModal .reward-option p {
     margin: 0;
     color: var(--ff-text-dark);
     font-size: 0.7rem;
 }
 
 /* --- CÓMO FUNCIONA (SIN NÚMEROS CIRCULARES) --- */
-.how-it-works-section {
+#abstinenceChallengeModal .how-it-works-section {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     margin: 0.75rem 0;
 }
 
-.step-item {
+#abstinenceChallengeModal .step-item {
     background: var(--ff-bg-dark);
     padding: 0.6rem;
     border-radius: var(--border-radius-sm);
@@ -277,7 +276,7 @@
     border-left: 3px solid var(--ff-accent);
 }
 
-.step-number {
+#abstinenceChallengeModal .step-number {
     display: inline-block;
     background: var(--ff-accent);
     color: var(--ff-bg-dark);
@@ -289,35 +288,35 @@
     font-family: 'Orbitron', sans-serif;
 }
 
-.step-content {
+#abstinenceChallengeModal .step-content {
     display: inline;
 }
 
-.step-content strong {
+#abstinenceChallengeModal .step-content strong {
     color: var(--ff-text-light);
     font-size: 0.8rem;
 }
 
-.step-content p {
+#abstinenceChallengeModal .step-content p {
     margin: 0.3rem 0 0 0;
     color: var(--ff-text-dark);
     font-size: 0.75rem;
     line-height: 1.3;
 }
 
-.step-content ul {
+#abstinenceChallengeModal .step-content ul {
     margin: 0.3rem 0 0 1rem;
     padding-left: 0.5rem;
 }
 
-.step-content li {
+#abstinenceChallengeModal .step-content li {
     margin: 0.2rem 0;
     color: var(--ff-text-dark);
     font-size: 0.7rem;
     line-height: 1.3;
 }
 
-.step-note {
+#abstinenceChallengeModal .step-note {
     display: block;
     font-size: 0.7rem;
     font-style: italic;
@@ -327,7 +326,7 @@
 }
 
 /* --- CONSEJOS COMPACTOS --- */
-.tips-box {
+#abstinenceChallengeModal .tips-box {
     background: var(--ff-bg-dark);
     padding: 0.6rem;
     border-radius: var(--border-radius-sm);
@@ -337,19 +336,19 @@
     font-size: 0.75rem;
 }
 
-.tips-box strong {
+#abstinenceChallengeModal .tips-box strong {
     display: block;
     color: var(--ff-text-light);
     margin-bottom: 0.3rem;
     font-size: 0.8rem;
 }
 
-.tips-box ul {
+#abstinenceChallengeModal .tips-box ul {
     margin: 0.3rem 0 0 1rem;
     padding-left: 0.5rem;
 }
 
-.tips-box li {
+#abstinenceChallengeModal .tips-box li {
     margin: 0.2rem 0;
     color: var(--ff-text-dark);
     font-size: 0.7rem;
@@ -358,8 +357,8 @@
 
 /* --- RESPONSIVE: Móvil pequeño --- */
 @media (max-width: 400px) {
-    .info-links,
-    .rewards-comparison {
+    #abstinenceChallengeModal .info-links,
+    #abstinenceChallengeModal .rewards-comparison {
         grid-template-columns: 1fr;
     }
 }

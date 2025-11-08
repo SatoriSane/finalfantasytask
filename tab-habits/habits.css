@@ -206,8 +206,8 @@
 
 .metric-change {
     position: absolute;
-    bottom: -8px;
-    right: 50%;
+    top: -8px;
+    right: 1rem;
     transform: translateX(50%);
     font-size: 0.75em;
     font-weight: 700;

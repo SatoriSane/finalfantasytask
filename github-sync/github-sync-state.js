@@ -15,10 +15,10 @@
     };
     
     const TIMING = {
-        CHECK_INTERVAL_S: 30,       // Intervalo normal de verificación en segundos (30s)
-        IMMEDIATE_CHECK_S: 2,       // Intervalo para verificación inmediata (2s)
-        DEBOUNCE_EXPORT: 2000,
-        POST_EXPORT_PAUSE: 10000,
+        CHECK_INTERVAL_S: 15,       // Intervalo normal de verificación en segundos (15s)
+        IMMEDIATE_CHECK_S: 0,       // Intervalo para verificación inmediata (0s)
+        DEBOUNCE_EXPORT: 0,
+        POST_EXPORT_PAUSE: 5000,
     };
     
     const log = (...msg) => console.log('[GitHubSync]', ...msg);
@@ -366,7 +366,7 @@
         markUserChanges() {
             this.hasUserChanges = true;
             clearTimeout(this.exportTimer);
-            log('📦 Cambio detectado → exportación programada en 2s.');
+            log('📦 Cambio detectado → exportación programada en 0.05s.');
             
             this.exportTimer = setTimeout(() => {
                 if (this.isConnected && this.gistId) {

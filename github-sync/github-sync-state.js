@@ -15,7 +15,7 @@
     };
     
     const TIMING = {
-        CHECK_INTERVAL_S: 15,       // Intervalo normal de verificación en segundos (15s)
+        CHECK_INTERVAL_S: 30,       // Intervalo normal de verificación en segundos (15s)
         IMMEDIATE_CHECK_S: 0,       // Intervalo para verificación inmediata (0s)
         DEBOUNCE_EXPORT: 0,
         POST_EXPORT_PAUSE: 5000,

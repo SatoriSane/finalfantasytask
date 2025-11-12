@@ -49,7 +49,14 @@
             
             syncButton.className = 'sync-btn'; // Limpiar clases
 
-            if (status.isSyncing) {
+            // ⭐ PRIORIDAD: Mostrar cuando UI está bloqueada por importación prioritaria
+            if (status.uiBlocked) {
+                syncButton.classList.add('syncing', 'priority');
+                syncProgressBar.style.width = '0%';
+                syncIcon.textContent = '🚨';
+                syncText.textContent = 'Importando...';
+                syncButton.title = 'Importando datos actualizados antes de permitir cambios';
+            } else if (status.isSyncing) {
                 syncButton.classList.add('syncing');
                 syncProgressBar.style.width = '0%'; // Ocultar barra durante la acción
 

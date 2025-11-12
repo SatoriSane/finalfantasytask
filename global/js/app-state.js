@@ -210,8 +210,14 @@ recordResistance: function(challengeId, challengeName) {
             }
         },
 
-        saveState: function() {
+        saveState: function(options = {}) {
             _saveStateToLocalStorage();
+            
+            // Emitir evento genérico de cambio de estado si no se especifica silencio
+            // Esto asegura que GitHub Sync detecte TODOS los cambios
+            if (!options.silent) {
+                App.events.emit('stateChanged', { timestamp: Date.now() });
+            }
         },
 
         addHistoryAction: function(name, points, type) {

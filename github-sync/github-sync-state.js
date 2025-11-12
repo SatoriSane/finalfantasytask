@@ -15,10 +15,10 @@
     };
     
     const TIMING = {
-        CHECK_INTERVAL_S: 30,       // Intervalo normal de verificación en segundos (15s)
-        IMMEDIATE_CHECK_S: 0,       // Intervalo para verificación inmediata (0s)
-        DEBOUNCE_EXPORT: 0,
-        POST_EXPORT_PAUSE: 5000,
+        CHECK_INTERVAL_S: 30,       // Intervalo normal de verificación en segundos (30s)
+        IMMEDIATE_CHECK_S: 0,       // Verificación INMEDIATA (0s = siguiente tick)
+        DEBOUNCE_EXPORT: 0,         // SIN debounce = exportación INSTANTÁNEA
+        POST_EXPORT_PAUSE: 3000,    // Pausa reducida después de exportar (3s)
     };
     
     const log = (...msg) => console.log('[GitHubSync]', ...msg);
@@ -41,6 +41,9 @@
         counterInterval: null,
         skipNextCheck: false,
         nextCheckIn: TIMING.CHECK_INTERVAL_S,
+        
+        isInitialCheckDone: false,  // ⭐ Bandera para saber si ya se hizo la verificación inicial
+        uiBlocked: false,            // ⭐ Bandera para bloquear UI durante importación crítica
     
         /**
          * Inicializa el sistema
@@ -50,10 +53,10 @@
             this.loadState();
         
             if (this.isConnected) {
-                log('🔗 Usuario ya conectado, iniciando monitoreo y verificación unificada.');
+                log('🔗 Usuario ya conectado, verificación PRIORITARIA antes de permitir interacción...');
                 
-                // ✅ LLAMADA SIMPLE: Programa la primera verificación para 2 segundos.
-                this.scheduleImmediateCheck();
+                // ⭐ CRÍTICO: Verificar INMEDIATAMENTE antes de que el usuario pueda hacer cambios
+                await this.checkAndImportPriority();
                 
                 this.startActivityMonitoring();
                 this.startAutoCheck();
@@ -112,8 +115,8 @@
             this.isConnected = true;
             log('📁 Gist listo:', this.gistId);
 
-            // ✅ LLAMADA SIMPLE: Programa la verificación para 2 segundos después del login.
-            this.scheduleImmediateCheck();
+            // ⭐ CRÍTICO: Verificar INMEDIATAMENTE después de conectar
+            await this.checkAndImportPriority();
 
             this.startActivityMonitoring();
             this.startAutoCheck();
@@ -191,13 +194,16 @@
             log('👀 Iniciando monitoreo de actividad...');
             
             // Detecta cuando el usuario vuelve a la pestaña
-            document.addEventListener('visibilitychange', () => {
+            document.addEventListener('visibilitychange', async () => {
                 this.isPageVisible = !document.hidden;
                 
-                if (this.isPageVisible) {
-                    // ✅ LLAMADA SIMPLE: Programa la verificación para 2 segundos al volver.
-                    log('👋 Usuario volvió a la página. Programando verificación en 2s...');
-                    this.scheduleImmediateCheck();
+                if (this.isPageVisible && this.isInitialCheckDone) {
+                    // ⭐ CRÍTICO: Verificar INMEDIATAMENTE al volver para importar antes de interacción
+                    const inactiveTime = Date.now() - this.lastActivity;
+                    if (inactiveTime > 60000) { // Más de 1 minuto inactivo
+                        log('👋 Usuario volvió después de inactividad. Verificación PRIORITARIA...');
+                        await this.checkAndImportPriority();
+                    }
                     this.lastActivity = Date.now();
                 }
             });
@@ -262,6 +268,70 @@
             }
         },
     
+        /**
+         * ⭐ NUEVO: Verificación e importación PRIORITARIA
+         * Se ejecuta ANTES de que el usuario pueda interactuar
+         * Bloquea la UI si es necesario para evitar conflictos
+         */
+        async checkAndImportPriority() {
+            if (!this.isConnected || !this.gistId) {
+                return;
+            }
+
+            try {
+                this.isSyncing = true;
+                this.syncAction = 'check';
+                this.uiBlocked = true;
+                this.updateUI();
+
+                log('🚨 VERIFICACIÓN PRIORITARIA - Importando antes de permitir cambios...');
+                const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                    headers: {
+                        'Authorization': `token ${this.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    log('⚠️ Error al obtener Gist:', response.status);
+                    return;
+                }
+                
+                const gist = await response.json();
+                const content = gist.files['fftask-backup.json']?.content;
+                
+                if (!content) {
+                    log('⚠️ No se encontró contenido en el Gist');
+                    this.isInitialCheckDone = true;
+                    return;
+                }
+
+                const backup = JSON.parse(content);
+                const isDifferentDevice = backup.deviceId !== this.deviceId;
+                const isNewer = new Date(backup.timestamp) > new Date(this.lastImport || 0);
+
+                if (isDifferentDevice && isNewer) {
+                    log('📥 IMPORTACIÓN PRIORITARIA: Cambios detectados desde otro dispositivo');
+                    log('   - Device remoto:', backup.deviceId);
+                    log('   - Device local:', this.deviceId);
+                    log('   - Timestamp remoto:', backup.timestamp);
+                    log('   - Última importación:', this.lastImport || 'nunca');
+                    await this.importData(backup);
+                } else {
+                    log('✅ No hay cambios nuevos. Usuario puede interactuar.');
+                    this.isInitialCheckDone = true;
+                }
+            } catch (error) {
+                console.error('[GitHubSync] ❌ Error en verificación prioritaria:', error);
+                this.isInitialCheckDone = true;
+            } finally {
+                this.isSyncing = false;
+                this.syncAction = null;
+                this.uiBlocked = false;
+                this.updateUI();
+            }
+        },
+
         /**
          * Verifica cambios remotos e importa automáticamente
          */
@@ -365,14 +435,24 @@
          */
         markUserChanges() {
             this.hasUserChanges = true;
-            clearTimeout(this.exportTimer);
-            log('📦 Cambio detectado → exportación programada en 0.05s.');
             
-            this.exportTimer = setTimeout(() => {
-                if (this.isConnected && this.gistId) {
+            if (TIMING.DEBOUNCE_EXPORT === 0) {
+                // ⭐ EXPORTACIÓN INSTANTÁNEA - Sin debounce
+                log('📦 Cambio detectado → EXPORTACIÓN INSTANTÁNEA');
+                if (this.isConnected && this.gistId && !this.isSyncing) {
                     this.exportData();
                 }
-            }, TIMING.DEBOUNCE_EXPORT);
+            } else {
+                // Exportación con debounce (si se configura)
+                clearTimeout(this.exportTimer);
+                log(`📦 Cambio detectado → exportación programada en ${TIMING.DEBOUNCE_EXPORT}ms.`);
+                
+                this.exportTimer = setTimeout(() => {
+                    if (this.isConnected && this.gistId) {
+                        this.exportData();
+                    }
+                }, TIMING.DEBOUNCE_EXPORT);
+            }
         },
     
         /**
@@ -467,7 +547,8 @@
                 'missionsUpdated',
                 'habitsUpdated',
                 'shopItemsUpdated',
-                'pointsUpdated'
+                'pointsUpdated',
+                'stateChanged'  // ⭐ Evento genérico para capturar TODOS los cambios
             ];
             events.forEach(event => {
                 window.App?.events?.on(event, (data) => {
@@ -533,7 +614,9 @@
                 nextCheckIn: this.nextCheckIn,
                 hasChanges: this.hasUserChanges,
                 deviceId: this.deviceId,
-                lastImport: this.lastImport
+                lastImport: this.lastImport,
+                uiBlocked: this.uiBlocked,
+                isInitialCheckDone: this.isInitialCheckDone
             };
         }
     };

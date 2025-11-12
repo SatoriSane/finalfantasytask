@@ -293,7 +293,23 @@
                 });
 
                 if (!response.ok) {
-                    log('⚠️ Error al obtener Gist:', response.status);
+                    log('❌ Error al obtener Gist:', response.status);
+                    
+                    // Si es error 401 o 404, token/gist inválido
+                    if (response.status === 401 || response.status === 404) {
+                        log('🔴 TOKEN O GIST INVÁLIDO en verificación prioritaria');
+                        if (window.App?.events) {
+                            App.events.emit('shownotifyMessage', 
+                                '⚠️ Error de sincronización: Token o Gist inválido. Por favor reconecta GitHub Sync.');
+                        }
+                        this.isInitialCheckDone = true;
+                        
+                        // Desconectar automáticamente
+                        setTimeout(() => {
+                            this.disconnect();
+                            this.updateUI();
+                        }, 2000);
+                    }
                     return;
                 }
                 
@@ -358,7 +374,22 @@
                 });
     
                 if (!response.ok) {
-                    log('⚠️ Error al obtener Gist:', response.status);
+                    log('❌ Error al obtener Gist:', response.status);
+                    
+                    // Si es error 401 o 404, token/gist inválido
+                    if (response.status === 401 || response.status === 404) {
+                        log('🔴 TOKEN O GIST INVÁLIDO en verificación periódica');
+                        if (window.App?.events) {
+                            App.events.emit('shownotifyMessage', 
+                                '⚠️ Error de sincronización: Token o Gist inválido. Por favor reconecta GitHub Sync.');
+                        }
+                        
+                        // Desconectar automáticamente
+                        setTimeout(() => {
+                            this.disconnect();
+                            this.updateUI();
+                        }, 2000);
+                    }
                     return;
                 }
                 
@@ -504,7 +535,30 @@
                     
                     log('✅ Datos exportados correctamente.');
                 } else {
-                    log('⚠️ Fallo al exportar datos:', response.status);
+                    // ⚠️ ERROR: Token inválido o expirado
+                    const errorText = await response.text();
+                    log('❌ FALLO AL EXPORTAR:', response.status, errorText);
+                    
+                    // Si es error 401 (Unauthorized) o 404 (Not Found), el token/gist es inválido
+                    if (response.status === 401 || response.status === 404) {
+                        log('🔴 TOKEN O GIST INVÁLIDO - Desconectando...');
+                        this.hasUserChanges = false; // Limpiar bandera para no mostrar "Pendiente"
+                        
+                        // Mostrar alerta al usuario
+                        if (window.App?.events) {
+                            App.events.emit('shownotifyMessage', 
+                                '⚠️ Error de sincronización: Token o Gist inválido. Por favor reconecta GitHub Sync.');
+                        }
+                        
+                        // Desconectar automáticamente
+                        setTimeout(() => {
+                            this.disconnect();
+                            this.updateUI();
+                        }, 2000);
+                    } else {
+                        // Otro tipo de error, limpiar bandera pero mantener conexión
+                        this.hasUserChanges = false;
+                    }
                 }
             } catch (error) {
                 console.error('[GitHubSync] ❌ Error al exportar:', error);

@@ -120,7 +120,13 @@
                     </div>
                 </div>
                 <div class="sync-info-box">
-                    <p>Guarda tus datos de forma segura y sincroniza entre dispositivos usando un Gist privado de GitHub.</p>
+                    <p><strong>Sincronización en tiempo real</strong> entre todos tus dispositivos usando un Gist privado de GitHub.</p>
+                    <ul style="margin-top: 0.75rem; font-size: 0.9rem;">
+                        <li>⚡ Exportación instantánea al hacer cambios</li>
+                        <li>🚨 Importación prioritaria al iniciar la app</li>
+                        <li>🔒 Datos seguros en tu cuenta de GitHub</li>
+                        <li>🔄 Sin pérdida de datos ni conflictos</li>
+                    </ul>
                 </div>
                 <form class="sync-connect-form" id="githubConnectForm">
                     <div class="sync-form-group">
@@ -131,6 +137,7 @@
                             <a href="https://github.com/settings/tokens/new?scopes=gist&description=FFTask%20Sync" target="_blank" rel="noopener">
                                 Crear token aquí →
                             </a>
+                            <br><small style="opacity: 0.8;">💡 Consejo: Selecciona "No expiration" para que no caduque.</small>
                         </div>
                     </div>
                     <button type="submit" class="primary" style="width: 100%;">🔗 Conectar y Activar</button>
@@ -158,15 +165,16 @@
                     ${status.hasChanges ? `
                     <div class="info-row">
                         <span class="info-label">Cambios pendientes:</span>
-                        <span class="info-value" style="color: #f59e0b;">⚠️ Se exportarán pronto</span>
+                        <span class="info-value" style="color: #f59e0b;">⚡ Exportando ahora...</span>
                     </div>` : ''}
                 </div>
                 <div class="sync-info-box">
                     <h3>¿Cómo funciona?</h3>
                     <ul>
-                        <li><strong>Exportación:</strong> Automática 2s después de cada cambio.</li>
-                        <li><strong>Importación:</strong> Al detectar cambios de otro dispositivo.</li>
-                        <li><strong>Verificación:</strong> Cada 30s y al volver a la app.</li>
+                        <li><strong>Exportación:</strong> ⚡ INSTANTÁNEA al hacer cualquier cambio.</li>
+                        <li><strong>Importación:</strong> 🚨 PRIORITARIA al iniciar o volver a la app (antes de permitir cambios).</li>
+                        <li><strong>Verificación:</strong> Cada 30s durante uso activo.</li>
+                        <li><strong>Protección:</strong> Si el token expira, se desconecta automáticamente y te avisa.</li>
                     </ul>
                 </div>
                 <button class="sync-option-btn danger" id="disconnectGithubBtn">

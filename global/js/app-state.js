@@ -47,15 +47,37 @@
         // Lógica de recurrencia
         switch (scheduledMission.repeatUnit) {
             case 'day':
-                const diffDays = (date.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
-                return diffDays % scheduledMission.repeatInterval === 0;
+                const diffDaysDaily = (date.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
+                return diffDaysDaily % scheduledMission.repeatInterval === 0;
             case 'week':
                 if (!scheduledMission.daysOfWeek || scheduledMission.daysOfWeek.length === 0) {
                     return false; // No hay días seleccionados para la repetición semanal.
                 }
                 const dayOfWeek = date.getDay();
-                const diffWeeks = Math.floor(((date.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) / 7);
-                return scheduledMission.daysOfWeek.includes(String(dayOfWeek)) && (diffWeeks % scheduledMission.repeatInterval === 0);
+                
+                // Verificar que el día de la semana coincida con los días seleccionados
+                if (!scheduledMission.daysOfWeek.includes(String(dayOfWeek))) {
+                    return false;
+                }
+                
+                // Calcular el número de semanas completas desde la fecha de inicio
+                // Primero, encontrar el primer día de la semana de inicio (domingo = 0)
+                const startDayOfWeek = startDate.getDay();
+                const daysToFirstOccurrence = (dayOfWeek - startDayOfWeek + 7) % 7;
+                const firstOccurrenceDate = new Date(startDate);
+                firstOccurrenceDate.setDate(startDate.getDate() + daysToFirstOccurrence);
+                
+                // Si la fecha actual es antes de la primera ocurrencia, no aplica
+                if (date < firstOccurrenceDate) {
+                    return false;
+                }
+                
+                // Calcular semanas desde la primera ocurrencia
+                const diffDaysWeekly = Math.floor((date.getTime() - firstOccurrenceDate.getTime()) / (1000 * 3600 * 24));
+                const diffWeeks = Math.floor(diffDaysWeekly / 7);
+                
+                // Verificar que el número de semanas sea múltiplo del intervalo
+                return diffWeeks % scheduledMission.repeatInterval === 0;
             case 'month':
                 let monthDiff = (date.getFullYear() - startDate.getFullYear()) * 12 + (date.getMonth() - startDate.getMonth());
                 return date.getDate() === startDate.getDate() && monthDiff >= 0 && monthDiff % scheduledMission.repeatInterval === 0;
@@ -508,37 +530,9 @@ recordResistance: function(challengeId, challengeName) {
                 }
 
                 // --- RECURRENCIA ---
-                if (startObj && viewDateObj < startObj) return;
-                if (endObj && viewDateObj > endObj) return;
-
-                switch (sch.repeatUnit) {
-                    case 'day': {
-                        const diffDays = Math.floor((viewDateObj - startObj) / (1000 * 60 * 60 * 24));
-                        if (diffDays % sch.repeatInterval === 0) {
-                            tasksForDate.push({ ...sch, fromScheduled: true });
-                        }
-                        break;
-                    }
-                    case 'week': {
-                        const dayNum = viewDateObj.getDay();
-                        if (Array.isArray(sch.daysOfWeek) && sch.daysOfWeek.map(Number).includes(dayNum)) {
-                            tasksForDate.push({ ...sch, fromScheduled: true });
-                        }
-                        break;
-                    }
-                    case 'month': {
-                        if (viewDateObj.getDate() === startObj.getDate()) {
-                            tasksForDate.push({ ...sch, fromScheduled: true });
-                        }
-                        break;
-                    }
-                    case 'year': {
-                        if (viewDateObj.getDate() === startObj.getDate() &&
-                            viewDateObj.getMonth() === startObj.getMonth()) {
-                            tasksForDate.push({ ...sch, fromScheduled: true });
-                        }
-                        break;
-                    }
+                // Usar la función _isMissionScheduledForDate que tiene la lógica correcta
+                if (_isMissionScheduledForDate(sch, viewDateObj)) {
+                    tasksForDate.push({ ...sch, fromScheduled: true });
                 }
             });
 

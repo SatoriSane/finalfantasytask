@@ -51,59 +51,52 @@
                     // Lógica para repeticiones semanales con días de la semana específicos
                     if (scheduledMis.repeatUnit === 'week' && scheduledMis.daysOfWeek && scheduledMis.daysOfWeek.length > 0) {
                         const selectedDays = scheduledMis.daysOfWeek.map(day => parseInt(day, 10)).sort((a, b) => a - b);
-                        let currentIterDate = App.utils.normalizeDateToStartOfDay(initialScheduledDateObj);
+                        const repeatInterval = scheduledMis.repeatInterval || 1;
                         let occurrencesAdded = 0;
         
-                        // Si la fecha programada original es en el pasado, empezar a buscar desde hoy.
-                        if (currentIterDate < todayNormalized) {
-                            currentIterDate = todayNormalized;
-                        }
-        
-                        // Avanzar currentIterDate hasta el primer día válido de la semana (hoy o futuro)
-                        let foundFirstValidDay = false;
-                        for (let i = 0; i < 7 && !foundFirstValidDay; i++) {
-                            if (selectedDays.includes(currentIterDate.getDay())) {
-                                foundFirstValidDay = true;
-                            } else {
-                                currentIterDate = App.utils.addDateUnit(currentIterDate, 1, 'day');
-                                if (!currentIterDate) break; // Fecha inválida, salir
+                        // Para cada día seleccionado, encontrar su primera ocurrencia desde la fecha de inicio
+                        selectedDays.forEach(targetDay => {
+                            // Calcular la primera ocurrencia de este día desde la fecha de inicio
+                            const startDayOfWeek = initialScheduledDateObj.getDay();
+                            const daysToFirstOccurrence = (targetDay - startDayOfWeek + 7) % 7;
+                            const firstOccurrenceDate = new Date(initialScheduledDateObj);
+                            firstOccurrenceDate.setDate(initialScheduledDateObj.getDate() + daysToFirstOccurrence);
+                            
+                            // Generar ocurrencias respetando el intervalo de semanas
+                            let currentOccurrence = new Date(firstOccurrenceDate);
+                            let weekCount = 0;
+                            
+                            // Generar hasta MAX_DISPLAY_OCCURRENCES ocurrencias o hasta la fecha de fin
+                            while (occurrencesAdded < MAX_DISPLAY_OCCURRENCES) {
+                                // Verificar si excede la fecha de fin
+                                if (repeatEndDateObj && currentOccurrence > repeatEndDateObj) {
+                                    break;
+                                }
+                                
+                                // Solo añadir si la fecha es hoy o futura
+                                if (currentOccurrence >= todayNormalized) {
+                                    const isOriginalScheduledDateForThisOccurrence = (currentOccurrence.getTime() === initialScheduledDateObj.getTime());
+                                    allMissionsToDisplay.push({
+                                        ...scheduledMis,
+                                        id: scheduledMis.id,
+                                        displayId: App.utils.genId("disp-"),
+                                        scheduledDate: App.utils.getFormattedDate(currentOccurrence),
+                                        isActualScheduled: isOriginalScheduledDateForThisOccurrence
+                                    });
+                                    occurrencesAdded++;
+                                }
+                                
+                                // Avanzar al siguiente intervalo de semanas
+                                weekCount++;
+                                currentOccurrence = new Date(firstOccurrenceDate);
+                                currentOccurrence.setDate(firstOccurrenceDate.getDate() + (weekCount * repeatInterval * 7));
+                                
+                                // Salir si la fecha se vuelve muy lejana (más de 1 año)
+                                if (currentOccurrence.getTime() - todayNormalized.getTime() > 365 * 24 * 60 * 60 * 1000) {
+                                    break;
+                                }
                             }
-                        }
-                        if (!foundFirstValidDay || !currentIterDate) {
-                            console.warn(`renderScheduledMissions: No se pudo encontrar un día válido para la misión semanal recurrente \"${scheduledMis.name}\".`);
-                            return;
-                        }
-        
-                        // Generar ocurrencias para los próximos 14 días (2 semanas)
-                        const maxDaysToCheck = 14;
-                        let daysChecked = 0;
-                        
-                        while (occurrencesAdded < MAX_DISPLAY_OCCURRENCES && daysChecked < maxDaysToCheck) {
-                            // Si la fecha actual excede la fecha de fin de repetición, salir
-                            if (repeatEndDateObj && currentIterDate > repeatEndDateObj) {
-                                break;
-                            }
-        
-                            const dayOfWeek = currentIterDate.getDay();
-        
-                            // Si este día de la semana está seleccionado, añadirlo
-                            if (selectedDays.includes(dayOfWeek)) {
-                                const isOriginalScheduledDateForThisOccurrence = (currentIterDate.getTime() === initialScheduledDateObj.getTime());
-                                allMissionsToDisplay.push({
-                                    ...scheduledMis,
-                                    id: scheduledMis.id,
-                                    displayId: App.utils.genId("disp-"),
-                                    scheduledDate: App.utils.getFormattedDate(currentIterDate),
-                                    isActualScheduled: isOriginalScheduledDateForThisOccurrence // Solo true si coincide con la fecha original programada
-                                });
-                                occurrencesAdded++;
-                            }
-        
-                            // Avanzar al siguiente día para buscar la próxima ocurrencia
-                            currentIterDate = App.utils.addDateUnit(currentIterDate, 1, 'day');
-                            daysChecked++;
-                            if (!currentIterDate) break; // Salir si la fecha se vuelve inválida
-                        }
+                        });
                     } else { // Lógica para otras unidades de repetición (day, month, year)
                         let tempDate = new Date(initialScheduledDateObj); // Empezar con la fecha programada inicial sin normalizar
                         let occurrencesAdded = 0;

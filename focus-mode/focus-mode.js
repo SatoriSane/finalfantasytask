@@ -173,11 +173,35 @@
     }
 
     /**
-     * Obtiene la primera tarea incompleta de hoy
+     * Obtiene la primera tarea incompleta de hoy (respetando el orden guardado)
      */
     function _getFirstIncompleteTask() {
         const todayTasks = App.state.getTodayTasks();
-        return todayTasks.find(task => !task.completed);
+        const incompleteTasks = todayTasks.filter(task => !task.completed);
+        
+        // Obtener el orden guardado
+        const savedOrder = App.state.getTodayTaskOrder() || [];
+        
+        // Ordenar las tareas según el orden guardado
+        const orderedTasks = [];
+        const remainingTasks = new Set(incompleteTasks.map(t => t.id));
+        
+        // Primero agregar las tareas en el orden guardado
+        savedOrder.forEach(id => {
+            const task = incompleteTasks.find(t => t.id === id);
+            if (task) {
+                orderedTasks.push(task);
+                remainingTasks.delete(id);
+            }
+        });
+        
+        // Luego agregar las tareas que no están en el orden guardado
+        remainingTasks.forEach(id => {
+            const task = incompleteTasks.find(t => t.id === id);
+            if (task) orderedTasks.push(task);
+        });
+        
+        return orderedTasks[0] || null;
     }
 
     /**

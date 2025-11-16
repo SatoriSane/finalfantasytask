@@ -240,11 +240,13 @@
                     
                     ${maxReps > 1 ? `
                     <div class="focus-progress">
-                        <div class="focus-progress-label">Progreso de Repeticiones</div>
+                        <div class="focus-progress-label">
+                            <span>Repeticiones</span>
+                            <span class="focus-progress-text">${currentReps} / ${maxReps}</span>
+                        </div>
                         <div class="focus-progress-bar">
                             <div class="focus-progress-fill" style="width: ${progressPercentage}%"></div>
                         </div>
-                        <div class="focus-progress-text">${currentReps} / ${maxReps}</div>
                     </div>` : ''}
                     
                     <div class="focus-bottom-section">
@@ -343,9 +345,8 @@
                 const confetti = document.createElement('div');
                 confetti.className = 'focus-confetti';
                 confetti.style.left = Math.random() * 100 + '%';
-                confetti.style.top = '0';
+                confetti.style.top = '-20px';
                 confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.animationDelay = Math.random() * 0.3 + 's';
                 confetti.style.animationDuration = (Math.random() * 0.5 + 1) + 's';
                 document.body.appendChild(confetti);
 

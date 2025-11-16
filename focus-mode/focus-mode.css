@@ -417,6 +417,7 @@ body.focus-mode-active .focus-fab {
 
 .focus-bottom-section .focus-action-btn {
     pointer-events: auto;
+    padding: 1.5rem;
 }
 
 .focus-action-btn {
@@ -507,6 +508,7 @@ body.focus-mode-active .focus-fab {
     border-radius: 12px;
     font-size: 1.1rem;
     font-weight: 800;
+    color: var(--positive-color);
     border: 1px solid rgba(10, 17, 40, 0.2);
 }
 

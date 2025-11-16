@@ -60,6 +60,9 @@
             // Escuchar cuando se instala la app
             window.addEventListener('appinstalled', handleAppInstalled);
             
+            // Detectar cuando se desinstala la app (verificar periódicamente)
+            detectUninstall();
+            
             // Mostrar el banner después de un delay (SIEMPRE, en cada recarga)
             setTimeout(showBanner, CONFIG.SHOW_DELAY);
             
@@ -169,16 +172,8 @@
             return;
         }
         
-        // Método 6: Verificar localStorage (marca manual si se instaló)
-        try {
-            if (localStorage.getItem('pwa_installed') === 'true') {
-                isInstalled = true;
-                console.log('✅ Detectado: marca de instalación en localStorage');
-                return;
-            }
-        } catch (error) {
-            // Ignorar errores de localStorage
-        }
+        // NO usar localStorage para detección - los métodos nativos son suficientes
+        // localStorage persiste después de desinstalar y causa falsos positivos
         
         console.log('ℹ️ App no instalada - Banner se mostrará');
     }
@@ -200,18 +195,31 @@
     }
 
     /**
+     * Limpia localStorage si es necesario
+     * Los métodos nativos de detección son suficientes y se limpian automáticamente
+     */
+    function detectUninstall() {
+        // Limpiar localStorage viejo si existe
+        // Ya no lo usamos para detección, solo los métodos nativos
+        try {
+            if (localStorage.getItem('pwa_installed')) {
+                console.log('🧹 Limpiando localStorage viejo (ya no se usa para detección)');
+                localStorage.removeItem('pwa_installed');
+            }
+        } catch (error) {
+            // Ignorar errores
+        }
+    }
+
+    /**
      * Maneja cuando se instala la app
      */
     function handleAppInstalled(e) {
         console.log('✅ PWA installed successfully');
         isInstalled = true;
         
-        // Marcar como instalada en localStorage
-        try {
-            localStorage.setItem('pwa_installed', 'true');
-        } catch (error) {
-            console.error('Error guardando estado de instalación:', error);
-        }
+        // NO guardar en localStorage - los métodos nativos detectarán la instalación automáticamente
+        // En la próxima recarga, display-mode: standalone estará activo
         
         hideBanner();
         deferredPrompt = null;
@@ -361,13 +369,9 @@
                 if (outcome === 'accepted') {
                     console.log('✅ User accepted the install prompt');
                     
-                    // Marcar como instalada
+                    // Marcar como instalada (solo en memoria)
                     isInstalled = true;
-                    try {
-                        localStorage.setItem('pwa_installed', 'true');
-                    } catch (error) {
-                        console.error('Error guardando estado de instalación:', error);
-                    }
+                    // NO guardar en localStorage - los métodos nativos detectarán la instalación
                 } else {
                     console.log('❌ User dismissed the install prompt');
                 }
@@ -544,13 +548,10 @@
             }
         },
         resetInstallState: () => {
-            try {
-                localStorage.removeItem('pwa_installed');
-                isInstalled = false;
-                console.log('✅ Estado de instalación reseteado - Recarga la página para ver el banner');
-            } catch (error) {
-                console.error('Error resetting install state:', error);
-            }
+            // Ya no usamos localStorage, solo resetear variable en memoria
+            isInstalled = false;
+            console.log('✅ Estado de instalación reseteado en memoria');
+            console.log('ℹ️ Nota: Los métodos nativos seguirán detectando la app si está instalada');
         }
     };
 

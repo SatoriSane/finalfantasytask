@@ -34,19 +34,15 @@
             // Detectar si ya está instalado
             checkIfInstalled();
             
-            // Si ya está instalado, verificar si estamos en el navegador o en la app
-            if (isInstalled) {
-                // Si estamos en modo standalone (app instalada), NO mostrar banner
-                if (window.matchMedia('(display-mode: standalone)').matches) {
-                    console.log('✅ PWA ya instalada y ejecutándose en modo standalone - No mostrar banner');
-                    return;
-                }
-                
-                // Si estamos en el navegador pero la app está instalada, mostrar opción de abrir
-                console.log('✅ PWA instalada pero ejecutándose en navegador - Mostrando opción de abrir app');
-                createInstalledBanner();
+            // Si estamos en modo standalone (app instalada ejecutándose), NO mostrar banner
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('✅ PWA ejecutándose en modo standalone - No mostrar banner');
                 return;
             }
+            
+            // Si estamos en el navegador, NO mostrar banner de "App Instalada"
+            // Solo mostrar banner de "Instalar" si el navegador lo permite
+            // El navegador ya muestra su propio botón de instalar si la app está disponible
             
             console.log('📱 Plataforma detectada:', platform);
             console.log('🌐 Navegador detectado:', browser);
@@ -59,9 +55,6 @@
             
             // Escuchar cuando se instala la app
             window.addEventListener('appinstalled', handleAppInstalled);
-            
-            // Detectar cuando se desinstala la app (verificar periódicamente)
-            detectUninstall();
             
             // Mostrar el banner después de un delay (SIEMPRE, en cada recarga)
             setTimeout(showBanner, CONFIG.SHOW_DELAY);
@@ -195,23 +188,6 @@
     }
 
     /**
-     * Limpia localStorage si es necesario
-     * Los métodos nativos de detección son suficientes y se limpian automáticamente
-     */
-    function detectUninstall() {
-        // Limpiar localStorage viejo si existe
-        // Ya no lo usamos para detección, solo los métodos nativos
-        try {
-            if (localStorage.getItem('pwa_installed')) {
-                console.log('🧹 Limpiando localStorage viejo (ya no se usa para detección)');
-                localStorage.removeItem('pwa_installed');
-            }
-        } catch (error) {
-            // Ignorar errores
-        }
-    }
-
-    /**
      * Maneja cuando se instala la app
      */
     function handleAppInstalled(e) {
@@ -223,54 +199,6 @@
         
         hideBanner();
         deferredPrompt = null;
-    }
-
-    /**
-     * Crea el banner cuando la app ya está instalada
-     */
-    function createInstalledBanner() {
-        // Verificar si ya existe
-        if (document.getElementById(CONFIG.BANNER_ID)) {
-            return;
-        }
-
-        const banner = document.createElement('div');
-        banner.id = CONFIG.BANNER_ID;
-        banner.className = 'pwa-install-banner installed';
-        
-        banner.innerHTML = `
-            <div class="pwa-banner-content">
-                <div class="pwa-banner-icon">✅</div>
-                <div class="pwa-banner-text">
-                    <h3 class="pwa-banner-title">App Instalada</h3>
-                    <p class="pwa-banner-description">FFTask ya está instalada en tu dispositivo</p>
-                </div>
-                <div class="pwa-banner-actions">
-                    <button class="pwa-install-btn" id="pwaOpenBtn">Abrir App</button>
-                    <button class="pwa-close-btn" id="pwaCloseBtn">Cerrar</button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(banner);
-
-        // Adjuntar event listeners
-        const openBtn = banner.querySelector('#pwaOpenBtn');
-        const closeBtn = banner.querySelector('#pwaCloseBtn');
-
-        if (openBtn) {
-            openBtn.addEventListener('click', handleOpenApp);
-        }
-
-        if (closeBtn) {
-            closeBtn.addEventListener('click', handleCloseClick);
-        }
-
-        // Mostrar el banner después de un delay
-        setTimeout(() => {
-            banner.classList.add('show');
-            document.body.classList.add('pwa-banner-visible');
-        }, CONFIG.SHOW_DELAY);
     }
 
     /**
@@ -443,26 +371,6 @@
         }
         
         alert(message);
-    }
-
-    /**
-     * Maneja el click en el botón "Abrir App"
-     */
-    function handleOpenApp() {
-        // Intentar abrir la app instalada
-        // En la mayoría de casos, si ya estamos en la app instalada, solo cerramos el banner
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-            // Ya estamos en la app instalada, solo cerrar el banner
-            hideBanner();
-            console.log('ℹ️ Ya estás en la app instalada');
-        } else {
-            // Estamos en el navegador, intentar abrir la app
-            // Esto funciona en algunos navegadores
-            const appUrl = window.location.origin + '/';
-            window.open(appUrl, '_blank');
-            hideBanner();
-            console.log('ℹ️ Intentando abrir la app instalada');
-        }
     }
 
     /**

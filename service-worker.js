@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v3.31'; // Incremented version
+const CACHE_NAME = 'final-fantasy-tasks-cache-v4.1'; // Updated with PNG icons
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear
@@ -60,6 +60,25 @@ const APP_FILES = [
     'github-sync/github-sync-state.js',
     'github-sync/github-sync-ui.js',
     'github-sync/github-sync.css',
+
+    // Focus Mode
+    'focus-mode/focus-mode.js',
+    'focus-mode/focus-mode.css',
+
+    // PWA Install System
+    'pwa/pwa.js',
+    'pwa/pwa.css',
+
+    // Icons
+    'icons/icon-72x72.png',
+    'icons/icon-96x96.png',
+    'icons/icon-128x128.png',
+    'icons/icon-144x144.png',
+    'icons/icon-152x152.png',
+    'icons/icon-192x192.png',
+    'icons/icon-384x384.png',
+    'icons/icon-512x512.png',
+    'icons/icon-192x192-maskable.png',
 
     // Estilos CSS globales
     'global/css/base.css',

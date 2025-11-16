@@ -1,26 +1,76 @@
 {
-    "name": "Final Fantasy Task",
-    "short_name": "FF Task",
-    "description": "Tu gestor de tareas estilo Final Fantasy.",
-    "start_url": "index.html",
+    "name": "Final Fantasy Task - Gestor de Tareas",
+    "short_name": "FFTask",
+    "description": "Tu gestor de tareas estilo Final Fantasy con gamificación y sistema de puntos.",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#2c3e50",
+    "orientation": "portrait-primary",
+    "background_color": "#0A1128",
     "theme_color": "#0A1128",
+    "categories": ["productivity", "lifestyle"],
     "icons": [
         {
-            "src": "https://placehold.co/192x192/0A1128/00E4FF?text=FF",
-            "sizes": "192x192",
-            "type": "image/png"
+            "src": "icons/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any"
         },
         {
-            "src": "https://placehold.co/512x512/0A1128/00E4FF?text=FF",
-            "sizes": "512x512",
-            "type": "image/png"
+            "src": "icons/icon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any"
         },
         {
-            "src": "https://placehold.co/144x144/0A1128/00E4FF?text=FF",
+            "src": "icons/icon-128x128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-144x144.png",
             "sizes": "144x144",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-192x192-maskable.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'%3E%3Crect width='540' height='720' fill='%230A1128'/%3E%3Ctext x='270' y='360' font-size='60' text-anchor='middle' fill='%2300E4FF' font-family='Arial, sans-serif'%3EFFTask App%3C/text%3E%3C/svg%3E",
+            "sizes": "540x720",
+            "type": "image/svg+xml",
+            "form_factor": "narrow"
         }
     ]
 }

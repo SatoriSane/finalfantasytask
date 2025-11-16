@@ -116,12 +116,28 @@ body.focus-mode-active .focus-fab {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 5rem 1.5rem 6rem 1.5rem;
+    padding: 5rem 1.5rem 10rem 1.5rem;
     max-width: 600px;
     margin: 0 auto;
     width: 100%;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ff-accent) transparent;
+}
+
+.focus-content-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.focus-content-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.focus-content-wrapper::-webkit-scrollbar-thumb {
+    background: var(--ff-accent);
+    border-radius: 3px;
 }
 
 
@@ -383,11 +399,24 @@ body.focus-mode-active .focus-fab {
 }
 
 
-/* Sección Inferior - Botón de Acción */
+/* Sección Inferior - Botón de Acción (Fijo encima del footer) */
 .focus-bottom-section {
-    flex-shrink: 0;
-    margin-top: 1.5rem;
+    position: fixed;
+    bottom: 3.5rem;
+    left: 0;
+    right: 0;
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+    z-index: 100001;
     animation: fadeInUp 0.6s ease-out 0.7s both;
+    pointer-events: none;
+    background: linear-gradient(0deg, var(--ff-bg-dark) 0%, rgba(10, 17, 40, 0.95) 50%, transparent 100%);
+}
+
+.focus-bottom-section .focus-action-btn {
+    pointer-events: auto;
 }
 
 .focus-action-btn {
@@ -621,8 +650,17 @@ body.focus-mode-active .focus-fab {
         padding: 2.5rem 1.5rem 1.5rem 1.5rem;
     }
     
+    .focus-content-wrapper {
+        padding: 4rem 1rem 9rem 1rem;
+    }
+    
     .focus-title {
         font-size: 1.8rem;
+    }
+    
+    .focus-bottom-section {
+        bottom: 3rem;
+        padding: 1.2rem 1rem 0.8rem 1rem;
     }
     
     .focus-action-btn {

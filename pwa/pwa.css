@@ -1,0 +1,256 @@
+/* ========================================
+   PWA INSTALL BANNER - Mobile First Design
+   ======================================== */
+
+/* Banner de Instalación PWA */
+.pwa-install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 1rem 1.2rem 1rem;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 99998;
+    display: none;
+    animation: slideUpBanner 0.4s ease-out;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.pwa-install-banner.show {
+    display: block;
+}
+
+@keyframes slideUpBanner {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Contenedor del banner */
+.pwa-banner-content {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+
+/* Icono de la app */
+.pwa-banner-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+    animation: bounceIcon 2s ease-in-out infinite;
+}
+
+@keyframes bounceIcon {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Texto del banner */
+.pwa-banner-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.pwa-banner-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.3rem 0;
+    line-height: 1.2;
+}
+
+.pwa-banner-description {
+    font-size: 0.85rem;
+    margin: 0;
+    opacity: 0.95;
+    line-height: 1.3;
+}
+
+/* Botones del banner */
+.pwa-banner-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.pwa-install-btn {
+    background: white;
+    color: #667eea;
+    border: none;
+    padding: 0.7rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.pwa-install-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.pwa-install-btn:active {
+    transform: translateY(0);
+}
+
+.pwa-close-btn {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.pwa-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.pwa-close-btn:active {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Variantes por Plataforma */
+
+/* iOS - Sin botón de instalar automático */
+.pwa-install-banner.ios-style .pwa-banner-description {
+    font-size: 0.8rem;
+}
+
+.pwa-install-banner.ios-style .pwa-install-btn {
+    display: none;
+}
+
+.pwa-install-banner.ios-style .pwa-banner-actions {
+    flex-direction: row;
+}
+
+/* Android - Con botón de instalar */
+.pwa-install-banner.android-style .pwa-banner-actions {
+    flex-direction: column;
+}
+
+/* Desktop - Con botón de instalar */
+.pwa-install-banner.desktop-style .pwa-banner-actions {
+    flex-direction: column;
+}
+
+/* Generic - Sin botón de instalar */
+.pwa-install-banner.generic-style .pwa-install-btn {
+    display: none;
+}
+
+.pwa-install-banner.generic-style .pwa-banner-actions {
+    flex-direction: row;
+}
+
+/* Firefox - Ocultar botón de instalar (no soporta prompt automático) */
+@-moz-document url-prefix() {
+    .pwa-install-btn {
+        display: none !important;
+    }
+    
+    .pwa-banner-actions {
+        flex-direction: row !important;
+    }
+}
+
+/* Icono de compartir iOS */
+.pwa-ios-share-icon {
+    display: inline-block;
+    font-size: 1.1rem;
+    vertical-align: middle;
+    margin: 0 0.2rem;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 600px) {
+    .pwa-install-banner {
+        padding: 0.9rem 0.8rem 1rem 0.8rem;
+    }
+    
+    .pwa-banner-content {
+        gap: 0.8rem;
+    }
+    
+    .pwa-banner-icon {
+        font-size: 2rem;
+    }
+    
+    .pwa-banner-title {
+        font-size: 0.95rem;
+    }
+    
+    .pwa-banner-description {
+        font-size: 0.8rem;
+    }
+    
+    .pwa-install-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .pwa-close-btn {
+        padding: 0.45rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .pwa-banner-content {
+        flex-wrap: wrap;
+    }
+    
+    .pwa-banner-actions {
+        width: 100%;
+        flex-direction: row;
+        justify-content: stretch;
+    }
+    
+    .pwa-install-btn,
+    .pwa-close-btn {
+        flex: 1;
+    }
+}
+
+/* Ajustar el padding del body cuando el banner está visible */
+body.pwa-banner-visible {
+    padding-bottom: 120px;
+}
+
+@media (max-width: 600px) {
+    body.pwa-banner-visible {
+        padding-bottom: 110px;
+    }
+}
+
+@media (max-width: 400px) {
+    body.pwa-banner-visible {
+        padding-bottom: 130px;
+    }
+}

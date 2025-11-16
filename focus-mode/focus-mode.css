@@ -1,0 +1,604 @@
+/* ========================================
+   MODO ENFOQUE - Diseño Simple y Coherente
+   ======================================== */
+
+/* FAB - Botón Flotante */
+.focus-fab {
+    position: fixed;
+    bottom: 80px;
+    left: 1rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    font-size: 1.8rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.focus-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.focus-fab:active {
+    transform: scale(0.95);
+}
+
+.focus-mode-overlay.active ~ .focus-fab {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Overlay - Pantalla Completa Real */
+.focus-mode-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, 
+        var(--ff-bg-dark) 0%, 
+        var(--ff-bg-medium) 100%);
+    z-index: 99999;
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease-in-out;
+}
+
+.focus-mode-overlay.active {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Container Principal - Pantalla Completa Vertical */
+.focus-mode-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    flex-direction: column;
+    padding: 0;
+    overflow-y: auto;
+    z-index: 100000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease-in-out;
+}
+
+.focus-mode-container.active {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Ocultar todo cuando modo zen está activo */
+body.focus-mode-active .navbar,
+body.focus-mode-active .tabs,
+body.focus-mode-active main,
+body.focus-mode-active .focus-fab {
+    display: none !important;
+}
+
+/* ========================================
+   TARJETA DE MISIÓN - Diseño Zen Optimizado
+   ======================================== */
+
+.focus-mission-card {
+    background: var(--ff-bg-dark);
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: relative;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ff-accent) transparent;
+}
+
+/* Contenedor principal con padding */
+.focus-content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 6rem 1.5rem 2rem 1.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.focus-mission-card::-webkit-scrollbar {
+    width: 6px;
+}
+
+.focus-mission-card::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.focus-mission-card::-webkit-scrollbar-thumb {
+    background: var(--ff-accent);
+    border-radius: 3px;
+}
+
+/* Header Fijo - Misión Actual */
+.focus-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, var(--ff-bg-dark) 0%, rgba(10, 17, 40, 0.95) 100%);
+    padding: 0.9rem;
+    padding-top: 1.3rem;
+    text-align: center;
+    z-index: 100001;
+    border-bottom: 1px solid rgba(var(--ff-accent-rgb), 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.focus-mission-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+/* Botón de Cierre */
+.focus-close-btn {
+    position: fixed;
+    top: 1.2rem;
+    right: 1.5rem;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 100002;
+    line-height: 1;
+    padding: 0;
+}
+
+.focus-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 1);
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* Sección Central - Título de la Misión */
+.focus-main-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.focus-title {
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: var(--ff-text-light);
+    line-height: 1.15;
+    word-break: break-word;
+    letter-spacing: -1px;
+    margin: 0;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Ajuste cuando hay descripción */
+.focus-mission-card:not(.no-description) .focus-main-section {
+    flex: 0;
+    padding: 1rem 0;
+}
+
+.focus-mission-card:not(.no-description) .focus-title {
+    font-size: 2.2rem;
+}
+
+/* Descripción */
+.focus-description {
+    background: rgba(var(--ff-accent-rgb), 0.08);
+    border-left: 4px solid var(--ff-accent);
+    padding: 1.2rem 1.5rem;
+    border-radius: var(--border-radius-md);
+    margin-bottom: 3rem;
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--ff-text-dark);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ff-accent) transparent;
+    border: 1px solid rgba(var(--ff-accent-rgb), 0.2);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    flex-grow: 1;
+}
+
+.focus-description::-webkit-scrollbar {
+    width: 6px;
+}
+
+.focus-description::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.focus-description::-webkit-scrollbar-thumb {
+    background: var(--ff-accent);
+    border-radius: 3px;
+}
+
+/* Progreso de Repeticiones */
+.focus-progress {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.focus-progress-label {
+    font-size: 0.9rem;
+    color: var(--ff-text-dark);
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.focus-progress-bar {
+    width: 100%;
+    height: 12px;
+    background: rgba(var(--ff-accent-rgb), 0.15);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 0.8rem;
+}
+
+.focus-progress-fill {
+    height: 100%;
+    background: var(--positive-gradient);
+    border-radius: 12px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.focus-progress-fill::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.4), 
+        transparent);
+    animation: progressShine 2s ease-in-out infinite;
+}
+
+@keyframes progressShine {
+    0% {
+        left: -100%;
+    }
+    50%, 100% {
+        left: 200%;
+    }
+}
+
+.focus-progress-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+    font-family: 'Orbitron', sans-serif;
+    animation: progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Footer - Categoría Sutil */
+.focus-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    text-align: center;
+    background: linear-gradient(0deg, var(--ff-bg-dark) 0%, rgba(10, 17, 40, 0.9) 100%);
+    border-top: 1px solid rgba(var(--ff-accent-rgb), 0.1);
+    z-index: 100001;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.focus-category {
+    display: inline-block;
+    color: var(--ff-text-dark);
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+
+/* Sección Inferior - Botón de Acción */
+.focus-bottom-section {
+    flex-shrink: 0;
+    padding-top: 2rem;
+    padding-bottom: 5rem;
+}
+
+.focus-action-btn {
+    background: var(--positive-gradient);
+    color: var(--ff-bg-dark);
+    border: none;
+    border-radius: 16px;
+    padding: 1.6rem 2rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    box-shadow: 
+        0 8px 24px rgba(88, 228, 120, 0.3),
+        0 0 0 0 rgba(88, 228, 120, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.focus-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.2), 
+        transparent);
+    transition: left 0.5s ease;
+}
+
+.focus-action-btn:hover::before {
+    left: 100%;
+}
+
+.focus-action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 12px 32px rgba(88, 228, 120, 0.4),
+        0 0 0 4px rgba(88, 228, 120, 0.15);
+}
+
+.focus-action-btn:active {
+    transform: translateY(-1px);
+}
+
+/* Animación al completar */
+.focus-action-btn.completing {
+    animation: completeSuccess 0.6s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes completeSuccess {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 
+            0 0 40px rgba(88, 228, 120, 0.8),
+            0 0 80px rgba(88, 228, 120, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+}
+
+.focus-action-icon {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.focus-action-text {
+    font-size: 1.25rem;
+}
+
+.focus-action-points {
+    background: rgba(10, 17, 40, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    border: 1px solid rgba(10, 17, 40, 0.2);
+}
+
+/* ========================================
+   CELEBRACIÓN AL COMPLETAR
+   ======================================== */
+
+.focus-celebration {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100003;
+    pointer-events: none;
+}
+
+.focus-celebration-icon {
+    font-size: 8rem;
+    animation: celebrationBounce 0.8s ease-out;
+}
+
+@keyframes celebrationBounce {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.3) rotate(180deg);
+        opacity: 1;
+    }
+    70% {
+        transform: scale(0.9) rotate(360deg);
+    }
+    100% {
+        transform: scale(1) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.focus-celebration-text {
+    position: absolute;
+    top: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--ff-accent);
+    white-space: nowrap;
+    animation: celebrationText 0.8s ease-out;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes celebrationText {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    30% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+}
+
+/* Confetti */
+.focus-confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background: var(--ff-accent);
+    z-index: 100003;
+    pointer-events: none;
+    animation: confettiFall 1.5s ease-out forwards;
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* ========================================
+   ESTADO VACÍO
+   ======================================== */
+
+.focus-empty-icon {
+    font-size: 6rem;
+    margin-bottom: 2rem;
+    animation: celebrate 2s ease-in-out infinite;
+    display: block;
+}
+
+@keyframes celebrate {
+    0%, 100% {
+        transform: scale(1) rotate(0deg);
+    }
+    25% {
+        transform: scale(1.1) rotate(-10deg);
+    }
+    75% {
+        transform: scale(1.1) rotate(10deg);
+    }
+}
+
+.focus-empty-message {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--ff-text-dark);
+    margin: 2rem 0 0 0;
+    opacity: 0.8;
+}
+
+/* Botón de salir */
+.focus-exit-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.focus-exit-btn:hover {
+    box-shadow: 
+        0 12px 32px rgba(102, 126, 234, 0.4),
+        0 0 0 4px rgba(102, 126, 234, 0.15);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 600px) {
+    .focus-mission-card {
+        padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+    }
+    
+    .focus-title {
+        font-size: 1.8rem;
+    }
+    
+    .focus-action-btn {
+        padding: 1.1rem 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .focus-close-btn {
+        top: 0.8rem;
+        right: 0.8rem;
+        width: 32px;
+        height: 32px;
+        font-size: 1.3rem;
+    }
+}

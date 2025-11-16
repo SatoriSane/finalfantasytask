@@ -102,6 +102,16 @@
                     quickAddBtn.style.display = 'none';
                 }
             }
+
+            // Controlar visibilidad del botón de modo enfoque
+            const focusModeBtn = document.getElementById('focusModeToggleBtn');
+            if (focusModeBtn) {
+                if (tabId === 'tab-today') {
+                    focusModeBtn.style.display = 'flex';
+                } else {
+                    focusModeBtn.style.display = 'none';
+                }
+            }
             
             // Las llamadas a renderizado específicas de cada módulo se manejan en script.js al cambiar de pestaña.
         },

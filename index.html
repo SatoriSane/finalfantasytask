@@ -6,6 +6,7 @@
     <title>FFTask</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="github-sync/github-sync.css">
+    <link rel="stylesheet" href="focus-mode/focus-mode.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0A1128">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -60,12 +61,18 @@
             <span id="pointsValue">0</span>
         </button>
     </header>
+    
+    <!-- Botón FAB para Modo Enfoque -->
+    <button id="focusModeToggleBtn" class="focus-fab" aria-label="Activar modo enfoque" title="Modo Zen">
+        🧘
+    </button>
     <div id="notifyMessagesContainer" aria-live="polite"></div>
     <main>
         <section id="tab-today" role="tabpanel" tabindex="0" aria-labelledby="navToday" class="active"
             aria-hidden="false">
             <div class="today-header">
                 <h2 id="todayTitle">Misiones de Hoy</h2>
+                
                 <!-- Barra de puntos con icono y contador -->
                 <div class="today-points-bar-wrapper">
                     <!-- Icono SVG a la izquierda -->
@@ -547,6 +554,9 @@
     <script src="github-sync/github-sync-state.js"></script>
     <script src="github-sync/github-sync-ui.js"></script>
     <script src="github-sync/github-sync-events.js"></script>
+
+    <!-- Focus Mode Scripts -->
+    <script src="focus-mode/focus-mode.js"></script>
 
     <!-- Registro del Service Worker     -->
     <script>

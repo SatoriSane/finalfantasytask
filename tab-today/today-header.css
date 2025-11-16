@@ -1,6 +1,9 @@
 .today-header {
     text-align: center;
     margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
   }
   
   /* Contenedor flex para distribuir los botones y el título */

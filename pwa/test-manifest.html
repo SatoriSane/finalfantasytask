@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="../manifest.json">
+    <title>Test Manifest URLs</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0A1128;
+            color: #fff;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 { color: #00E4FF; }
+        .test {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .ok { color: #58E478; }
+        .error { color: #FF4444; }
+        pre {
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .info { color: #00E4FF; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test de Resolución de URLs del Manifest</h1>
+    
+    <div class="info">
+        <strong>URL Actual:</strong> <span id="currentUrl"></span>
+    </div>
+    
+    <div class="test">
+        <h2>Manifest Cargado:</h2>
+        <pre id="manifestContent"></pre>
+    </div>
+    
+    <div class="test">
+        <h2>URLs Resueltas:</h2>
+        <pre id="resolvedUrls"></pre>
+    </div>
+    
+    <div class="test">
+        <h2>Simulación GitHub Pages:</h2>
+        <pre id="githubSimulation"></pre>
+    </div>
+
+    <script>
+        document.getElementById('currentUrl').textContent = window.location.href;
+        
+        async function testManifest() {
+            try {
+                const manifestLink = document.querySelector('link[rel="manifest"]');
+                const manifestUrl = new URL(manifestLink.href);
+                
+                // Cargar manifest
+                const response = await fetch(manifestLink.href);
+                const manifest = await response.json();
+                
+                // Mostrar contenido
+                document.getElementById('manifestContent').textContent = 
+                    JSON.stringify(manifest, null, 2);
+                
+                // Resolver URLs
+                const baseUrl = new URL(manifestLink.href);
+                const startUrl = new URL(manifest.start_url, baseUrl);
+                const scopeUrl = new URL(manifest.scope, baseUrl);
+                
+                const resolved = {
+                    "Manifest URL": manifestLink.href,
+                    "Base URL": baseUrl.href,
+                    "start_url (original)": manifest.start_url,
+                    "start_url (resuelto)": startUrl.href,
+                    "scope (original)": manifest.scope,
+                    "scope (resuelto)": scopeUrl.href
+                };
+                
+                document.getElementById('resolvedUrls').textContent = 
+                    JSON.stringify(resolved, null, 2);
+                
+                // Simular GitHub Pages
+                const githubBase = "https://satorisane.github.io/finalfantasytask/";
+                const githubManifestUrl = new URL("manifest.json", githubBase);
+                const githubStartUrl = new URL(manifest.start_url, githubManifestUrl);
+                const githubScopeUrl = new URL(manifest.scope, githubManifestUrl);
+                
+                const githubSimulation = {
+                    "GitHub Pages Base": githubBase,
+                    "Manifest estaría en": githubManifestUrl.href,
+                    "start_url se resolvería a": githubStartUrl.href,
+                    "scope se resolvería a": githubScopeUrl.href,
+                    "✅ Correcto?": githubStartUrl.href === githubBase && 
+                                   githubScopeUrl.href === githubBase ? "SÍ" : "NO"
+                };
+                
+                document.getElementById('githubSimulation').textContent = 
+                    JSON.stringify(githubSimulation, null, 2);
+                
+            } catch (e) {
+                document.getElementById('manifestContent').textContent = 
+                    `Error: ${e.message}`;
+            }
+        }
+        
+        window.addEventListener('load', testManifest);
+    </script>
+</body>
+</html>

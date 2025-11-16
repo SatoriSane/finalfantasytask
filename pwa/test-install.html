@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0A1128">
+    <link rel="manifest" href="../manifest.json">
+    <title>Test Instalación PWA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0A1128 0%, #1a2744 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #00E4FF;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        .status {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .status-item:last-child { border-bottom: none; }
+        .status-label {
+            font-weight: 600;
+            color: #00E4FF;
+        }
+        .status-value {
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .status-ok { color: #58E478; }
+        .status-error { color: #FF4444; }
+        .status-pending { color: #FFA500; }
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-line {
+            margin: 3px 0;
+            line-height: 1.4;
+        }
+        .icon { font-size: 24px; margin-right: 10px; }
+        .alert {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #FF4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .success {
+            background: rgba(88, 228, 120, 0.2);
+            border: 1px solid #58E478;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="icon">📱</span>Test Instalación PWA</h1>
+        
+        <div class="status" id="status">
+            <div class="status-item">
+                <span class="status-label">Protocolo:</span>
+                <span class="status-value" id="protocol">Verificando...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Service Worker:</span>
+                <span class="status-value" id="sw">Verificando...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Manifest:</span>
+                <span class="status-value" id="manifest">Verificando...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Instalable:</span>
+                <span class="status-value" id="installable">Esperando...</span>
+            </div>
+        </div>
+        
+        <div id="message"></div>
+        
+        <button id="registerBtn" onclick="registerServiceWorker()">
+            🔄 Registrar Service Worker
+        </button>
+        
+        <button id="installBtn" onclick="installApp()" disabled>
+            📥 Instalar App
+        </button>
+        
+        <button onclick="window.location.href='../index.html'">
+            🏠 Ir a la App Principal
+        </button>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let deferredPrompt = null;
+        const logDiv = document.getElementById('log');
+        
+        function log(message, type = 'info') {
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            const time = new Date().toLocaleTimeString();
+            const emoji = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            line.textContent = `[${time}] ${emoji} ${message}`;
+            line.style.color = type === 'success' ? '#58E478' : type === 'error' ? '#FF4444' : '#00E4FF';
+            logDiv.appendChild(line);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatus(id, text, status) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = `status-value status-${status}`;
+        }
+        
+        function showMessage(message, type = 'alert') {
+            const msgDiv = document.getElementById('message');
+            msgDiv.className = type;
+            msgDiv.innerHTML = message;
+        }
+        
+        // Verificar protocolo
+        function checkProtocol() {
+            const isSecure = location.protocol === 'https:' || 
+                           location.hostname === 'localhost' || 
+                           location.hostname === '127.0.0.1';
+            
+            updateStatus('protocol', 
+                `${location.protocol}//${location.hostname}:${location.port}`,
+                isSecure ? 'ok' : 'error'
+            );
+            
+            if (!isSecure) {
+                showMessage('⚠️ PWA requiere HTTPS o localhost. Estás en: ' + location.protocol, 'alert');
+                log('Protocolo inseguro detectado', 'error');
+            } else {
+                log('Protocolo seguro OK', 'success');
+            }
+            
+            return isSecure;
+        }
+        
+        // Verificar manifest
+        async function checkManifest() {
+            const link = document.querySelector('link[rel="manifest"]');
+            if (!link) {
+                updateStatus('manifest', 'No encontrado', 'error');
+                log('Link al manifest no encontrado', 'error');
+                return false;
+            }
+            
+            try {
+                const res = await fetch(link.href);
+                const manifest = await res.json();
+                updateStatus('manifest', `${manifest.short_name} ✓`, 'ok');
+                log(`Manifest cargado: ${manifest.name}`, 'success');
+                log(`  start_url: ${manifest.start_url}`, 'info');
+                log(`  icons: ${manifest.icons?.length || 0}`, 'info');
+                return true;
+            } catch (e) {
+                updateStatus('manifest', 'Error al cargar', 'error');
+                log(`Error cargando manifest: ${e.message}`, 'error');
+                return false;
+            }
+        }
+        
+        // Registrar Service Worker
+        async function registerServiceWorker() {
+            if (!('serviceWorker' in navigator)) {
+                updateStatus('sw', 'No soportado', 'error');
+                showMessage('❌ Tu navegador no soporta Service Workers', 'alert');
+                log('Service Worker no soportado', 'error');
+                return false;
+            }
+            
+            try {
+                log('Registrando Service Worker...', 'info');
+                const registration = await navigator.serviceWorker.register('../service-worker.js');
+                
+                updateStatus('sw', 'Registrado ✓', 'ok');
+                log('Service Worker registrado exitosamente', 'success');
+                log(`  Scope: ${registration.scope}`, 'info');
+                
+                // Esperar a que esté activo
+                if (registration.installing) {
+                    log('Service Worker instalando...', 'info');
+                    registration.installing.addEventListener('statechange', (e) => {
+                        log(`  Estado: ${e.target.state}`, 'info');
+                    });
+                }
+                
+                showMessage('✅ Service Worker registrado. Recarga la página para activarlo.', 'success');
+                
+                return true;
+            } catch (e) {
+                updateStatus('sw', 'Error', 'error');
+                log(`Error registrando SW: ${e.message}`, 'error');
+                showMessage(`❌ Error: ${e.message}`, 'alert');
+                return false;
+            }
+        }
+        
+        // Verificar Service Worker existente
+        async function checkServiceWorker() {
+            if (!('serviceWorker' in navigator)) {
+                updateStatus('sw', 'No soportado', 'error');
+                return false;
+            }
+            
+            const regs = await navigator.serviceWorker.getRegistrations();
+            if (regs.length > 0) {
+                updateStatus('sw', `${regs.length} registrado(s) ✓`, 'ok');
+                log(`${regs.length} Service Worker(s) encontrado(s)`, 'success');
+                regs.forEach((reg, i) => {
+                    log(`  SW ${i+1}: ${reg.active?.state || 'pending'}`, 'info');
+                });
+                return true;
+            } else {
+                updateStatus('sw', 'No registrado', 'pending');
+                log('No hay Service Workers registrados', 'info');
+                return false;
+            }
+        }
+        
+        // Capturar evento de instalación
+        window.addEventListener('beforeinstallprompt', (e) => {
+            log('¡beforeinstallprompt recibido!', 'success');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            updateStatus('installable', 'Sí ✓', 'ok');
+            document.getElementById('installBtn').disabled = false;
+            
+            showMessage('🎉 ¡La app es instalable! Haz click en "Instalar App"', 'success');
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            log('App instalada exitosamente', 'success');
+            showMessage('✅ ¡App instalada! Puedes cerrar esta ventana.', 'success');
+            deferredPrompt = null;
+        });
+        
+        // Instalar app
+        async function installApp() {
+            if (!deferredPrompt) {
+                showMessage('❌ No hay prompt de instalación disponible', 'alert');
+                log('No hay deferredPrompt', 'error');
+                return;
+            }
+            
+            try {
+                log('Mostrando prompt de instalación...', 'info');
+                await deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`, 
+                    outcome === 'accepted' ? 'success' : 'info');
+                
+                if (outcome === 'accepted') {
+                    showMessage('✅ Instalación iniciada...', 'success');
+                }
+                
+                deferredPrompt = null;
+                document.getElementById('installBtn').disabled = true;
+            } catch (e) {
+                log(`Error al instalar: ${e.message}`, 'error');
+                showMessage(`❌ Error: ${e.message}`, 'alert');
+            }
+        }
+        
+        // Inicializar
+        window.addEventListener('load', async () => {
+            log('Página cargada', 'info');
+            
+            const isSecure = checkProtocol();
+            const hasManifest = await checkManifest();
+            const hasSW = await checkServiceWorker();
+            
+            if (!isSecure) {
+                showMessage('⚠️ Debes usar HTTPS o localhost para instalar PWA', 'alert');
+            } else if (!hasSW) {
+                showMessage('ℹ️ Haz click en "Registrar Service Worker" para continuar', 'alert');
+            } else if (hasManifest) {
+                showMessage('✅ Todo listo. Esperando evento de instalación...', 'success');
+                log('Esperando beforeinstallprompt...', 'info');
+                log('Si no aparece, verifica:', 'info');
+                log('  1. Service Worker activo', 'info');
+                log('  2. Manifest válido', 'info');
+                log('  3. App no instalada previamente', 'info');
+            }
+        });
+    </script>
+</body>
+</html>

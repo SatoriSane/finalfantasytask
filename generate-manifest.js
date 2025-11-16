@@ -1,9 +1,16 @@
-{
+// generate-manifest.js - Script para generar manifest.json dinámicamente
+// Ejecutar: node generate-manifest.js [production|local]
+
+const fs = require('fs');
+const path = require('path');
+
+const args = process.argv.slice(2);
+const env = args[0] || 'local'; // 'production' o 'local'
+
+const manifestBase = {
     "name": "Final Fantasy Task",
     "short_name": "FFTask",
     "description": "Tu gestor de tareas estilo Final Fantasy con gamificación y sistema de puntos.",
-    "start_url": "./",
-    "scope": "./",
     "display": "standalone",
     "orientation": "portrait-primary",
     "background_color": "#0A1128",
@@ -73,4 +80,23 @@
             "form_factor": "narrow"
         }
     ]
+};
+
+// Configurar según entorno
+if (env === 'production') {
+    manifestBase.start_url = "/finalfantasytask/";
+    manifestBase.scope = "/finalfantasytask/";
+    console.log('✅ Generando manifest para PRODUCCIÓN (GitHub Pages)');
+} else {
+    manifestBase.start_url = "./";
+    manifestBase.scope = "./";
+    console.log('✅ Generando manifest para DESARROLLO (localhost)');
 }
+
+// Guardar archivo
+const outputPath = path.join(__dirname, 'manifest.json');
+fs.writeFileSync(outputPath, JSON.stringify(manifestBase, null, 4));
+
+console.log(`📝 Manifest guardado en: ${outputPath}`);
+console.log(`   start_url: ${manifestBase.start_url}`);
+console.log(`   scope: ${manifestBase.scope}`);

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico PWA - FFTask</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #0A1128;
+            color: #fff;
+        }
+        h1 { color: #00E4FF; }
+        .test {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #666;
+        }
+        .test.pass { border-left-color: #58E478; }
+        .test.fail { border-left-color: #FF4444; }
+        .test h3 { margin: 0 0 10px 0; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover { background: #5568d3; }
+        #log {
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-line { margin: 5px 0; }
+        .log-success { color: #58E478; }
+        .log-error { color: #FF4444; }
+        .log-info { color: #00E4FF; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico PWA</h1>
+    
+    <div id="tests"></div>
+    
+    <div>
+        <button onclick="runTests()">🔄 Ejecutar Tests</button>
+        <button onclick="forceInstall()">📱 Forzar Instalación</button>
+        <button onclick="clearLog()">🗑️ Limpiar Log</button>
+    </div>
+    
+    <div id="log"></div>
+
+    <script>
+        const testsDiv = document.getElementById('tests');
+        const logDiv = document.getElementById('log');
+        
+        let deferredPrompt = null;
+        
+        // Capturar el evento beforeinstallprompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            log('✅ beforeinstallprompt disparado!', 'success');
+            e.preventDefault();
+            deferredPrompt = e;
+            log('Prompt guardado, ahora puedes instalar', 'info');
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            log('✅ App instalada exitosamente!', 'success');
+        });
+        
+        function log(message, type = 'info') {
+            const line = document.createElement('div');
+            line.className = `log-line log-${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(line);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+        
+        async function runTests() {
+            testsDiv.innerHTML = '';
+            log('Iniciando tests...', 'info');
+            
+            // Test 1: HTTPS/Localhost
+            const isSecure = location.protocol === 'https:' || 
+                           location.hostname === 'localhost' || 
+                           location.hostname === '127.0.0.1';
+            addTest('Protocolo Seguro', isSecure, 
+                isSecure ? `✅ ${location.protocol}//${location.hostname}` : 
+                '❌ Requiere HTTPS o localhost');
+            log(`Protocolo: ${location.protocol}//${location.hostname}`, isSecure ? 'success' : 'error');
+            
+            // Test 2: Service Worker Support
+            const swSupported = 'serviceWorker' in navigator;
+            addTest('Service Worker API', swSupported, 
+                swSupported ? '✅ Soportado' : '❌ No soportado');
+            log(`Service Worker API: ${swSupported ? 'Soportado' : 'No soportado'}`, 
+                swSupported ? 'success' : 'error');
+            
+            // Test 3: Service Worker Registrado
+            if (swSupported) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                const hasReg = regs.length > 0;
+                addTest('Service Worker Registrado', hasReg, 
+                    hasReg ? `✅ ${regs.length} registrado(s)` : '❌ No registrado');
+                log(`Service Workers: ${regs.length}`, hasReg ? 'success' : 'error');
+                
+                if (hasReg) {
+                    regs.forEach((reg, i) => {
+                        log(`  SW ${i+1}: ${reg.scope}`, 'info');
+                        log(`  Estado: ${reg.active?.state || 'N/A'}`, 'info');
+                    });
+                }
+            }
+            
+            // Test 4: Manifest
+            const manifestLink = document.querySelector('link[rel="manifest"]');
+            const hasManifest = !!manifestLink;
+            addTest('Manifest Link', hasManifest, 
+                hasManifest ? `✅ ${manifestLink.href}` : '❌ No encontrado');
+            log(`Manifest: ${hasManifest ? manifestLink.href : 'No encontrado'}`, 
+                hasManifest ? 'success' : 'error');
+            
+            if (hasManifest) {
+                try {
+                    const res = await fetch(manifestLink.href);
+                    const manifest = await res.json();
+                    log(`Manifest cargado: ${manifest.name}`, 'success');
+                    log(`  start_url: ${manifest.start_url}`, 'info');
+                    log(`  display: ${manifest.display}`, 'info');
+                    log(`  icons: ${manifest.icons?.length || 0}`, 'info');
+                    
+                    const has192 = manifest.icons?.some(i => i.sizes.includes('192'));
+                    const has512 = manifest.icons?.some(i => i.sizes.includes('512'));
+                    addTest('Iconos Requeridos', has192 && has512,
+                        `${has192 ? '✅' : '❌'} 192x192 | ${has512 ? '✅' : '❌'} 512x512`);
+                } catch (e) {
+                    log(`Error cargando manifest: ${e.message}`, 'error');
+                    addTest('Manifest Válido', false, `❌ ${e.message}`);
+                }
+            }
+            
+            // Test 5: beforeinstallprompt
+            const hasPrompt = !!deferredPrompt;
+            addTest('Evento beforeinstallprompt', hasPrompt,
+                hasPrompt ? '✅ Capturado' : '⏳ Esperando...');
+            log(`beforeinstallprompt: ${hasPrompt ? 'Capturado' : 'No recibido aún'}`, 
+                hasPrompt ? 'success' : 'info');
+            
+            // Test 6: Display Mode
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            addTest('Modo Standalone', isStandalone,
+                isStandalone ? '✅ App instalada' : 'ℹ️ En navegador');
+            log(`Display mode: ${isStandalone ? 'standalone' : 'browser'}`, 'info');
+            
+            // Test 7: User Agent
+            log(`User Agent: ${navigator.userAgent}`, 'info');
+            
+            log('Tests completados', 'success');
+        }
+        
+        function addTest(name, passed, details) {
+            const test = document.createElement('div');
+            test.className = `test ${passed ? 'pass' : 'fail'}`;
+            test.innerHTML = `
+                <h3>${passed ? '✅' : '❌'} ${name}</h3>
+                <p>${details}</p>
+            `;
+            testsDiv.appendChild(test);
+        }
+        
+        async function forceInstall() {
+            if (!deferredPrompt) {
+                log('❌ No hay prompt disponible. La app no es instalable aún.', 'error');
+                log('Posibles razones:', 'info');
+                log('  1. No estás en HTTPS o localhost', 'info');
+                log('  2. Service Worker no registrado', 'info');
+                log('  3. Manifest inválido', 'info');
+                log('  4. Ya está instalada', 'info');
+                log('  5. El navegador no soporta PWA', 'info');
+                return;
+            }
+            
+            try {
+                log('Mostrando prompt de instalación...', 'info');
+                await deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                log(`Usuario ${outcome === 'accepted' ? 'aceptó' : 'rechazó'} la instalación`, 
+                    outcome === 'accepted' ? 'success' : 'info');
+                deferredPrompt = null;
+            } catch (e) {
+                log(`Error al instalar: ${e.message}`, 'error');
+            }
+        }
+        
+        // Auto-ejecutar tests al cargar
+        window.addEventListener('load', () => {
+            log('Página cargada', 'success');
+            setTimeout(runTests, 500);
+        });
+    </script>
+</body>
+</html>

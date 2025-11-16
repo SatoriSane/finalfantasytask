@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar PWA en GitHub Pages</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background: linear-gradient(135deg, #0A1128 0%, #1a2744 100%);
+            color: #fff;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { color: #00E4FF; }
+        .test {
+            background: rgba(255,255,255,0.08);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border-left: 4px solid #666;
+        }
+        .test.pass { border-left-color: #58E478; }
+        .test.fail { border-left-color: #FF4444; }
+        .test h3 { margin: 0 0 10px 0; font-size: 18px; }
+        .test p { margin: 5px 0; opacity: 0.9; }
+        .url { 
+            background: rgba(0,0,0,0.3); 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { background: #5568d3; }
+        .summary {
+            background: rgba(0,228,255,0.1);
+            border: 2px solid #00E4FF;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .summary h2 { margin: 0 0 10px 0; color: #00E4FF; }
+        .score { font-size: 48px; font-weight: bold; margin: 10px 0; }
+        .score.good { color: #58E478; }
+        .score.bad { color: #FF4444; }
+        .instructions {
+            background: rgba(255,165,0,0.1);
+            border: 1px solid #FFA500;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .instructions h3 { color: #FFA500; margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Verificación PWA en GitHub Pages</h1>
+    
+    <div class="instructions">
+        <h3>📋 Instrucciones</h3>
+        <p>1. Haz push de tus cambios a GitHub</p>
+        <p>2. Espera 1-2 minutos para que se despliegue</p>
+        <p>3. Abre esta página desde: <strong>https://satorisane.github.io/finalfantasytask/pwa/verify-github.html</strong></p>
+        <p>4. Haz click en "Ejecutar Verificación"</p>
+    </div>
+    
+    <div>
+        <button onclick="runVerification()">🔄 Ejecutar Verificación</button>
+        <button onclick="location.reload()">♻️ Recargar</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <div id="summary" style="display:none;" class="summary"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        const summaryDiv = document.getElementById('summary');
+        let passed = 0;
+        let failed = 0;
+        
+        function addTest(name, status, message, details = '') {
+            const test = document.createElement('div');
+            test.className = `test ${status ? 'pass' : 'fail'}`;
+            
+            const icon = status ? '✅' : '❌';
+            test.innerHTML = `
+                <h3>${icon} ${name}</h3>
+                <p>${message}</p>
+                ${details ? `<div class="url">${details}</div>` : ''}
+            `;
+            
+            resultsDiv.appendChild(test);
+            
+            if (status) passed++;
+            else failed++;
+        }
+        
+        async function runVerification() {
+            resultsDiv.innerHTML = '';
+            summaryDiv.style.display = 'none';
+            passed = 0;
+            failed = 0;
+            
+            // Test 1: Verificar que estamos en GitHub Pages
+            const isGitHub = location.hostname === 'satorisane.github.io';
+            addTest(
+                'Ubicación',
+                isGitHub,
+                isGitHub ? 
+                    'Ejecutándose en GitHub Pages' : 
+                    'NO estás en GitHub Pages. Abre esta página desde la URL de GitHub.',
+                location.href
+            );
+            
+            if (!isGitHub) {
+                showSummary();
+                return;
+            }
+            
+            // Test 2: Verificar HTTPS
+            const isHTTPS = location.protocol === 'https:';
+            addTest(
+                'Protocolo HTTPS',
+                isHTTPS,
+                isHTTPS ? 'Usando HTTPS' : 'No está en HTTPS',
+                location.protocol + '//' + location.host
+            );
+            
+            // Test 3: Verificar Manifest
+            try {
+                const manifestUrl = new URL('/finalfantasytask/manifest.json', location.origin);
+                const res = await fetch(manifestUrl);
+                const manifest = await res.json();
+                
+                addTest(
+                    'Manifest Accesible',
+                    true,
+                    `Manifest cargado: ${manifest.name}`,
+                    manifestUrl.href
+                );
+                
+                // Test 4: Verificar start_url
+                const baseUrl = new URL(manifestUrl);
+                const startUrl = new URL(manifest.start_url, baseUrl);
+                const expectedStart = 'https://satorisane.github.io/finalfantasytask/';
+                const startOk = startUrl.href === expectedStart;
+                
+                addTest(
+                    'start_url',
+                    startOk,
+                    startOk ? 
+                        'start_url se resuelve correctamente' : 
+                        `start_url incorrecto. Esperado: ${expectedStart}`,
+                    `Configurado: "${manifest.start_url}" → Resuelve a: ${startUrl.href}`
+                );
+                
+                // Test 5: Verificar scope
+                const scopeUrl = new URL(manifest.scope, baseUrl);
+                const expectedScope = 'https://satorisane.github.io/finalfantasytask/';
+                const scopeOk = scopeUrl.href === expectedScope;
+                
+                addTest(
+                    'scope',
+                    scopeOk,
+                    scopeOk ? 
+                        'scope se resuelve correctamente' : 
+                        `scope incorrecto. Esperado: ${expectedScope}`,
+                    `Configurado: "${manifest.scope}" → Resuelve a: ${scopeUrl.href}`
+                );
+                
+                // Test 6: Verificar iconos
+                const has192 = manifest.icons?.some(i => i.sizes.includes('192'));
+                const has512 = manifest.icons?.some(i => i.sizes.includes('512'));
+                const iconsOk = has192 && has512;
+                
+                addTest(
+                    'Iconos Requeridos',
+                    iconsOk,
+                    iconsOk ? 
+                        'Iconos 192x192 y 512x512 presentes' : 
+                        'Faltan iconos requeridos',
+                    `Total iconos: ${manifest.icons?.length || 0} | 192x192: ${has192 ? '✅' : '❌'} | 512x512: ${has512 ? '✅' : '❌'}`
+                );
+                
+                // Test 7: Verificar que los iconos cargan
+                if (manifest.icons && manifest.icons.length > 0) {
+                    const icon192 = manifest.icons.find(i => i.sizes.includes('192'));
+                    if (icon192) {
+                        try {
+                            const iconUrl = new URL(icon192.src, baseUrl);
+                            const iconRes = await fetch(iconUrl);
+                            addTest(
+                                'Icono 192x192 Accesible',
+                                iconRes.ok,
+                                iconRes.ok ? 'Icono carga correctamente' : 'Error al cargar icono',
+                                iconUrl.href
+                            );
+                        } catch (e) {
+                            addTest(
+                                'Icono 192x192 Accesible',
+                                false,
+                                'Error al verificar icono: ' + e.message
+                            );
+                        }
+                    }
+                }
+                
+            } catch (e) {
+                addTest(
+                    'Manifest',
+                    false,
+                    'Error al cargar manifest: ' + e.message
+                );
+            }
+            
+            // Test 8: Service Worker
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                const hasReg = regs.length > 0;
+                
+                addTest(
+                    'Service Worker',
+                    hasReg,
+                    hasReg ? 
+                        `${regs.length} Service Worker(s) registrado(s)` : 
+                        'No hay Service Workers registrados. Recarga la página.',
+                    hasReg ? regs[0].scope : ''
+                );
+            } else {
+                addTest(
+                    'Service Worker',
+                    false,
+                    'Service Worker no soportado en este navegador'
+                );
+            }
+            
+            // Test 9: Display mode
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            addTest(
+                'Modo de Visualización',
+                true,
+                isStandalone ? 
+                    '✅ App instalada (modo standalone)' : 
+                    'ℹ️ Ejecutándose en navegador (normal)',
+                isStandalone ? 'standalone' : 'browser'
+            );
+            
+            showSummary();
+        }
+        
+        function showSummary() {
+            const total = passed + failed;
+            const percentage = Math.round((passed / total) * 100);
+            const isGood = percentage >= 80;
+            
+            summaryDiv.style.display = 'block';
+            summaryDiv.innerHTML = `
+                <h2>📊 Resultado</h2>
+                <div class="score ${isGood ? 'good' : 'bad'}">${passed}/${total}</div>
+                <p>${percentage}% de tests pasados</p>
+                ${isGood ? 
+                    '<p style="color: #58E478; font-size: 18px; font-weight: 600;">🎉 ¡PWA lista para instalar!</p>' : 
+                    '<p style="color: #FF4444; font-size: 18px; font-weight: 600;">⚠️ Hay errores que corregir</p>'
+                }
+            `;
+        }
+        
+        // Auto-ejecutar si estamos en GitHub Pages
+        window.addEventListener('load', () => {
+            if (location.hostname === 'satorisane.github.io') {
+                setTimeout(runVerification, 500);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -177,6 +177,32 @@
     }
 }
 
+/* Banner cuando la app ya está instalada */
+.pwa-install-banner.installed {
+    background: linear-gradient(135deg, rgba(0, 228, 255, 0.15) 0%, rgba(10, 17, 40, 0.95) 100%);
+    border-top: 2px solid rgba(0, 228, 255, 0.3);
+}
+
+.pwa-install-banner.installed .pwa-banner-icon {
+    color: #58E478;
+    font-size: 2rem;
+}
+
+.pwa-install-banner.installed .pwa-banner-title {
+    color: #58E478;
+}
+
+.pwa-install-banner.installed .pwa-install-btn {
+    background: linear-gradient(135deg, #58E478 0%, #45B864 100%);
+    color: #0A1128;
+}
+
+.pwa-install-banner.installed .pwa-install-btn:hover {
+    background: linear-gradient(135deg, #6AFF8A 0%, #58E478 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(88, 228, 120, 0.4);
+}
+
 /* Icono de compartir iOS */
 .pwa-ios-share-icon {
     display: inline-block;

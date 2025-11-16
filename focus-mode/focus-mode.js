@@ -28,7 +28,6 @@
      * Crea los elementos del DOM necesarios
      */
     function _createFocusModeElements() {
-        // Crear overlay si no existe
         if (!document.getElementById('focusModeOverlay')) {
             const overlay = document.createElement('div');
             overlay.id = 'focusModeOverlay';
@@ -36,21 +35,11 @@
             document.body.appendChild(overlay);
         }
 
-        // Crear contenedor principal si no existe
         if (!document.getElementById('focusModeContainer')) {
             const container = document.createElement('div');
             container.id = 'focusModeContainer';
             container.className = 'focus-mode-container';
             document.body.appendChild(container);
-        }
-
-        // El botón ya está en el HTML, no necesitamos crearlo
-        // Solo verificamos que exista
-        const focusBtn = document.getElementById('focusModeToggleBtn');
-        if (focusBtn) {
-            console.log('✅ Focus Mode button found in HTML');
-        } else {
-            console.warn('⚠️ Focus Mode button not found in HTML');
         }
     }
 
@@ -58,23 +47,12 @@
      * Adjunta event listeners
      */
     function _attachEventListeners() {
-        try {
-            // NO adjuntar listener al botón de toggle - se maneja con delegación de eventos
-            console.log('✅ Focus Mode event listeners setup (toggle handled by delegation)');
+        const overlay = document.getElementById('focusModeOverlay');
+        if (overlay) overlay.addEventListener('click', deactivate);
 
-            // Click en overlay para cerrar
-            const overlay = document.getElementById('focusModeOverlay');
-            if (overlay) {
-                overlay.addEventListener('click', deactivate);
-            }
-
-            // Escuchar cuando se completan tareas (solo si App.events existe)
-            if (window.App && window.App.events && typeof window.App.events.on === 'function') {
-                App.events.on('taskCompleted', _handleTaskCompleted);
-                App.events.on('todayTasksUpdated', _handleTasksUpdated);
-            }
-        } catch (error) {
-            console.error('❌ Error attaching Focus Mode event listeners:', error);
+        if (App.events?.on) {
+            App.events.on('taskCompleted', _handleTaskCompleted);
+            App.events.on('todayTasksUpdated', _handleTasksUpdated);
         }
     }
 
@@ -82,45 +60,24 @@
      * Activa el modo de enfoque
      */
     function activate() {
-        console.log('🎯 Activating Focus Mode...');
-        
-        if (_isActive) {
-            console.log('⚠️ Focus Mode already active');
-            return;
-        }
+        if (_isActive) return;
 
         const firstIncompleteTask = _getFirstIncompleteTask();
         
         if (!firstIncompleteTask) {
-            console.log('ℹ️ No incomplete tasks found');
-            if (App.events && App.events.emit) {
-                App.events.emit('shownotifyMessage', 'No hay misiones pendientes para hoy. ¡Buen trabajo! 🎉');
-            } else {
-                alert('No hay misiones pendientes para hoy. ¡Buen trabajo! 🎉');
-            }
+            const msg = 'No hay misiones pendientes para hoy. ¡Buen trabajo! 🎉';
+            App.events?.emit ? App.events.emit('shownotifyMessage', msg) : alert(msg);
             return;
         }
 
         _isActive = true;
         _currentFocusTaskId = firstIncompleteTask.id;
 
-        // Activar overlay y container
-        const overlay = document.getElementById('focusModeOverlay');
-        const container = document.getElementById('focusModeContainer');
-        
-        console.log('Overlay found:', !!overlay);
-        console.log('Container found:', !!container);
-        
-        if (overlay) overlay.classList.add('active');
-        if (container) container.classList.add('active');
-
-        // Agregar clase al body para ocultar todo lo demás
+        document.getElementById('focusModeOverlay')?.classList.add('active');
+        document.getElementById('focusModeContainer')?.classList.add('active');
         document.body.classList.add('focus-mode-active');
 
-        // Renderizar la misión
         _renderFocusedMission(firstIncompleteTask);
-
-        console.log('🎯 Focus Mode activated for task:', firstIncompleteTask.name);
     }
 
     /**
@@ -132,44 +89,26 @@
         _isActive = false;
         _currentFocusTaskId = null;
 
-        // Desactivar overlay y container
-        const overlay = document.getElementById('focusModeOverlay');
-        const container = document.getElementById('focusModeContainer');
-        
-        if (overlay) overlay.classList.remove('active');
-        if (container) container.classList.remove('active');
-
-        // Quitar clase del body para restaurar todo
+        document.getElementById('focusModeOverlay')?.classList.remove('active');
+        document.getElementById('focusModeContainer')?.classList.remove('active');
         document.body.classList.remove('focus-mode-active');
-
-        console.log('🎯 Focus Mode deactivated');
     }
 
     /**
      * Toggle del modo de enfoque
      */
     function toggle() {
-        console.log('🎯 Focus Mode toggle called');
-        
-        // Inicializar solo la primera vez que se llama
         if (!_initialized) {
-            console.log('🎯 First time - initializing Focus Mode...');
             init();
             _initialized = true;
         }
         
-        // Verificar que App.state esté disponible
-        if (!window.App || !window.App.state) {
-            console.error('❌ App.state not available');
+        if (!App?.state) {
             alert('El sistema aún no está listo. Por favor, espera un momento.');
             return;
         }
         
-        if (_isActive) {
-            deactivate();
-        } else {
-            activate();
-        }
+        _isActive ? deactivate() : activate();
     }
 
     /**
@@ -204,12 +143,39 @@
         return orderedTasks[0] || null;
     }
 
+
     /**
-     * Obtiene el conteo de tareas incompletas
+     * Obtiene datos de la tarea para renderizar
      */
-    function _getIncompleteTasksCount() {
-        const todayTasks = App.state.getTodayTasks();
-        return todayTasks.filter(task => !task.completed).length;
+    function _getTaskData(task) {
+        const state = App.state.get();
+        const mission = task.missionId ? state.missions.find(m => m.id === task.missionId) : null;
+        
+        // Categoría
+        let categoryName = 'Sin propósito';
+        const categoryId = task.categoryId || mission?.categoryId;
+        if (categoryId) {
+            const category = App.state.getCategoryById(categoryId);
+            categoryName = category?.name || 'Sin propósito';
+        }
+
+        // Progreso
+        const maxReps = task.dailyRepetitions?.max || 1;
+        const currentReps = task.currentRepetitions || 0;
+        const progressPercentage = (currentReps / maxReps) * 100;
+
+        // Puntos (con bonus)
+        const bonusMissionId = App.state.getBonusMissionForToday();
+        const points = (task.missionId === bonusMissionId) ? task.points * 2 : task.points;
+
+        return {
+            categoryName,
+            description: mission?.description || null,
+            maxReps,
+            currentReps,
+            progressPercentage,
+            points
+        };
     }
 
     /**
@@ -219,36 +185,10 @@
         const container = document.getElementById('focusModeContainer');
         if (!container) return;
 
-        const state = App.state.get();
-        const mission = task.missionId ? state.missions.find(m => m.id === task.missionId) : null;
-        
-        // Obtener información de categoría
-        let categoryName = 'Sin propósito';
-        if (task.categoryId) {
-            const category = App.state.getCategoryById(task.categoryId);
-            categoryName = category ? category.name : 'Sin propósito';
-        } else if (mission && mission.categoryId) {
-            const category = App.state.getCategoryById(mission.categoryId);
-            categoryName = category ? category.name : 'Sin propósito';
-        }
-
-        // Calcular progreso de repeticiones
-        const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
-        const currentReps = task.currentRepetitions || 0;
-        const progressPercentage = (currentReps / maxReps) * 100;
-
-        // Calcular puntos (considerar bonus)
-        const bonusMissionId = App.state.getBonusMissionForToday();
-        let points = task.points;
-        if (task.missionId && task.missionId === bonusMissionId) {
-            points *= 2;
-        }
-
-        // Obtener descripción
-        const description = mission && mission.description ? mission.description : null;
+        const data = _getTaskData(task);
 
         container.innerHTML = `
-            <div class="focus-mission-card${!description ? ' no-description' : ''}">
+            <div class="focus-mission-card${!data.description ? ' no-description' : ''}">
                 <div class="focus-header">
                     <div class="focus-mission-label">Misión Actual</div>
                 </div>
@@ -260,16 +200,16 @@
                         <h1 class="focus-title">${task.name}</h1>
                     </div>
                     
-                    ${description ? `<div class="focus-description">${description}</div>` : ''}
+                    ${data.description ? `<div class="focus-description">${data.description}</div>` : ''}
                     
-                    ${maxReps > 1 ? `
+                    ${data.maxReps > 1 ? `
                     <div class="focus-progress">
                         <div class="focus-progress-label">
                             <span>Repeticiones</span>
-                            <span class="focus-progress-text">${currentReps} / ${maxReps}</span>
+                            <span class="focus-progress-text">${data.currentReps} / ${data.maxReps}</span>
                         </div>
                         <div class="focus-progress-bar">
-                            <div class="focus-progress-fill" style="width: ${progressPercentage}%"></div>
+                            <div class="focus-progress-fill" style="width: ${data.progressPercentage}%"></div>
                         </div>
                     </div>` : ''}
                     
@@ -277,27 +217,28 @@
                         <button class="focus-action-btn" data-task-id="${task.id}">
                             <span class="focus-action-icon">✓</span>
                             <span class="focus-action-text">Completar</span>
-                            <span class="focus-action-points">+${points}</span>
+                            <span class="focus-action-points">+${data.points}</span>
                         </button>
                     </div>
                 </div>
                 
                 <div class="focus-footer">
-                    <span class="focus-category">${categoryName}</span>
+                    <span class="focus-category">${data.categoryName}</span>
                 </div>
             </div>
         `;
 
         // Adjuntar event listeners
-        const completeBtn = container.querySelector('.focus-action-btn');
-        if (completeBtn) {
-            completeBtn.addEventListener('click', () => _handleCompleteClick(task.id));
-        }
+        _attachMissionEventListeners(task.id);
+    }
 
-        const closeBtn = container.querySelector('.focus-close-btn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', deactivate);
-        }
+    /**
+     * Adjunta event listeners a la misión renderizada
+     */
+    function _attachMissionEventListeners(taskId) {
+        const container = document.getElementById('focusModeContainer');
+        container?.querySelector('.focus-action-btn')?.addEventListener('click', () => _handleCompleteClick(taskId));
+        container?.querySelector('.focus-close-btn')?.addEventListener('click', deactivate);
     }
 
     /**
@@ -339,15 +280,8 @@
             </div>
         `;
 
-        const closeBtn = container.querySelector('.focus-close-btn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', deactivate);
-        }
-
-        const exitBtn = container.querySelector('.focus-exit-btn');
-        if (exitBtn) {
-            exitBtn.addEventListener('click', deactivate);
-        }
+        container.querySelector('.focus-close-btn')?.addEventListener('click', deactivate);
+        container.querySelector('.focus-exit-btn')?.addEventListener('click', deactivate);
     }
 
     /**
@@ -362,15 +296,14 @@
         `;
         document.body.appendChild(celebration);
 
-        // Crear confetti
-        const colors = ['#58E478', '#667eea', '#764ba2', '#f093fb'];
+        // Crear confetti usando clases CSS
+        const confettiClasses = ['confetti-green', 'confetti-purple', 'confetti-pink', 'confetti-light'];
         for (let i = 0; i < 30; i++) {
             setTimeout(() => {
                 const confetti = document.createElement('div');
-                confetti.className = 'focus-confetti';
+                const colorClass = confettiClasses[Math.floor(Math.random() * confettiClasses.length)];
+                confetti.className = `focus-confetti ${colorClass}`;
                 confetti.style.left = Math.random() * 100 + '%';
-                confetti.style.top = '-20px';
-                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
                 confetti.style.animationDuration = (Math.random() * 0.5 + 1) + 's';
                 document.body.appendChild(confetti);
 
@@ -391,26 +324,16 @@
         if (!progressBar || !progressText) return;
 
         // Obtener la tarea actualizada
-        const todayTasks = App.state.getTodayTasks();
-        const task = todayTasks.find(t => t.id === taskId);
-        
+        const task = App.state.getTodayTasks().find(t => t.id === taskId);
         if (!task) return;
 
-        const maxReps = task.dailyRepetitions ? task.dailyRepetitions.max : 1;
+        const maxReps = task.dailyRepetitions?.max || 1;
         const currentReps = task.currentRepetitions || 0;
         const newPercentage = (currentReps / maxReps) * 100;
 
-        // Animar la barra
+        // Animar la barra (el CSS maneja la transición)
         progressBar.style.width = newPercentage + '%';
-        
-        // Actualizar el texto
         progressText.textContent = `${currentReps} / ${maxReps}`;
-        
-        // Añadir efecto de pulso al texto
-        progressText.style.animation = 'none';
-        setTimeout(() => {
-            progressText.style.animation = 'progressPulse 2s ease-in-out infinite';
-        }, 10);
     }
 
     /**
@@ -469,17 +392,6 @@
         }
     }
 
-    /**
-     * Maneja cuando se completa una tarea
-     */
-    function _handleTaskCompleted(taskId) {
-        if (!_isActive) return;
-
-        // Si la tarea completada es la que estamos mostrando
-        if (_currentFocusTaskId === taskId) {
-            // Ya se maneja en _handleCompleteClick
-        }
-    }
 
     /**
      * Maneja cuando se actualizan las tareas
@@ -509,11 +421,7 @@
         isActive: () => _isActive
     };
 
-    // NO auto-inicializar - esperar a que el usuario haga click
-    // Solo exponer la API pública
-    console.log('🎯 Focus Mode script loaded (not initialized yet)');
-    
-    // Usar delegación de eventos para no interferir con otros event listeners
+    // Delegación de eventos para el botón de toggle
     document.addEventListener('click', function(e) {
         if (e.target && e.target.id === 'focusModeToggleBtn') {
             e.preventDefault();

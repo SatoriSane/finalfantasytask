@@ -2,6 +2,12 @@
    MODO ENFOQUE - Diseño Simple y Coherente
    ======================================== */
 
+/* Variables de espaciado */
+:root {
+    --focus-footer-height: 3.5rem;
+    --focus-button-gap: 2rem;
+}
+
 /* FAB - Botón Flotante */
 .focus-fab {
     position: fixed;
@@ -402,10 +408,10 @@ body.focus-mode-active .focus-fab {
 /* Sección Inferior - Botón de Acción (Fijo encima del footer) */
 .focus-bottom-section {
     position: fixed;
-    bottom: 3.5rem;
+    bottom: calc(var(--focus-footer-height) + var(--focus-button-gap));
     left: 0;
     right: 0;
-    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    padding: 1.5rem 1.5rem 1rem;
     max-width: 600px;
     margin: 0 auto;
     width: 100%;
@@ -415,12 +421,8 @@ body.focus-mode-active .focus-fab {
     background: linear-gradient(0deg, var(--ff-bg-dark) 0%, rgba(10, 17, 40, 0.95) 50%, transparent 100%);
 }
 
-.focus-bottom-section .focus-action-btn {
-    pointer-events: auto;
-    padding: 1.5rem;
-}
-
 .focus-action-btn {
+    pointer-events: auto;
     background: var(--positive-gradient);
     color: var(--ff-bg-dark);
     border: none;
@@ -434,9 +436,7 @@ body.focus-mode-active .focus-fab {
     justify-content: center;
     gap: 1rem;
     width: 100%;
-    box-shadow: 
-        0 8px 24px rgba(88, 228, 120, 0.3),
-        0 0 0 0 rgba(88, 228, 120, 0.4);
+    box-shadow: 0 8px 24px rgba(88, 228, 120, 0.3);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
@@ -661,8 +661,8 @@ body.focus-mode-active .focus-fab {
     }
     
     .focus-bottom-section {
-        bottom: 3rem;
-        padding: 1.2rem 1rem 0.8rem 1rem;
+        bottom: calc(var(--focus-footer-height) + 1rem);
+        padding: 1rem 1rem 0.5rem;
     }
     
     .focus-action-btn {
@@ -678,3 +678,9 @@ body.focus-mode-active .focus-fab {
         font-size: 1.3rem;
     }
 }
+
+/* Colores de confetti */
+.confetti-green { background: #58E478; }
+.confetti-purple { background: #667eea; }
+.confetti-pink { background: #764ba2; }
+.confetti-light { background: #f093fb; }

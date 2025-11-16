@@ -1,9 +1,10 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v4.1'; // Updated with PNG icons
+const CACHE_NAME = 'final-fantasy-tasks-cache-v4.2'; // Updated for GitHub Pages
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear
+// Usar rutas relativas (sin / inicial) para que funcionen en subcarpetas
 const APP_FILES = [
-    '/', // Raíz
+    './', // Raíz relativa
     'index.html',
     'offline.html',
     'manifest.json',

@@ -122,7 +122,7 @@
         },
 
 
-        scheduleMission: function(missionId, initialDateString, isRecurring, recurringType) {
+        scheduleMission: function(missionId, initialDateString, isRecurring, recurringType, scheduleTime, scheduleDuration) {
             const state = _get();
             const missionToProgram = state.missions.find(m => m.id === missionId);
             if (!missionToProgram) {
@@ -139,7 +139,9 @@
                 scheduledDate: initialDateString,
                 isRecurring: isRecurring,
                 dailyRepetitions: missionToProgram.dailyRepetitions,
-                lastProcessedDate: null
+                lastProcessedDate: null,
+                scheduleTime: scheduleTime || null, // ⏰ Hora del día (opcional)
+                scheduleDuration: scheduleDuration || null // ⏱️ Duración estimada (opcional)
             };
         
             if (isRecurring && recurringType) {
@@ -157,8 +159,13 @@
             if (initialDateString === todayFormatted) {
                 const todayTasks = state.tasksByDate[todayFormatted] || [];
                 const existingTask = todayTasks.find(t => t.missionId === missionId);
-                if (existingTask && existingTask.skippedForToday) {
-                    existingTask.skippedForToday = false;
+                if (existingTask) {
+                    // Actualizar la tarea existente con hora y duración
+                    if (existingTask.skippedForToday) {
+                        existingTask.skippedForToday = false;
+                    }
+                    existingTask.scheduleTime = scheduleTime || null;
+                    existingTask.scheduleDuration = scheduleDuration || null;
                 }
             }
         

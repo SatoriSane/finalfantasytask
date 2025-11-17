@@ -1,4 +1,8 @@
 // focus-mode.js - Modo de enfoque ADHD para concentrarse en una sola misión
+// Archivo principal simplificado - La lógica está en módulos separados:
+// - focus-utils.js: Validaciones y utilidades
+// - focus-scheduled.js: Lógica de tareas programadas
+// - focus-render.js: Funciones de renderizado
 (function(App) {
     'use strict';
 
@@ -12,12 +16,8 @@
      */
     function init() {
         try {
-            // Crear elementos del DOM si no existen
             _createFocusModeElements();
-            
-            // Escuchar eventos
             _attachEventListeners();
-            
             console.log('✅ Focus Mode initialized');
         } catch (error) {
             console.error('❌ Error initializing Focus Mode:', error);
@@ -62,22 +62,32 @@
     function activate() {
         if (_isActive) return;
 
-        const firstIncompleteTask = _getFirstIncompleteTask();
+        const result = App.focusScheduled.getNextAvailableTask();
         
-        if (!firstIncompleteTask) {
+        if (!result.task && !result.nextScheduledTask) {
             const msg = 'No hay misiones pendientes para hoy. ¡Buen trabajo! 🎉';
             App.events?.emit ? App.events.emit('shownotifyMessage', msg) : alert(msg);
             return;
         }
 
         _isActive = true;
-        _currentFocusTaskId = firstIncompleteTask.id;
+
+        if (App.focusTimer) {
+            App.focusTimer.resumeInterval();
+            App.focusTimer.removeFabBadge();
+        }
 
         document.getElementById('focusModeOverlay')?.classList.add('active');
         document.getElementById('focusModeContainer')?.classList.add('active');
         document.body.classList.add('focus-mode-active');
 
-        _renderFocusedMission(firstIncompleteTask);
+        if (result.task) {
+            _currentFocusTaskId = result.task.id;
+            _renderFocusedMission(result.task);
+        } else {
+            _currentFocusTaskId = result.nextScheduledTask.id;
+            _renderScheduledMission(result.nextScheduledTask, result.minutesUntilNext, result.hasOtherAvailableTasks);
+        }
     }
 
     /**
@@ -88,6 +98,13 @@
 
         _isActive = false;
         _currentFocusTaskId = null;
+        
+        App.focusScheduled.stopScheduledCountdown();
+        
+        if (App.focusTimer) {
+            App.focusTimer.pauseInterval();
+            App.focusTimer.renderFabBadge();
+        }
 
         document.getElementById('focusModeOverlay')?.classList.remove('active');
         document.getElementById('focusModeContainer')?.classList.remove('active');
@@ -112,228 +129,47 @@
     }
 
     /**
-     * Obtiene la primera tarea incompleta de hoy (respetando el orden guardado)
+     * Renderiza una misión programada
      */
-    function _getFirstIncompleteTask() {
-        const todayTasks = App.state.getTodayTasks();
-        const incompleteTasks = todayTasks.filter(task => !task.completed);
-        
-        // Obtener el orden guardado
-        const savedOrder = App.state.getTodayTaskOrder() || [];
-        
-        // Ordenar las tareas según el orden guardado
-        const orderedTasks = [];
-        const remainingTasks = new Set(incompleteTasks.map(t => t.id));
-        
-        // Primero agregar las tareas en el orden guardado
-        savedOrder.forEach(id => {
-            const task = incompleteTasks.find(t => t.id === id);
-            if (task) {
-                orderedTasks.push(task);
-                remainingTasks.delete(id);
+    function _renderScheduledMission(task, minutesUntil, hasOtherTasks) {
+        const callbacks = {
+            onStartEarly: (taskId) => {
+                const task = App.state.getTodayTasks().find(t => t.id === taskId);
+                if (task) _renderFocusedMission(task);
+            },
+            onSkip: (taskId) => {
+                const result = App.focusScheduled.getNextAvailableTask(taskId);
+                if (result.task) {
+                    _currentFocusTaskId = result.task.id;
+                    _renderFocusedMission(result.task);
+                } else if (result.nextScheduledTask) {
+                    _currentFocusTaskId = result.nextScheduledTask.id;
+                    _renderScheduledMission(result.nextScheduledTask, result.minutesUntilNext, result.hasOtherAvailableTasks);
+                } else {
+                    App.focusRender.renderEmptyState({ onClose: deactivate });
+                }
+            },
+            onClose: deactivate,
+            onCountdownComplete: (task) => {
+                if (_isActive && _currentFocusTaskId === task.id) {
+                    _renderFocusedMission(task);
+                }
             }
-        });
-        
-        // Luego agregar las tareas que no están en el orden guardado
-        remainingTasks.forEach(id => {
-            const task = incompleteTasks.find(t => t.id === id);
-            if (task) orderedTasks.push(task);
-        });
-        
-        return orderedTasks[0] || null;
-    }
-
-
-    /**
-     * Obtiene datos de la tarea para renderizar
-     */
-    function _getTaskData(task) {
-        const state = App.state.get();
-        const mission = task.missionId ? state.missions.find(m => m.id === task.missionId) : null;
-        
-        // Categoría
-        let categoryName = 'Sin propósito';
-        const categoryId = task.categoryId || mission?.categoryId;
-        if (categoryId) {
-            const category = App.state.getCategoryById(categoryId);
-            categoryName = category?.name || 'Sin propósito';
-        }
-
-        // Progreso
-        const maxReps = task.dailyRepetitions?.max || 1;
-        const currentReps = task.currentRepetitions || 0;
-        const progressPercentage = (currentReps / maxReps) * 100;
-
-        // Puntos (con bonus)
-        const bonusMissionId = App.state.getBonusMissionForToday();
-        const points = (task.missionId === bonusMissionId) ? task.points * 2 : task.points;
-
-        return {
-            categoryName,
-            description: mission?.description || null,
-            maxReps,
-            currentReps,
-            progressPercentage,
-            points
         };
+
+        App.focusRender.renderScheduledMission(task, minutesUntil, hasOtherTasks, callbacks);
     }
 
     /**
      * Renderiza la misión enfocada
      */
     function _renderFocusedMission(task) {
-        const container = document.getElementById('focusModeContainer');
-        if (!container) return;
+        const callbacks = {
+            onComplete: _handleCompleteClick,
+            onClose: deactivate
+        };
 
-        const data = _getTaskData(task);
-
-        container.innerHTML = `
-            <div class="focus-mission-card${!data.description ? ' no-description' : ''}">
-                <div class="focus-header">
-                    <div class="focus-mission-label">Misión Actual</div>
-                </div>
-                
-                <button class="focus-close-btn" aria-label="Cerrar modo zen">×</button>
-                
-                <div class="focus-content-wrapper">
-                    <div class="focus-main-section">
-                        <h1 class="focus-title">${task.name}</h1>
-                    </div>
-                    
-                    ${data.description ? `<div class="focus-description">${data.description}</div>` : ''}
-                    
-                    ${data.maxReps > 1 ? `
-                    <div class="focus-progress">
-                        <div class="focus-progress-label">
-                            <span>Repeticiones</span>
-                            <span class="focus-progress-text">${data.currentReps} / ${data.maxReps}</span>
-                        </div>
-                        <div class="focus-progress-bar">
-                            <div class="focus-progress-fill" style="width: ${data.progressPercentage}%"></div>
-                        </div>
-                    </div>` : ''}
-                    
-                    <div class="focus-bottom-section">
-                        <button class="focus-action-btn" data-task-id="${task.id}">
-                            <span class="focus-action-icon">✓</span>
-                            <span class="focus-action-text">Completar</span>
-                            <span class="focus-action-points">+${data.points}</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="focus-footer">
-                    <span class="focus-category">${data.categoryName}</span>
-                </div>
-            </div>
-        `;
-
-        // Adjuntar event listeners
-        _attachMissionEventListeners(task.id);
-    }
-
-    /**
-     * Adjunta event listeners a la misión renderizada
-     */
-    function _attachMissionEventListeners(taskId) {
-        const container = document.getElementById('focusModeContainer');
-        container?.querySelector('.focus-action-btn')?.addEventListener('click', () => _handleCompleteClick(taskId));
-        container?.querySelector('.focus-close-btn')?.addEventListener('click', deactivate);
-    }
-
-    /**
-     * Renderiza el estado vacío (sin misiones)
-     */
-    function _renderEmptyState() {
-        const container = document.getElementById('focusModeContainer');
-        if (!container) return;
-
-        container.innerHTML = `
-            <div class="focus-mission-card no-description">
-                <div class="focus-header">
-                    <div class="focus-mission-label">Misión Actual</div>
-                </div>
-                
-                <button class="focus-close-btn" aria-label="Cerrar modo zen">×</button>
-                
-                <div class="focus-content-wrapper">
-                    <div class="focus-main-section">
-                        <div class="focus-empty-icon">🎉</div>
-                        <h1 class="focus-title">¡Todo Completado!</h1>
-                        <p class="focus-empty-message">
-                            No tienes misiones pendientes para hoy.<br>
-                            ¡Excelente trabajo! Disfruta tu tiempo libre.
-                        </p>
-                    </div>
-                    
-                    <div class="focus-bottom-section">
-                        <button class="focus-action-btn focus-exit-btn">
-                            <span class="focus-action-icon">🚪</span>
-                            <span class="focus-action-text">Salir del Modo Zen</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="focus-footer">
-                    <span class="focus-category">Todas las misiones completadas</span>
-                </div>
-            </div>
-        `;
-
-        container.querySelector('.focus-close-btn')?.addEventListener('click', deactivate);
-        container.querySelector('.focus-exit-btn')?.addEventListener('click', deactivate);
-    }
-
-    /**
-     * Muestra celebración al completar
-     */
-    function _showCelebration() {
-        const celebration = document.createElement('div');
-        celebration.className = 'focus-celebration';
-        celebration.innerHTML = `
-            <div class="focus-celebration-icon">✨</div>
-            <div class="focus-celebration-text">¡Completado!</div>
-        `;
-        document.body.appendChild(celebration);
-
-        // Crear confetti usando clases CSS
-        const confettiClasses = ['confetti-green', 'confetti-purple', 'confetti-pink', 'confetti-light'];
-        for (let i = 0; i < 30; i++) {
-            setTimeout(() => {
-                const confetti = document.createElement('div');
-                const colorClass = confettiClasses[Math.floor(Math.random() * confettiClasses.length)];
-                confetti.className = `focus-confetti ${colorClass}`;
-                confetti.style.left = Math.random() * 100 + '%';
-                confetti.style.animationDuration = (Math.random() * 0.5 + 1) + 's';
-                document.body.appendChild(confetti);
-
-                setTimeout(() => confetti.remove(), 1500);
-            }, i * 30);
-        }
-
-        setTimeout(() => celebration.remove(), 800);
-    }
-
-    /**
-     * Anima la barra de progreso
-     */
-    function _animateProgressBar(taskId) {
-        const progressBar = document.querySelector('.focus-progress-fill');
-        const progressText = document.querySelector('.focus-progress-text');
-        
-        if (!progressBar || !progressText) return;
-
-        // Obtener la tarea actualizada
-        const task = App.state.getTodayTasks().find(t => t.id === taskId);
-        if (!task) return;
-
-        const maxReps = task.dailyRepetitions?.max || 1;
-        const currentReps = task.currentRepetitions || 0;
-        const newPercentage = (currentReps / maxReps) * 100;
-
-        // Animar la barra (el CSS maneja la transición)
-        progressBar.style.width = newPercentage + '%';
-        progressText.textContent = `${currentReps} / ${maxReps}`;
+        App.focusRender.renderFocusedMission(task, callbacks);
     }
 
     /**
@@ -341,57 +177,78 @@
      */
     function _handleCompleteClick(taskId) {
         const btn = document.querySelector('.focus-action-btn');
-        if (btn) {
-            btn.classList.add('completing');
+        if (btn) btn.classList.add('completing');
+
+        const todayTasks = App.state.getTodayTasks();
+        const task = todayTasks.find(t => t.id === taskId);
+        
+        let bonusPoints = 0;
+        if (App.focusTimer && task) {
+            const hasBonus = App.focusTimer.hasBonusActive(taskId);
+            if (hasBonus) {
+                bonusPoints = task.points;
+                console.log(`🎯 Bonus x2 aplicado! +${bonusPoints} puntos extra`);
+            }
         }
 
-        // Completar la tarea
         const success = App.state.completeTaskRepetition(taskId);
 
         if (success) {
-            // Verificar si la tarea tiene repeticiones
-            const todayTasks = App.state.getTodayTasks();
-            const task = todayTasks.find(t => t.id === taskId);
-            
-            if (task && task.dailyRepetitions && task.dailyRepetitions.max > 1) {
-                const currentReps = task.currentRepetitions || 0;
-                const maxReps = task.dailyRepetitions.max;
-                
-                // Si aún quedan repeticiones, animar la barra
-                if (currentReps < maxReps) {
-                    _animateProgressBar(taskId);
-                    
-                    // Mostrar celebración pequeña
-                    _showCelebration();
-                    
-                    // Quitar clase completing del botón
-                    setTimeout(() => {
-                        if (btn) btn.classList.remove('completing');
-                    }, 600);
-                    
-                    return; // No avanzar a la siguiente misión
-                }
+            if (bonusPoints > 0) {
+                App.state.addPoints(bonusPoints, { silentUI: false });
+                App.events.emit('shownotifyMessage', `⚡ ¡BONUS x2! +${bonusPoints} puntos extra por completar a tiempo`);
             }
             
-            // Si no hay más repeticiones o la tarea está completa, mostrar celebración y avanzar
-            _showCelebration();
+            const hasMoreReps = task && task.dailyRepetitions && task.dailyRepetitions.max > 1;
+            const currentReps = task ? (task.currentRepetitions || 0) : 0;
+            const maxReps = task ? (task.dailyRepetitions?.max || 1) : 1;
+            const stillHasReps = hasMoreReps && currentReps < maxReps;
+            
+            if (stillHasReps) {
+                if (App.focusTimer && task.scheduleDuration) {
+                    App.focusTimer.stopTimer();
+                    setTimeout(() => {
+                        App.focusTimer.startTimer(task);
+                        setTimeout(() => App.focusTimer.updateTimerDisplay(task.id), 100);
+                    }, 100);
+                }
+                
+                App.focusRender.animateProgressBar(taskId);
+                App.focusRender.showCelebration();
+                
+                setTimeout(() => {
+                    if (btn) btn.classList.remove('completing');
+                }, 600);
+                
+                return;
+            } else {
+                if (App.focusTimer) App.focusTimer.stopTimer();
+            }
+            
+            App.focusRender.showCelebration();
             
             setTimeout(() => {
-                // Verificar si hay más tareas
-                const nextTask = _getFirstIncompleteTask();
+                const result = App.focusScheduled.getNextAvailableTask();
                 
-                if (nextTask) {
-                    // Renderizar la siguiente misión
-                    _currentFocusTaskId = nextTask.id;
-                    _renderFocusedMission(nextTask);
+                if (result.task) {
+                    _currentFocusTaskId = result.task.id;
+                    _renderFocusedMission(result.task);
+                } else if (result.nextScheduledTask) {
+                    _currentFocusTaskId = result.nextScheduledTask.id;
+                    _renderScheduledMission(result.nextScheduledTask, result.minutesUntilNext, result.hasOtherAvailableTasks);
                 } else {
-                    // No hay más misiones, mostrar estado vacío
-                    _renderEmptyState();
+                    App.focusRender.renderEmptyState({ onClose: deactivate });
                 }
             }, 800);
         }
     }
 
+    /**
+     * Maneja cuando se completa una tarea (evento externo)
+     */
+    function _handleTaskCompleted() {
+        // Manejado por _handleCompleteClick
+    }
 
     /**
      * Maneja cuando se actualizan las tareas
@@ -399,25 +256,27 @@
     function _handleTasksUpdated() {
         if (!_isActive) return;
 
-        // Verificar si la tarea actual todavía existe
-        const currentTask = _getFirstIncompleteTask();
+        const result = App.focusScheduled.getNextAvailableTask();
         
-        if (!currentTask) {
-            // No hay más tareas, mostrar estado vacío
-            _renderEmptyState();
-        } else if (currentTask.id !== _currentFocusTaskId) {
-            // La tarea cambió, actualizar
-            _currentFocusTaskId = currentTask.id;
-            _renderFocusedMission(currentTask);
+        if (!result.task && !result.nextScheduledTask) {
+            App.focusRender.renderEmptyState({ onClose: deactivate });
+        } else if (result.task && result.task.id !== _currentFocusTaskId) {
+            _currentFocusTaskId = result.task.id;
+            _renderFocusedMission(result.task);
+        } else if (!result.task && result.nextScheduledTask) {
+            if (result.nextScheduledTask.id !== _currentFocusTaskId) {
+                _currentFocusTaskId = result.nextScheduledTask.id;
+                _renderScheduledMission(result.nextScheduledTask, result.minutesUntilNext, result.hasOtherAvailableTasks);
+            }
         }
     }
 
     // Exponer API pública
     App.focusMode = {
-        init: init,
-        activate: activate,
-        deactivate: deactivate,
-        toggle: toggle,
+        init,
+        activate,
+        deactivate,
+        toggle,
         isActive: () => _isActive
     };
 
@@ -432,6 +291,6 @@
             e.stopPropagation();
             toggle();
         }
-    }, true); // Usar capture phase para capturar antes que otros handlers
+    }, true);
 
 })(window.App = window.App || {});

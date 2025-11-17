@@ -218,7 +218,9 @@ recordResistance: function(challengeId, challengeName) {
                         categoryId: categoryId, // ⭐ NUEVO: Guardar categoryId directamente en la tarea
                         completed: false,
                         currentRepetitions: 0,
-                        dailyRepetitions: { max: sm.dailyRepetitions ? sm.dailyRepetitions.max : 1 }
+                        dailyRepetitions: { max: sm.dailyRepetitions ? sm.dailyRepetitions.max : 1 },
+                        scheduleTime: sm.scheduleTime || null, // ⏰ Hora del día
+                        scheduleDuration: sm.scheduleDuration || null // ⏱️ Duración estimada
                     });
                     this.trackMissionAppearance(sm.missionId);
                 }
@@ -601,6 +603,8 @@ recordResistance: function(challengeId, challengeName) {
                             completed: false,
                             currentRepetitions: 0,
                             dailyRepetitions: sch.dailyRepetitions || { max: 1 },
+                            scheduleTime: sch.scheduleTime || null, // ⏰ Hora del día
+                            scheduleDuration: sch.scheduleDuration || null, // ⏱️ Duración estimada
                             fromScheduled: true
                         });
                     }
@@ -620,6 +624,8 @@ recordResistance: function(challengeId, challengeName) {
                         completed: false,
                         currentRepetitions: 0,
                         dailyRepetitions: sch.dailyRepetitions || { max: 1 },
+                        scheduleTime: sch.scheduleTime || null, // ⏰ Hora del día
+                        scheduleDuration: sch.scheduleDuration || null, // ⏱️ Duración estimada
                         fromScheduled: true
                     });
                 }

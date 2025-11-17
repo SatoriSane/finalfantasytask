@@ -7,7 +7,13 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="github-sync/github-sync.css">
     <link rel="stylesheet" href="focus-mode/focus-mode.css">
+    <link rel="stylesheet" href="focus-mode/focus-scheduled.css">
     <link rel="stylesheet" href="pwa/pwa.css">
+    
+    <!-- Focus Mode Scripts -->
+    <script src="focus-mode/focus-utils.js"></script>
+    <script src="focus-mode/focus-scheduled.js"></script>
+    <script src="focus-mode/focus-render.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0A1128">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -315,22 +321,34 @@
                     <p class="modal-instruction"><strong id="scheduleDateDisplay"></strong></p>
                     <button id="nextDayBtn" class="nav-day-btn" aria-label="Día siguiente"><span class="arrow-icon right"></span></button>
                     <button id="unscheduleMissionBtn" class="icon-btn notify" style="display: none;" aria-label="Desprogramar Misión">🗑️</button>
+                    
+                    <!-- Suma de puntos de misiones programadas para este día -->
+                    <div id="scheduledPointsSummary" class="scheduled-points-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="var(--ff-accent)" stroke="var(--ff-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L9.19 8.68L2 9.27L7.54 13.91L5.75 21.02L12 17.5L18.25 21.02L16.46 13.91L22 9.27L14.81 8.68L12 2Z"></path>
+                        </svg>
+                        <span id="scheduledPointsValue">0</span>
+                    </div>
                 </div>
                 
-                <!-- Suma de puntos de misiones programadas para este día -->
-<div id="scheduledPointsSummary" 
-     style="display: inline-flex; 
-            align-items: center;
-            gap: 0.2rem;
-            padding: 0.5rem;
-            background: rgba(0, 228, 255, 0.1);
-            border-radius: 8px;
-            margin: 0rem auto;   /* opcional: centrado */
-     ">                    <span style="font-size: 0.9em; color: var(--ff-text-dark);">Puntos del día: </span>
-                    <span id="scheduledPointsValue" style="font-weight: bold; color: var(--ff-cyan); font-size: 1.1em;">0</span>
-                    <span style="font-size: 0.9em; color: var(--ff-text-dark);"> puntos</span>
+                <!-- Campos opcionales de hora y duración en una sola fila -->
+                <div class="schedule-time-section">
+                    <div class="form-group">
+                        <label for="scheduleTime">⏰ Hora:</label>
+                        <input type="time" id="scheduleTime" class="time-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleDuration">⏱️ Duración:</label>
+                        <div class="duration-input-group">
+                            <input type="number" id="scheduleDuration" min="1" placeholder="30">
+                            <select id="scheduleDurationUnit">
+                                <option value="minutes">Min</option>
+                                <option value="hours">Hrs</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                
+
                 <!-- Toggle Switch para Repetir Misión (Nuevo diseño con una sola etiqueta) -->
                 <div class="toggle-container">
                     <div class="toggle-switch" id="repeatMissionToggle" role="switch" aria-checked="false" tabindex="0">
@@ -571,6 +589,7 @@
     <script src="github-sync/github-sync-events.js"></script>
 
     <!-- Focus Mode Scripts -->
+    <script src="focus-mode/focus-timer-bonus.js"></script>
     <script src="focus-mode/focus-mode.js"></script>
 
     <!-- PWA Install Banner -->

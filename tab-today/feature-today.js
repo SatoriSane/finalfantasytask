@@ -599,10 +599,36 @@ function _openQuickMissionModal() {
                 }
             }
         
+            // Crear contenedor para nombre y información de programación
+            const taskInfoContainer = document.createElement("div");
+            taskInfoContainer.className = "task-info-container";
+            
             const taskNameDiv = document.createElement("div");
             taskNameDiv.className = "task-name";
             taskNameDiv.innerHTML = `${task.name} ${descriptionIcon} ${categoryBadge}`;
-            taskCard.appendChild(taskNameDiv);
+            taskInfoContainer.appendChild(taskNameDiv);
+        
+            // Mostrar hora y duración si existen
+            if (task.scheduleTime || task.scheduleDuration) {
+                const scheduleInfoDiv = document.createElement("div");
+                scheduleInfoDiv.className = "task-schedule-info";
+                
+                let scheduleInfoHTML = '';
+                if (task.scheduleTime && task.scheduleTime.time) {
+                    scheduleInfoHTML += `<span class="schedule-time">⏰ ${task.scheduleTime.time}</span>`;
+                }
+                if (task.scheduleDuration && task.scheduleDuration.value) {
+                    const durationText = task.scheduleDuration.unit === 'hours' 
+                        ? `${task.scheduleDuration.value}h`
+                        : `${task.scheduleDuration.value}min`;
+                    scheduleInfoHTML += `<span class="schedule-duration">⏱️ ${durationText}</span>`;
+                }
+                
+                scheduleInfoDiv.innerHTML = scheduleInfoHTML;
+                taskInfoContainer.appendChild(scheduleInfoDiv);
+            }
+            
+            taskCard.appendChild(taskInfoContainer);
         
             const actionsContainer = document.createElement("div");
             actionsContainer.className = "task-actions-reps";

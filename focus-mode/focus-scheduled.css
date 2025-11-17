@@ -1,0 +1,201 @@
+/* ========================================
+   MISIÓN PROGRAMADA - Focus Mode
+   Diseño sutil y amigable
+   ======================================== */
+
+/* Contenedor principal de misión programada */
+.scheduled-mission {
+    background: var(--ff-bg-medium);
+    border: 2px solid var(--ff-border);
+}
+
+/* Header con label suave */
+.scheduled-mission .focus-mission-label {
+    color: var(--ff-accent);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    text-shadow: 0 0 10px rgba(100, 200, 255, 0.3);
+}
+
+/* Información de programación */
+.focus-scheduled-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 1.5rem;
+    background: var(--ff-bg-light);
+    border: 1px solid var(--ff-border);
+    border-radius: var(--border-radius-md);
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Display de hora programada */
+.scheduled-time-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(100, 200, 255, 0.05);
+    border: 2px solid rgba(100, 200, 255, 0.3);
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scheduled-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 6px rgba(100, 200, 255, 0.4));
+}
+
+.scheduled-time {
+    font-family: 'Orbitron', monospace, sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 8px rgba(100, 200, 255, 0.3);
+}
+
+/* Countdown */
+.scheduled-countdown {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.2rem;
+    background: rgba(100, 200, 255, 0.05);
+    border-radius: var(--border-radius-md);
+    border: 1px solid rgba(100, 200, 255, 0.15);
+}
+
+.countdown-label {
+    font-size: 0.85rem;
+    color: var(--ff-text-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+    font-family: 'Orbitron', sans-serif;
+    opacity: 0.8;
+}
+
+.countdown-value {
+    font-family: 'Orbitron', monospace, sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+    letter-spacing: 2px;
+    text-shadow: 0 0 12px rgba(100, 200, 255, 0.4);
+    line-height: 1;
+}
+
+/* Mensaje informativo */
+.scheduled-message {
+    text-align: center;
+    padding: 1.2rem;
+    margin-bottom: 1.2rem;
+    background: rgba(100, 200, 255, 0.05);
+    border-left: 3px solid rgba(100, 200, 255, 0.4);
+    border-radius: var(--border-radius-md);
+    color: var(--ff-text-light);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.scheduled-message-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    opacity: 0.7;
+}
+
+/* Botones de acción */
+.focus-start-early-btn {
+    background: rgba(100, 200, 255, 0.1);
+    color: var(--ff-accent);
+    border: 2px solid rgba(100, 200, 255, 0.4);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.focus-start-early-btn:hover {
+    background: rgba(100, 200, 255, 0.2);
+    color: var(--ff-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(100, 200, 255, 0.3);
+    border-color: var(--ff-accent);
+}
+
+.focus-start-early-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.focus-skip-btn {
+    background: transparent;
+    color: var(--ff-text-light);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 0.8rem;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+.focus-skip-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--ff-text-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    opacity: 1;
+}
+
+.focus-skip-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.focus-skip-btn .focus-action-icon {
+    font-size: 1.3rem;
+}
+
+/* Animación suave para el countdown */
+@keyframes countdown-pulse {
+    0%, 100% {
+        transform: scale(1);
+        text-shadow: 0 0 12px rgba(100, 200, 255, 0.4);
+    }
+    50% {
+        transform: scale(1.03);
+        text-shadow: 0 0 18px rgba(100, 200, 255, 0.5);
+    }
+}
+
+.countdown-value {
+    animation: countdown-pulse 3s ease-in-out infinite;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .scheduled-time {
+        font-size: 1.5rem;
+    }
+    
+    .countdown-value {
+        font-size: 2rem;
+    }
+    
+    .scheduled-icon {
+        font-size: 1.5rem;
+    }
+}

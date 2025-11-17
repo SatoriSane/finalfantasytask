@@ -61,7 +61,7 @@
             const totalPoints = App.state.getScheduledPointsForDate(_currentScheduleDateObj);
             if (totalPoints > 0) {
                 scheduledPointsValue.textContent = totalPoints;
-                scheduledPointsSummary.style.display = 'block';
+                scheduledPointsSummary.style.display = 'flex';
             } else {
                 scheduledPointsSummary.style.display = 'none';
             }
@@ -418,6 +418,11 @@
                 console.error("Elementos del modal de programación no encontrados.");
                 return;
             }
+            
+            // Obtener referencias a los campos de hora y duración
+            const scheduleTimeInput = document.getElementById('scheduleTime');
+            const scheduleDurationInput = document.getElementById('scheduleDuration');
+            const scheduleDurationUnitSelect = document.getElementById('scheduleDurationUnit');
 
             unscheduleMissionBtn.style.display = 'none';
             _currentScheduleDateObj = App.utils.normalizeDateToStartOfDay(new Date());
@@ -431,6 +436,11 @@
             repeatUnitSelect.value = 'day';
             daysToggleContainer.classList.add('hidden');
             daysToggleContainer.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Limpiar campos de hora y duración
+            if (scheduleTimeInput) scheduleTimeInput.value = '';
+            if (scheduleDurationInput) scheduleDurationInput.value = '';
+            if (scheduleDurationUnitSelect) scheduleDurationUnitSelect.value = 'minutes';
 
             _currentScheduledProgramId = scheduledProgramId;
             missionToScheduleIdInput.value = missionId;
@@ -444,6 +454,17 @@
                 scheduleMissionTitle.textContent = `Programación para "${missionToSchedule.name}"`;
                 unscheduleMissionBtn.style.display = 'block';
                 _currentScheduleDateObj = App.utils.normalizeDateToStartOfDay(scheduledMissionData.scheduledDate);
+
+                // Cargar hora y duración si existen
+                if (scheduleTimeInput && scheduledMissionData.scheduleTime) {
+                    scheduleTimeInput.value = scheduledMissionData.scheduleTime.time || '';
+                }
+                if (scheduleDurationInput && scheduledMissionData.scheduleDuration) {
+                    scheduleDurationInput.value = scheduledMissionData.scheduleDuration.value || '';
+                    if (scheduleDurationUnitSelect) {
+                        scheduleDurationUnitSelect.value = scheduledMissionData.scheduleDuration.unit || 'minutes';
+                    }
+                }
 
                 if (scheduledMissionData.isRecurring) {
                     repeatMissionToggle.classList.add('active');
@@ -543,6 +564,9 @@
             const repeatOptionsContainer = document.getElementById('repeatOptionsContainer');
             const toggleContainer = document.querySelector('.toggle-container');
             const dailyRepetitionsMaxInput = document.getElementById('scheduleDailyRepetitionsMax');
+            const scheduleTimeInput = document.getElementById('scheduleTime');
+            const scheduleDurationInput = document.getElementById('scheduleDuration');
+            const scheduleDurationUnitSelect = document.getElementById('scheduleDurationUnit');
 
             if (closeScheduleMissionModalBtn) closeScheduleMissionModalBtn.addEventListener('click', App.ui.missions.closeScheduleMissionModal);
             if (cancelAdvancedScheduleBtn) cancelAdvancedScheduleBtn.addEventListener('click', App.ui.missions.closeScheduleMissionModal);
@@ -707,11 +731,28 @@
                     }
                 }
 
+                // Capturar hora y duración (opcionales)
+                let scheduleTime = null;
+                let scheduleDuration = null;
+                
+                if (scheduleTimeInput && scheduleTimeInput.value) {
+                    scheduleTime = {
+                        time: scheduleTimeInput.value
+                    };
+                }
+                
+                if (scheduleDurationInput && scheduleDurationInput.value) {
+                    scheduleDuration = {
+                        value: parseInt(scheduleDurationInput.value, 10),
+                        unit: scheduleDurationUnitSelect ? scheduleDurationUnitSelect.value : 'minutes'
+                    };
+                }
+
                 if (missionId && date) {
                     if (_currentScheduledProgramId) {
                         App.state.deleteScheduledMission(_currentScheduledProgramId);
                     }
-                    App.state.scheduleMission(missionId, date, isRecurring, repeatOptions);
+                    App.state.scheduleMission(missionId, date, isRecurring, repeatOptions, scheduleTime, scheduleDuration);
                     App.ui.missions.closeScheduleMissionModal();
 
                 } else {

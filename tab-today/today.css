@@ -80,15 +80,20 @@
     border-color: var(--ff-accent);
 }
 
+.task-info-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-right: 1rem;
+}
+
 #todayTasksList .task-name {
     font-weight: 600;
     font-size: 1.2rem;
-    flex-grow: 1;
-    margin-right: 1rem;
-        word-break: break-word;       /* o usar break-all */
-    overflow-wrap: break-word;    /* estándar moderno */
-    white-space: normal;          /* asegúrate de que el texto pueda ocupar varias líneas */
-
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
 }
 
 /* Estado completado */
@@ -444,4 +449,33 @@
         transform: scale(1);
         opacity: 1;
     }
+}
+
+/* ===================== INFORMACIÓN DE PROGRAMACIÓN ===================== */
+.task-schedule-info {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.task-schedule-info span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--border-radius-sm);
+    background: rgba(var(--ff-accent-rgb), 0.1);
+    color: var(--ff-text-light);
+    font-weight: 500;
+}
+
+.schedule-time {
+    background: rgba(0, 228, 255, 0.15) !important;
+    color: var(--ff-cyan) !important;
+}
+
+.schedule-duration {
+    background: rgba(255, 184, 0, 0.15) !important;
+    color: #FFB800 !important;
 }

@@ -155,18 +155,27 @@
         
             state.scheduledMissions.push(scheduledData);
         
-            const todayFormatted = App.utils.getFormattedDate(new Date());
-            if (initialDateString === todayFormatted) {
-                const todayTasks = state.tasksByDate[todayFormatted] || [];
-                const existingTask = todayTasks.find(t => t.missionId === missionId);
-                if (existingTask) {
-                    // Actualizar la tarea existente con hora y duración
-                    if (existingTask.skippedForToday) {
-                        existingTask.skippedForToday = false;
+            // ⭐ FIX: Actualizar scheduleTime y scheduleDuration en TODAS las tareas existentes
+            // de esta misión en tasksByDate (no solo hoy)
+            if (state.tasksByDate) {
+                Object.keys(state.tasksByDate).forEach(dateKey => {
+                    const tasksForDate = state.tasksByDate[dateKey];
+                    if (Array.isArray(tasksForDate)) {
+                        tasksForDate.forEach(task => {
+                            if (task.missionId === missionId) {
+                                // Actualizar hora y duración en todas las instancias de esta misión
+                                task.scheduleTime = scheduleTime || null;
+                                task.scheduleDuration = scheduleDuration || null;
+                                
+                                // Si es para hoy y estaba marcada como omitida, reactivarla
+                                const todayFormatted = App.utils.getFormattedDate(new Date());
+                                if (dateKey === todayFormatted && task.skippedForToday) {
+                                    task.skippedForToday = false;
+                                }
+                            }
+                        });
                     }
-                    existingTask.scheduleTime = scheduleTime || null;
-                    existingTask.scheduleDuration = scheduleDuration || null;
-                }
+                });
             }
         
             _save();

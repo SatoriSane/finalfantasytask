@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v4.3'; // Updated for GitHub Pages
+const CACHE_NAME = 'final-fantasy-tasks-cache-v4.4'; // Updated for GitHub Pages
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear
@@ -63,9 +63,13 @@ const APP_FILES = [
     'github-sync/github-sync.css',
 
     // Focus Mode
-    'focus-mode/focus-mode.js',
     'focus-mode/focus-mode.css',
-
+    'focus-mode/focus-mode.js',
+    'focus-mode/focus-render.js',
+    'focus-mode/focus-scheduled.css',
+    'focus-mode/focus-scheduled.js',
+    'focus-mode/focus-timer-bonus.js',
+    'focus-mode/focus-utils.js',
     // PWA Install System
     'pwa/pwa.js',
     'pwa/pwa.css',

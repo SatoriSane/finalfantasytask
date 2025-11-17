@@ -44,6 +44,7 @@
         
         isInitialCheckDone: false,  // ⭐ Bandera para saber si ya se hizo la verificación inicial
         uiBlocked: false,            // ⭐ Bandera para bloquear UI durante importación crítica
+        pendingExport: false,        // ⭐ Bandera para exportación pendiente
     
         /**
          * Inicializa el sistema
@@ -345,6 +346,13 @@
                 this.syncAction = null;
                 this.uiBlocked = false;
                 this.updateUI();
+                
+                // ⭐ NUEVO: Si hay exportación pendiente, ejecutarla ahora
+                if (this.pendingExport && !this.uiBlocked) {
+                    log('📦 Ejecutando exportación pendiente después de verificación prioritaria...');
+                    this.pendingExport = false;
+                    setTimeout(() => this.exportData(), 500);
+                }
             }
         },
 
@@ -421,6 +429,13 @@
                 this.isSyncing = false;
                 this.syncAction = null;
                 this.updateUI();
+                
+                // ⭐ NUEVO: Si hay exportación pendiente, ejecutarla ahora
+                if (this.pendingExport) {
+                    log('📦 Ejecutando exportación pendiente después de verificación...');
+                    this.pendingExport = false;
+                    setTimeout(() => this.exportData(), 500);
+                }
             }
         },
     
@@ -470,8 +485,14 @@
             if (TIMING.DEBOUNCE_EXPORT === 0) {
                 // ⭐ EXPORTACIÓN INSTANTÁNEA - Sin debounce
                 log('📦 Cambio detectado → EXPORTACIÓN INSTANTÁNEA');
-                if (this.isConnected && this.gistId && !this.isSyncing) {
-                    this.exportData();
+                if (this.isConnected && this.gistId) {
+                    if (!this.isSyncing) {
+                        this.exportData();
+                    } else {
+                        // ⭐ NUEVO: Si está sincronizando, programar exportación para después
+                        log('⏳ Sincronización en curso, exportación pendiente...');
+                        this.pendingExport = true;
+                    }
                 }
             } else {
                 // Exportación con debounce (si se configura)
@@ -534,6 +555,14 @@
                     }, TIMING.POST_EXPORT_PAUSE);
                     
                     log('✅ Datos exportados correctamente.');
+                    
+                    // ⭐ NUEVO: Si hay exportación pendiente, ejecutarla ahora
+                    if (this.pendingExport) {
+                        log('📦 Ejecutando exportación pendiente...');
+                        this.pendingExport = false;
+                        // Pequeño delay para evitar rate limiting
+                        setTimeout(() => this.exportData(), 500);
+                    }
                 } else {
                     // ⚠️ ERROR: Token inválido o expirado
                     const errorText = await response.text();

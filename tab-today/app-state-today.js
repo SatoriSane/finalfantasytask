@@ -173,11 +173,11 @@
         if (App.state.updateMissionOrderWeights) {
             console.log('🎯 Llamando a updateMissionOrderWeights...');
             App.state.updateMissionOrderWeights(order, targetDate);
+            // updateMissionOrderWeights ya llama a _save(), no necesitamos hacerlo aquí
         } else {
             console.error('❌ App.state.updateMissionOrderWeights no está disponible');
+            _save(); // Solo guardar si no se pudo actualizar los pesos
         }
-        
-        _save();
     }
 
     function getTodayTaskOrder(dateStr = null) {

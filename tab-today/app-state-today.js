@@ -161,6 +161,22 @@
             state.todayOrder = {};
         }
         state.todayOrder[targetDate] = order;
+        
+        console.log('💾 Guardando orden de tareas:', {
+            fecha: targetDate,
+            totalTareas: order.length,
+            orden: order
+        });
+        
+        // ⭐ NUEVO: Actualizar los pesos de orden de las misiones
+        // Esto hace que el orden de hoy influya en días futuros
+        if (App.state.updateMissionOrderWeights) {
+            console.log('🎯 Llamando a updateMissionOrderWeights...');
+            App.state.updateMissionOrderWeights(order, targetDate);
+        } else {
+            console.error('❌ App.state.updateMissionOrderWeights no está disponible');
+        }
+        
         _save();
     }
 

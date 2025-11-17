@@ -422,8 +422,39 @@ function _openQuickMissionModal() {
                 }
             });
         
-            remainingIncompleteTasks.forEach(id => {
-                const task = incompleteTasks.find(t => t.id === id);
+            // ⭐ NUEVO: Ordenar tareas restantes por orderWeight de su misión
+            const remainingTasksArray = Array.from(remainingIncompleteTasks)
+                .map(id => incompleteTasks.find(t => t.id === id))
+                .filter(Boolean);
+            
+            if (remainingTasksArray.length > 0) {
+                console.log('📋 Ordenando tareas sin orden guardado para', viewDate);
+            }
+            
+            // Obtener el peso de cada tarea basado en su misión
+            remainingTasksArray.sort((a, b) => {
+                const missionA = a.missionId ? App.state.getMissionById(a.missionId) : null;
+                const missionB = b.missionId ? App.state.getMissionById(b.missionId) : null;
+                
+                const weightA = missionA?.orderWeight ?? 500; // Peso neutral si no existe
+                const weightB = missionB?.orderWeight ?? 500;
+                
+                if (remainingTasksArray.length > 0 && (missionA || missionB)) {
+                    console.log(`  Comparando: ${a.name} (${weightA}) vs ${b.name} (${weightB})`);
+                }
+                
+                return weightB - weightA; // Mayor peso = más arriba
+            });
+            
+            if (remainingTasksArray.length > 0) {
+                console.log('✅ Orden final de tareas nuevas:');
+                remainingTasksArray.forEach((task, i) => {
+                    const mission = task.missionId ? App.state.getMissionById(task.missionId) : null;
+                    console.log(`  ${i + 1}. ${task.name} (peso: ${mission?.orderWeight ?? 500})`);
+                });
+            }
+            
+            remainingTasksArray.forEach(task => {
                 if (task) orderedIncompleteTasks.push(task);
             });
         

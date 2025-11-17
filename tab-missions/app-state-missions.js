@@ -23,7 +23,8 @@
                 name,
                 points: parseInt(points, 10) || 0,
                 categoryId,
-                dailyRepetitions: { max: parseInt(dailyRepetitionsMax, 10) || 1 }
+                dailyRepetitions: { max: parseInt(dailyRepetitionsMax, 10) || 1 },
+                orderWeight: 500 // Peso neutral por defecto (rango: 0-1000)
             };
             state.missions.push(newMission);
             _save();
@@ -301,6 +302,70 @@
             }
             
             return deletedCount;
+        },
+
+        /**
+         * Actualiza los pesos de orden de las misiones basándose en el orden actual de las tareas
+         * @param {Array<string>} taskIds - Array de IDs de tareas en el orden deseado
+         * @param {string} dateStr - Fecha de las tareas (formato YYYY-MM-DD)
+         */
+        updateMissionOrderWeights: function(taskIds, dateStr) {
+            const state = _get();
+            
+            console.log('🔄 Actualizando pesos de orden:', {
+                fecha: dateStr,
+                totalTareas: taskIds.length,
+                taskIds: taskIds
+            });
+            
+            // Obtener las tareas de la fecha - puede ser string o Date
+            const tasksForDate = App.state.getTasksForDate(dateStr);
+            
+            console.log(`  📦 Total de tareas para ${dateStr}: ${tasksForDate.length}`);
+            console.log('  📋 IDs de tareas obtenidas:', tasksForDate.map(t => t.id));
+            console.log('  📋 IDs de tareas que estamos buscando:', taskIds);
+            
+            // Calcular peso basado en posición: primera tarea = 1000, última = 100
+            const maxWeight = 1000;
+            const minWeight = 100;
+            const weightRange = maxWeight - minWeight;
+            
+            let updatedCount = 0;
+            const processedMissions = new Set(); // Para evitar actualizar la misma misión múltiples veces
+            
+            taskIds.forEach((taskId, index) => {
+                // Buscar la tarea por ID en las tareas de esta fecha
+                const task = tasksForDate.find(t => t.id === taskId);
+                
+                if (task) {
+                    console.log(`  🔍 Tarea encontrada: ${task.name}, missionId: ${task.missionId || 'ninguno'}`);
+                    
+                    if (task.missionId && !processedMissions.has(task.missionId)) {
+                        const mission = state.missions.find(m => m.id === task.missionId);
+                        if (mission) {
+                            // Calcular peso: posición 0 = 1000, última posición = 100
+                            const weight = maxWeight - (index * (weightRange / Math.max(taskIds.length - 1, 1)));
+                            const oldWeight = mission.orderWeight;
+                            mission.orderWeight = Math.round(weight);
+                            processedMissions.add(task.missionId);
+                            updatedCount++;
+                            
+                            console.log(`  ✅ ${mission.name}: ${oldWeight} → ${mission.orderWeight} (posición ${index + 1})`);
+                        } else {
+                            console.log(`  ⚠️ Misión no encontrada para task.missionId: ${task.missionId}`);
+                        }
+                    } else if (!task.missionId) {
+                        console.log(`  ℹ️ Tarea sin missionId (tarea temporal): ${task.name}`);
+                    } else {
+                        console.log(`  ⏭️ Misión ya procesada: ${task.missionId}`);
+                    }
+                } else {
+                    console.log(`  ❌ Tarea no encontrada con ID: ${taskId}`);
+                }
+            });
+            
+            _save();
+            console.log(`✨ Pesos actualizados: ${updatedCount} misiones`);
         },
 
         getMissionById: (id) => _get().missions.find(m => m.id === id),

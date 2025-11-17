@@ -320,6 +320,15 @@ recordResistance: function(challengeId, challengeName) {
                     if (typeof state.todayOrder === 'undefined') {
                         state.todayOrder = {};
                     }
+                    
+                    // ⭐ NUEVO: Migración de orderWeight para misiones existentes
+                    if (state.missions && Array.isArray(state.missions)) {
+                        state.missions.forEach(mission => {
+                            if (typeof mission.orderWeight === 'undefined') {
+                                mission.orderWeight = 500; // Peso neutral por defecto
+                            }
+                        });
+                    }
         
                 } catch (e) {
                     console.error("App.state: Error parsing localStorage data:", e);
@@ -582,7 +591,18 @@ recordResistance: function(challengeId, challengeName) {
                 if (!sch.isRecurring) {
                     const schDateStr = App.utils.getFormattedDate(startObj);
                     if (schDateStr === viewDateStr) {
-                        tasksForDate.push({ ...sch, fromScheduled: true });
+                        // Crear una tarea con ID único en lugar de usar el objeto de misión programada
+                        tasksForDate.push({
+                            id: `task-${sch.id}-${viewDateStr}`, // ID único por fecha
+                            name: sch.name,
+                            points: sch.points,
+                            missionId: sch.missionId,
+                            categoryId: sch.categoryId,
+                            completed: false,
+                            currentRepetitions: 0,
+                            dailyRepetitions: sch.dailyRepetitions || { max: 1 },
+                            fromScheduled: true
+                        });
                     }
                     return;
                 }
@@ -590,7 +610,18 @@ recordResistance: function(challengeId, challengeName) {
                 // --- RECURRENCIA ---
                 // Usar la función _isMissionScheduledForDate que tiene la lógica correcta
                 if (_isMissionScheduledForDate(sch, viewDateObj)) {
-                    tasksForDate.push({ ...sch, fromScheduled: true });
+                    // Crear una tarea con ID único en lugar de usar el objeto de misión programada
+                    tasksForDate.push({
+                        id: `task-${sch.id}-${viewDateStr}`, // ID único por fecha
+                        name: sch.name,
+                        points: sch.points,
+                        missionId: sch.missionId,
+                        categoryId: sch.categoryId,
+                        completed: false,
+                        currentRepetitions: 0,
+                        dailyRepetitions: sch.dailyRepetitions || { max: 1 },
+                        fromScheduled: true
+                    });
                 }
             });
 

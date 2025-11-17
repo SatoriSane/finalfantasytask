@@ -16,6 +16,8 @@
         const scheduleDateDisplay = document.getElementById('scheduleDateDisplay');
         const prevDayBtn = document.getElementById('prevDayBtn');
         const repeatEndDateInput = document.getElementById('repeatEndDate');
+        const scheduledPointsSummary = document.getElementById('scheduledPointsSummary');
+        const scheduledPointsValue = document.getElementById('scheduledPointsValue');
 
         if (!scheduleDateDisplay || !prevDayBtn || !repeatEndDateInput || !_currentScheduleDateObj) {
             console.error("_updateScheduleDateDisplay: Elementos o fecha actual no encontrados.");
@@ -53,6 +55,17 @@
 
         scheduleDateDisplay.innerHTML = finalDisplayHtml;
         repeatEndDateInput.min = App.utils.getFormattedDate(_currentScheduleDateObj);
+        
+        // Actualizar la suma de puntos programados para esta fecha
+        if (scheduledPointsSummary && scheduledPointsValue) {
+            const totalPoints = App.state.getScheduledPointsForDate(_currentScheduleDateObj);
+            if (totalPoints > 0) {
+                scheduledPointsValue.textContent = totalPoints;
+                scheduledPointsSummary.style.display = 'block';
+            } else {
+                scheduledPointsSummary.style.display = 'none';
+            }
+        }
     }
 
     /**
@@ -428,7 +441,7 @@
             }
 
             if (scheduledMissionData) {
-                scheduleMissionTitle.textContent = `Editar Programación para "${missionToSchedule.name}"`;
+                scheduleMissionTitle.textContent = `Programación para "${missionToSchedule.name}"`;
                 unscheduleMissionBtn.style.display = 'block';
                 _currentScheduleDateObj = App.utils.normalizeDateToStartOfDay(scheduledMissionData.scheduledDate);
 

@@ -317,6 +317,20 @@
                     <button id="unscheduleMissionBtn" class="icon-btn notify" style="display: none;" aria-label="Desprogramar Misión">🗑️</button>
                 </div>
                 
+                <!-- Suma de puntos de misiones programadas para este día -->
+<div id="scheduledPointsSummary" 
+     style="display: inline-flex; 
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.5rem;
+            background: rgba(0, 228, 255, 0.1);
+            border-radius: 8px;
+            margin: 0rem auto;   /* opcional: centrado */
+     ">                    <span style="font-size: 0.9em; color: var(--ff-text-dark);">Puntos del día: </span>
+                    <span id="scheduledPointsValue" style="font-weight: bold; color: var(--ff-cyan); font-size: 1.1em;">0</span>
+                    <span style="font-size: 0.9em; color: var(--ff-text-dark);"> puntos</span>
+                </div>
+                
                 <!-- Toggle Switch para Repetir Misión (Nuevo diseño con una sola etiqueta) -->
                 <div class="toggle-container">
                     <div class="toggle-switch" id="repeatMissionToggle" role="switch" aria-checked="false" tabindex="0">

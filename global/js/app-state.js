@@ -80,7 +80,23 @@
                 return diffWeeks % scheduledMission.repeatInterval === 0;
             case 'month':
                 let monthDiff = (date.getFullYear() - startDate.getFullYear()) * 12 + (date.getMonth() - startDate.getMonth());
-                return date.getDate() === startDate.getDate() && monthDiff >= 0 && monthDiff % scheduledMission.repeatInterval === 0;
+                if (monthDiff < 0 || monthDiff % scheduledMission.repeatInterval !== 0) {
+                    return false;
+                }
+                
+                // Obtener el día programado originalmente
+                const scheduledDay = startDate.getDate();
+                
+                // Obtener el último día del mes actual
+                const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+                
+                // Si el día programado existe en este mes, debe coincidir exactamente
+                if (scheduledDay <= lastDayOfMonth) {
+                    return date.getDate() === scheduledDay;
+                }
+                
+                // Si el día programado no existe (ej: 31 en febrero), usar el último día del mes
+                return date.getDate() === lastDayOfMonth;
             case 'year':
                 let yearDiff = date.getFullYear() - startDate.getFullYear();
                 return date.getMonth() === startDate.getMonth() && date.getDate() === startDate.getDate() && yearDiff >= 0 && yearDiff % scheduledMission.repeatInterval === 0;
@@ -478,6 +494,48 @@ recordResistance: function(challengeId, challengeName) {
                 console.warn("Error saving last selected category:", e);
             }
         },
+        /**
+         * Calcula la suma total de puntos de todas las misiones programadas para una fecha específica.
+         * @param {Date|string} date - La fecha a consultar (objeto Date o string "YYYY-MM-DD")
+         * @returns {number} - Suma total de puntos
+         */
+        getScheduledPointsForDate: function(date) {
+            const dateObj = typeof date === 'string' ? App.utils.normalizeDateToStartOfDay(new Date(date)) : App.utils.normalizeDateToStartOfDay(date);
+            if (!dateObj) return 0;
+            
+            const dateStr = App.utils.getFormattedDate(dateObj);
+            let totalPoints = 0;
+            
+            // Contar tareas directas en tasksByDate
+            const tasksForDate = (state.tasksByDate && state.tasksByDate[dateStr]) ? state.tasksByDate[dateStr] : [];
+            tasksForDate.forEach(task => {
+                totalPoints += (task.points || 0) * (task.dailyRepetitions?.max || 1);
+            });
+            
+            // Crear un Set con los missionId que ya existen en tasksForDate para evitar duplicados
+            const existingMissionIds = new Set(tasksForDate.filter(t => t.missionId).map(t => t.missionId));
+            
+            // Contar misiones programadas que aplican para esta fecha
+            state.scheduledMissions.forEach(sm => {
+                // Si ya existe en tasksByDate, no contarla de nuevo
+                if (existingMissionIds.has(sm.missionId)) {
+                    return;
+                }
+                
+                // Verificar si está omitida para esta fecha
+                if (sm.skippedDates && sm.skippedDates.includes(dateStr)) {
+                    return;
+                }
+                
+                // Verificar si la misión está programada para esta fecha
+                if (_isMissionScheduledForDate(sm, dateObj)) {
+                    totalPoints += (sm.points || 0) * (sm.dailyRepetitions?.max || 1);
+                }
+            });
+            
+            return totalPoints;
+        },
+
         /**
          * Devuelve todas las misiones visibles en una fecha dada.
          * Incluye tanto tareas directas de tasksByDate como misiones programadas/recurrentes.

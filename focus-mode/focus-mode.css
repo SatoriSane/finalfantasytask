@@ -298,7 +298,7 @@ body.focus-mode-active .focus-fab {
     white-space: pre-wrap;
     word-wrap: break-word;
     flex: 0 1 auto;
-    max-height: 20vh;
+    max-height: 40vh;
     animation: fadeIn 0.6s ease-out 0.4s both;
 }
 
@@ -682,7 +682,7 @@ body.focus-mode-active .focus-fab {
     }
     
     .focus-description {
-        max-height: 15vh;
+        max-height: 25vh;
     }
     
     .focus-title {
@@ -738,7 +738,7 @@ body.focus-mode-active .focus-fab {
     width: fit-content;
     min-width: 180px;
     flex-shrink: 0;
-    animation: fadeInUp 0.6s ease-out 0.3s both;
+    animation: fadeInUp 0.6s ease-out 0.6s both;
 }
 
 /* Timer Iniciando - Animación de preparación */

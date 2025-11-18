@@ -39,27 +39,37 @@
             timerElement.classList.add('timer-starting');
         }
 
-        // Esperar 2 segundos antes de iniciar el countdown
+        // Esperar 2 segundos de animación
         setTimeout(() => {
-            _activeTimer = {
-                taskId: task.id,
-                startTime: Date.now(),
-                durationMs: durationMs,
-                bonusActive: true
-            };
-
-            _saveTimerState();
-            _startInterval();
-            _startFabInterval(); // Iniciar intervalo del FAB
-
             // Remover clase de inicio y agregar clase de activo
             if (timerElement) {
                 timerElement.classList.remove('timer-starting');
                 timerElement.classList.add('timer-started');
             }
-        }, 2000);
+            
+            // Esperar 1 segundo adicional mostrando el tiempo completo
+            setTimeout(() => {
+                // Crear el timer y empezar el countdown
+                _activeTimer = {
+                    taskId: task.id,
+                    startTime: Date.now(),
+                    durationMs: durationMs,
+                    bonusActive: true
+                };
 
-        return _activeTimer;
+                _saveTimerState();
+                _startInterval();
+                _startFabInterval(); // Iniciar intervalo del FAB
+                
+                // Forzar actualización del display
+                setTimeout(() => {
+                    updateTimerDisplay(task.id);
+                }, 50);
+            }, 1000); // 1 segundo mostrando tiempo inicial
+        }, 2000); // 2 segundos de animación
+
+        // Retornar un objeto temporal para indicar que el timer se está iniciando
+        return { taskId: task.id, starting: true };
     }
 
     /**
@@ -165,15 +175,31 @@
      * Renderiza el componente visual del timer
      */
     function renderTimer(container, task) {
-        const state = getTimerState(task.id);
-        
-        if (!state) {
-            return ''; // No hay timer para esta tarea
+        // Verificar si la tarea tiene duración estimada
+        if (!task.scheduleDuration || !task.scheduleDuration.value) {
+            return ''; // No hay duración, no mostrar timer
         }
 
-        const timeText = formatTimeRemaining(state.remainingMs);
-        const bonusClass = state.bonusActive ? 'active' : 'expired';
-        const message = state.bonusActive ? 'Bonus ×2' : 'Expirado';
+        const state = getTimerState(task.id);
+        
+        let timeText, bonusClass, message;
+        
+        if (!state) {
+            // Si no hay estado aún (timer no iniciado), mostrar tiempo inicial completo
+            const durationValue = task.scheduleDuration.value;
+            const durationUnit = task.scheduleDuration.unit;
+            const durationMs = durationUnit === 'hours' 
+                ? durationValue * 60 * 60 * 1000 
+                : durationValue * 60 * 1000;
+            
+            timeText = formatTimeRemaining(durationMs);
+            bonusClass = 'active';
+            message = 'Bonus ×2';
+        } else {
+            timeText = formatTimeRemaining(state.remainingMs);
+            bonusClass = state.bonusActive ? 'active' : 'expired';
+            message = state.bonusActive ? 'Bonus ×2' : 'Expirado';
+        }
 
         return `
             <div class="focus-timer-container ${bonusClass}">
@@ -317,6 +343,7 @@
             clearInterval(_intervalId);
         }
 
+        // Actualizar cada 100ms para evitar saltos de segundos
         _intervalId = setInterval(() => {
             if (_activeTimer) {
                 updateTimerDisplay(_activeTimer.taskId);
@@ -328,7 +355,7 @@
                     _intervalId = null;
                 }
             }
-        }, 1000); // Actualizar cada segundo
+        }, 100); // Actualizar cada 100ms para suavidad
     }
 
     /**

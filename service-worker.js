@@ -1,4 +1,4 @@
-const CACHE_NAME = 'final-fantasy-tasks-cache-v5.3'; // Updated for GitHub Pages
+const CACHE_NAME = 'final-fantasy-tasks-cache-v5.6'; // Updated for GitHub Pages
 const OFFLINE_URL = 'offline.html';
 
 // Lista actualizada de todos los archivos de la aplicación a cachear

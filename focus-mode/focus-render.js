@@ -151,8 +151,6 @@
                             <h1 class="focus-title">${task.name}</h1>
                         </div>
                         
-                        ${timerHTML}
-                        
                         ${data.description ? `<div class="focus-description">${data.description}</div>` : ''}
                         
                         ${data.maxReps > 1 ? `
@@ -165,6 +163,8 @@
                                 <div class="focus-progress-fill" style="width: ${data.progressPercentage}%"></div>
                             </div>
                         </div>` : ''}
+                        
+                        ${timerHTML}
                     </div>
                     
                     <div class="focus-bottom-section">

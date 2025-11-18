@@ -67,7 +67,7 @@
 }
 
 /* Estilos de Campos de Entrada */
-input[type="text"], input[type="number"], input[type="date"], select {
+input[type="text"], input[type="number"], input[type="date"], input[type="time"], select {
     font-size: 1rem;
     padding: 0.8rem 1rem;
     border: 1px solid var(--ff-border);
@@ -83,6 +83,32 @@ input:focus, select:focus {
     border-color: var(--ff-accent);
     box-shadow: 0 0 0 2px rgba(0, 228, 255, 0.3);
     outline: none;
+}
+
+/* Estilos específicos para input[type="time"] */
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+    cursor: pointer;
+}
+
+input[type="time"]::-webkit-datetime-edit {
+    color: var(--ff-text-light);
+}
+
+input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+    color: var(--ff-text-light);
+}
+
+/* Ocultar spinners de input[type="number"] para ahorrar espacio */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+    appearance: textfield; /* Estándar */
 }
 
 /* 🖼️ Modales */
@@ -588,7 +614,7 @@ input:focus, select:focus {
     flex-direction: column;
     gap: 0.6rem;
     margin: 1rem 0;
-    padding: 0.8rem;
+    padding: 0.6rem;
     background: rgba(var(--ff-accent-rgb), 0.05);
     border-radius: var(--border-radius-md);
     border: 1px solid rgba(var(--ff-accent-rgb), 0.15);

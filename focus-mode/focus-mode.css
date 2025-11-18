@@ -152,30 +152,25 @@ body.focus-mode-active .focus-fab {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 5rem 1.5rem 10rem 1.5rem;
+    align-items: stretch;
+    padding: 5rem 1.5rem 12rem 1.5rem;
     max-width: 600px;
     margin: 0 auto;
     width: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     min-height: 0;
-    scrollbar-width: thin;
-    scrollbar-color: var(--ff-accent) transparent;
+    gap: 0;
 }
 
-.focus-content-wrapper::-webkit-scrollbar {
-    width: 6px;
-}
 
-.focus-content-wrapper::-webkit-scrollbar-track {
-    background: transparent;
+/* Contenedor interno que agrupa el contenido principal */
+.focus-content-inner {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex-shrink: 0;
+    gap: 0;
 }
-
-.focus-content-wrapper::-webkit-scrollbar-thumb {
-    background: var(--ff-accent);
-    border-radius: 3px;
-}
-
 
 /* Header Fijo - Misión Actual */
 .focus-header {
@@ -303,8 +298,8 @@ body.focus-mode-active .focus-fab {
     white-space: pre-wrap;
     word-wrap: break-word;
     flex: 0 1 auto;
-    max-height: 50vh;
-    animation: fadeIn 0.6s ease-out 0.5s both;
+    max-height: 20vh;
+    animation: fadeIn 0.6s ease-out 0.4s both;
 }
 
 @keyframes fadeIn {
@@ -335,7 +330,7 @@ body.focus-mode-active .focus-fab {
     border-radius: var(--border-radius-md);
     padding: 1rem 1.2rem;
     margin-bottom: 1.5rem;
-    animation: fadeInUp 0.6s ease-out 0.6s both;
+    animation: fadeInUp 0.6s ease-out 0.5s both;
     flex-shrink: 0;
     border: 1px solid rgba(var(--ff-accent-rgb), 0.1);
 }
@@ -683,7 +678,11 @@ body.focus-mode-active .focus-fab {
     }
     
     .focus-content-wrapper {
-        padding: 4rem 1rem 9rem 1rem;
+        padding: 4rem 1rem 10rem 1rem;
+    }
+    
+    .focus-description {
+        max-height: 15vh;
     }
     
     .focus-title {
@@ -719,37 +718,136 @@ body.focus-mode-active .focus-fab {
    TIMER BONUS - Minimalista y Discreto
    ======================================== */
 
+/* ⏱️ TIMER DE ENFOQUE - Estilo Discreto y Centrado */
 .focus-timer-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.5rem 0.8rem;
-    margin-bottom: 0.6rem;
-    background: transparent;
-    border-radius: var(--border-radius-sm);
-    font-size: 0.8rem;
-    color: var(--ff-text-dark);
-}
-
-.focus-timer-container.expired {
-    opacity: 0.4;
-}
-
-.focus-timer-message {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--ff-text-dark);
-}
-
-.focus-timer-time {
+    padding: 1rem 1.8rem 0.8rem 1.8rem;
+    border-radius: var(--border-radius-md);
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.85rem;
     font-weight: 600;
-    letter-spacing: 0.5px;
+    background: var(--ff-bg-light);
+    border: 1px solid var(--ff-border);
+    transition: all var(--transition-speed);
+    text-align: center;
+    margin: 0 auto 1.5rem auto;
+    max-width: 220px;
+    width: fit-content;
+    min-width: 180px;
+    flex-shrink: 0;
+    animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+/* Timer Iniciando - Animación de preparación */
+.focus-timer-container.timer-starting {
+    animation: timerPrepare 2s ease-in-out;
+}
+
+@keyframes timerPrepare {
+    0%, 100% {
+        transform: scale(1);
+        border-color: var(--ff-border);
+    }
+    25% {
+        transform: scale(1.05);
+        border-color: var(--ff-accent);
+    }
+    50% {
+        transform: scale(1);
+        border-color: var(--positive-color);
+    }
+    75% {
+        transform: scale(1.05);
+        border-color: var(--ff-accent);
+    }
+}
+
+/* Timer Iniciado - Pulso de confirmación */
+.focus-timer-container.timer-started {
+    animation: timerStart 0.6s ease-out;
+}
+
+@keyframes timerStart {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(88, 228, 120, 0.5);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Timer Activo (Bonus ×2) */
+.focus-timer-container.active {
+    border-color: var(--positive-color);
+    background: rgba(var(--ff-bg-light-rgb), 0.8);
+}
+
+/* Timer Expirado */
+.focus-timer-container.expired {
+    border-color: var(--ff-border);
+    opacity: 0.65;
+}
+
+/* Tiempo Restante - Protagonista principal */
+.focus-timer-time {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--ff-text-light);
+    white-space: nowrap;
+    letter-spacing: 2px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.focus-timer-container.active .focus-timer-time {
     color: var(--ff-accent);
 }
 
 .focus-timer-container.expired .focus-timer-time {
     color: var(--ff-text-dark);
+    text-decoration: line-through;
+}
+
+/* Mensaje del Timer - Integrado debajo */
+.focus-timer-message {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    opacity: 0.7;
+    line-height: 1;
+}
+
+.focus-timer-container.active .focus-timer-message {
+    color: var(--positive-color);
+}
+
+.focus-timer-container.expired .focus-timer-message {
+    color: var(--ff-text-dark);
+}
+
+/* 📱 Responsive */
+@media (max-width: 600px) {
+    .focus-timer-container {
+        padding: 0.9rem 1.6rem 0.7rem 1.6rem;
+        gap: 0.4rem;
+        min-width: 160px;
+        max-width: 200px;
+        width: fit-content;
+    }
+    
+    .focus-timer-message {
+        font-size: 0.6rem;
+    }
+    
+    .focus-timer-time {
+        font-size: 1.6rem;
+    }
 }

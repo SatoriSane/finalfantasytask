@@ -26,25 +26,27 @@
                 <button class="focus-close-btn" aria-label="Cerrar modo zen">×</button>
                 
                 <div class="focus-content-wrapper">
-                    <div class="focus-main-section">
-                        <h1 class="focus-title">${task.name}</h1>
-                    </div>
-                    
-                    ${data.description ? `<div class="focus-description">${data.description}</div>` : ''}
-                    
-                    <div class="scheduled-message">
-                        <span class="scheduled-message-icon">⏱️</span>
-                        ${waitMessage}
-                    </div>
-                    
-                    <div class="focus-scheduled-info">
-                        <div class="scheduled-time-display">
-                            <span class="scheduled-icon">⏰</span>
-                            <span class="scheduled-time">${timeText}</span>
+                    <div class="focus-content-inner">
+                        <div class="focus-main-section">
+                            <h1 class="focus-title">${task.name}</h1>
                         </div>
-                        <div class="scheduled-countdown">
-                            <span class="countdown-label">Comienza en</span>
-                            <span class="countdown-value">${minutesUntil} min</span>
+                        
+                        ${data.description ? `<div class="focus-description">${data.description}</div>` : ''}
+                        
+                        <div class="scheduled-message">
+                            <span class="scheduled-message-icon">⏱️</span>
+                            ${waitMessage}
+                        </div>
+                        
+                        <div class="focus-scheduled-info">
+                            <div class="scheduled-time-display">
+                                <span class="scheduled-icon">⏰</span>
+                                <span class="scheduled-time">${timeText}</span>
+                            </div>
+                            <div class="scheduled-countdown">
+                                <span class="countdown-label">Comienza en</span>
+                                <span class="countdown-value">${minutesUntil} min</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -144,24 +146,26 @@
                 <button class="focus-close-btn" aria-label="Cerrar modo zen">×</button>
                 
                 <div class="focus-content-wrapper">
-                    <div class="focus-main-section">
-                        <h1 class="focus-title">${task.name}</h1>
+                    <div class="focus-content-inner">
+                        <div class="focus-main-section">
+                            <h1 class="focus-title">${task.name}</h1>
+                        </div>
+                        
+                        ${timerHTML}
+                        
+                        ${data.description ? `<div class="focus-description">${data.description}</div>` : ''}
+                        
+                        ${data.maxReps > 1 ? `
+                        <div class="focus-progress">
+                            <div class="focus-progress-label">
+                                <span>Repeticiones</span>
+                                <span class="focus-progress-text">${data.currentReps} / ${data.maxReps}</span>
+                            </div>
+                            <div class="focus-progress-bar">
+                                <div class="focus-progress-fill" style="width: ${data.progressPercentage}%"></div>
+                            </div>
+                        </div>` : ''}
                     </div>
-                    
-                    ${data.description ? `<div class="focus-description">${data.description}</div>` : ''}
-                    
-                    ${data.maxReps > 1 ? `
-                    <div class="focus-progress">
-                        <div class="focus-progress-label">
-                            <span>Repeticiones</span>
-                            <span class="focus-progress-text">${data.currentReps} / ${data.maxReps}</span>
-                        </div>
-                        <div class="focus-progress-bar">
-                            <div class="focus-progress-fill" style="width: ${data.progressPercentage}%"></div>
-                        </div>
-                    </div>` : ''}
-                    
-                    ${timerHTML}
                     
                     <div class="focus-bottom-section">
                         <button class="focus-action-btn" data-task-id="${task.id}">
@@ -215,13 +219,15 @@
                 <button class="focus-close-btn" aria-label="Cerrar modo zen">×</button>
                 
                 <div class="focus-content-wrapper">
-                    <div class="focus-main-section">
-                        <div class="focus-empty-icon">🎉</div>
-                        <h1 class="focus-title">¡Todo Completado!</h1>
-                        <p class="focus-empty-message">
-                            No tienes misiones pendientes para hoy.<br>
-                            ¡Excelente trabajo! Disfruta tu tiempo libre.
-                        </p>
+                    <div class="focus-content-inner">
+                        <div class="focus-main-section">
+                            <div class="focus-empty-icon">🎉</div>
+                            <h1 class="focus-title">¡Todo Completado!</h1>
+                            <p class="focus-empty-message">
+                                No tienes misiones pendientes para hoy.<br>
+                                ¡Excelente trabajo! Disfruta tu tiempo libre.
+                            </p>
+                        </div>
                     </div>
                     
                     <div class="focus-bottom-section">

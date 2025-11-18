@@ -98,7 +98,60 @@
                 dailyRepetitions: { max: parseInt(document.getElementById('editMissionDailyReps').value, 10) || 1 },
                 points: parseInt(document.getElementById('editMissionPoints').value, 10) || 0
             };
+            
+            // ⭐ NUEVO: Capturar hora y duración
+            const scheduleTimeInput = document.getElementById('editMissionScheduleTime');
+            const scheduleDurationInput = document.getElementById('editMissionScheduleDuration');
+            const scheduleDurationUnitSelect = document.getElementById('editMissionScheduleDurationUnit');
+            
+            let scheduleTime = null;
+            let scheduleDuration = null;
+            
+            if (scheduleTimeInput && scheduleTimeInput.value) {
+                scheduleTime = { time: scheduleTimeInput.value };
+            }
+            
+            if (scheduleDurationInput && scheduleDurationInput.value) {
+                scheduleDuration = {
+                    value: parseInt(scheduleDurationInput.value, 10),
+                    unit: scheduleDurationUnitSelect ? scheduleDurationUnitSelect.value : 'minutes'
+                };
+            }
+            
+            // Actualizar la misión
             App.state.updateMission(missionId, updatedMission);
+            
+            // ⭐ NUEVO: Si la misión está programada, actualizar scheduleTime y scheduleDuration
+            const scheduledMission = App.state.getScheduledMissions().find(sm => sm.missionId === missionId);
+            if (scheduledMission) {
+                // Actualizar en scheduledMissions
+                scheduledMission.scheduleTime = scheduleTime;
+                scheduledMission.scheduleDuration = scheduleDuration;
+                
+                // Actualizar en todas las tareas existentes de tasksByDate
+                const state = App.state.getState();
+                if (state.tasksByDate) {
+                    Object.keys(state.tasksByDate).forEach(dateKey => {
+                        const tasksForDate = state.tasksByDate[dateKey];
+                        if (Array.isArray(tasksForDate)) {
+                            tasksForDate.forEach(task => {
+                                if (task.missionId === missionId) {
+                                    task.scheduleTime = scheduleTime;
+                                    task.scheduleDuration = scheduleDuration;
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                // Guardar el estado actualizado
+                App.state.saveState();
+                
+                // Emitir eventos para actualizar la UI
+                App.events.emit('scheduledMissionsUpdated');
+                App.events.emit('todayTasksUpdated');
+            }
+            
             closeModal();
         });
 
@@ -513,6 +566,41 @@
             document.getElementById('editMissionDescription').value = mission.description || '';
             document.getElementById('editMissionDailyReps').value = mission.dailyRepetitions.max;
             document.getElementById('editMissionPoints').value = mission.points;
+            
+            // ⭐ NUEVO: Cargar hora y duración desde la tarea o desde scheduledMissions
+            let scheduleTime = null;
+            let scheduleDuration = null;
+            
+            // Si viene de today, intentar obtener los datos de la tarea
+            if (isFromToday && todayTaskId) {
+                const task = App.state.getTodayTasks().find(t => t.id === todayTaskId);
+                if (task) {
+                    scheduleTime = task.scheduleTime;
+                    scheduleDuration = task.scheduleDuration;
+                }
+            }
+            
+            // Si no se encontró en la tarea, buscar en scheduledMissions
+            if (!scheduleTime && !scheduleDuration) {
+                const scheduledMission = App.state.getScheduledMissions().find(sm => sm.missionId === missionId);
+                if (scheduledMission) {
+                    scheduleTime = scheduledMission.scheduleTime;
+                    scheduleDuration = scheduledMission.scheduleDuration;
+                }
+            }
+            
+            // Cargar los valores en los campos
+            const scheduleTimeInput = document.getElementById('editMissionScheduleTime');
+            const scheduleDurationInput = document.getElementById('editMissionScheduleDuration');
+            const scheduleDurationUnitSelect = document.getElementById('editMissionScheduleDurationUnit');
+            
+            if (scheduleTimeInput) {
+                scheduleTimeInput.value = scheduleTime?.time || '';
+            }
+            if (scheduleDurationInput && scheduleDurationUnitSelect) {
+                scheduleDurationInput.value = scheduleDuration?.value || '';
+                scheduleDurationUnitSelect.value = scheduleDuration?.unit || 'minutes';
+            }
 
             const deleteBtn = document.getElementById('deleteMissionBtn');
             

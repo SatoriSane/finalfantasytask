@@ -33,16 +33,31 @@
             ? durationValue * 60 * 60 * 1000 
             : durationValue * 60 * 1000;
 
-        _activeTimer = {
-            taskId: task.id,
-            startTime: Date.now(),
-            durationMs: durationMs,
-            bonusActive: true
-        };
+        // Agregar clase de inicio para animación
+        const timerElement = document.querySelector('.focus-timer-container');
+        if (timerElement) {
+            timerElement.classList.add('timer-starting');
+        }
 
-        _saveTimerState();
-        _startInterval();
-        _startFabInterval(); // Iniciar intervalo del FAB
+        // Esperar 2 segundos antes de iniciar el countdown
+        setTimeout(() => {
+            _activeTimer = {
+                taskId: task.id,
+                startTime: Date.now(),
+                durationMs: durationMs,
+                bonusActive: true
+            };
+
+            _saveTimerState();
+            _startInterval();
+            _startFabInterval(); // Iniciar intervalo del FAB
+
+            // Remover clase de inicio y agregar clase de activo
+            if (timerElement) {
+                timerElement.classList.remove('timer-starting');
+                timerElement.classList.add('timer-started');
+            }
+        }, 2000);
 
         return _activeTimer;
     }
@@ -161,10 +176,10 @@
         const message = state.bonusActive ? 'Bonus ×2' : 'Expirado';
 
         return `
-            <span class="focus-timer-container ${bonusClass}">
-                <span class="focus-timer-message">${message}</span>
+            <div class="focus-timer-container ${bonusClass}">
                 <span class="focus-timer-time">${timeText}</span>
-            </span>
+                <span class="focus-timer-message">${message}</span>
+            </div>
         `;
     }
 

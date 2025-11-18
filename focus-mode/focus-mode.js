@@ -207,10 +207,11 @@
             if (stillHasReps) {
                 if (App.focusTimer && task.scheduleDuration) {
                     App.focusTimer.stopTimer();
+                    // Esperar un poco antes de reiniciar para que el usuario vea la celebración
                     setTimeout(() => {
                         App.focusTimer.startTimer(task);
-                        setTimeout(() => App.focusTimer.updateTimerDisplay(task.id), 100);
-                    }, 100);
+                        // El timer ya tiene su propio delay de 2s y animación
+                    }, 800);
                 }
                 
                 App.focusRender.animateProgressBar(taskId);

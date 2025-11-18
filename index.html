@@ -330,25 +330,6 @@
                         <span id="scheduledPointsValue">0</span>
                     </div>
                 </div>
-                
-                <!-- Campos opcionales de hora y duración en una sola fila -->
-                <div class="schedule-time-section">
-                    <div class="form-group">
-                        <label for="scheduleTime">⏰ Hora:</label>
-                        <input type="time" id="scheduleTime" class="time-input">
-                    </div>
-                    <div class="form-group">
-                        <label for="scheduleDuration">⏱️ Duración:</label>
-                        <div class="duration-input-group">
-                            <input type="number" id="scheduleDuration" min="1" placeholder="30">
-                            <select id="scheduleDurationUnit">
-                                <option value="minutes">Min</option>
-                                <option value="hours">Hrs</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Toggle Switch para Repetir Misión (Nuevo diseño con una sola etiqueta) -->
                 <div class="toggle-container">
                     <div class="toggle-switch" id="repeatMissionToggle" role="switch" aria-checked="false" tabindex="0">
@@ -381,7 +362,23 @@
                         <input type="date" id="repeatEndDate" min="">
                     </div>
                 </div>
-
+                <!-- Campos opcionales de hora y duración en una sola fila -->
+                <div class="schedule-time-section">
+                    <div class="form-group">
+                        <label for="scheduleTime">⏰ Hora:</label>
+                        <input type="time" id="scheduleTime" class="time-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleDuration">⏱️ Duración:</label>
+                        <div class="duration-input-group">
+                            <input type="number" id="scheduleDuration" min="1" placeholder="30">
+                            <select id="scheduleDurationUnit">
+                                <option value="minutes">Min</option>
+                                <option value="hours">Hrs</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="modal-actions">
                     <div class="main-actions">
@@ -435,12 +432,28 @@
                 </div>
                 <div class="form-group-inline">
                     <div class="form-group">
-                        <label for="editMissionDailyReps">Repeticiones máximas:</label>
+                        <label for="editMissionDailyReps">Repeticiones:</label>
                         <input type="number" id="editMissionDailyReps" min="1" value="1">
                     </div>
                     <div class="form-group">
-                        <label for="editMissionPoints">Puntos por repetición:</label>
+                        <label for="editMissionPoints">Puntos:</label>
                         <input type="number" id="editMissionPoints" min="1" value="10">
+                    </div>
+                </div>
+                <div class="form-group-inline">
+                    <div class="form-group">
+                        <label for="editMissionScheduleTime">⏰ Hora:</label>
+                        <input type="time" id="editMissionScheduleTime" class="time-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="editMissionScheduleDuration">⏱️ Duración:</label>
+                        <div class="duration-input-group">
+                            <input type="number" id="editMissionScheduleDuration" min="1" placeholder="30">
+                            <select id="editMissionScheduleDurationUnit">
+                                <option value="minutes">Min</option>
+                                <option value="hours">Hrs</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <button type="button" id="deleteMissionBtn" class="button-delete-icon button-corner-top-left">🗑️</button>

@@ -31,29 +31,17 @@
         const dailyRepetitionsMax = 1;
         App.state.addMission(name, points, catId, dailyRepetitionsMax);
         const newMission = state.missions[state.missions.length - 1];
+        
+        // ⭐ Asignar peso usando la función centralizada (sin hora = peso máximo)
+        App.state.calculateAndAssignMissionWeight(newMission, null);
     
         const scheduleDate = targetDate || App.utils.getFormattedDate();
     
         // Solo programar la misión
         App.state.scheduleMission(newMission.id, scheduleDate, false);
-    
-        // Obtener el estado actualizado después de programar
-        const updatedState = App.state.get();
-        const tasks = updatedState.tasksByDate[scheduleDate] || [];
         
-        // Buscar la tarea recién creada (la última que coincida con el missionId)
-        const newTaskIndex = tasks.findIndex(t => t.missionId === newMission.id);
-        
-        if (newTaskIndex !== -1 && newTaskIndex !== 0) {
-            // Mover la tarea al principio
-            const newTask = tasks.splice(newTaskIndex, 1)[0];
-            tasks.unshift(newTask);
-            updatedState.tasksByDate[scheduleDate] = tasks;
-            
-            // Actualizar el orden guardado
-            const newOrder = tasks.filter(t => !t.completed).map(t => t.id);
-            App.state.saveTodayTaskOrder(newOrder, scheduleDate);
-        }
+        // ⭐ La tarea aparecerá al principio automáticamente por su peso alto
+        // No es necesario mover manualmente ni guardar orden
     
         state.lastQuickAddCategoryId = catId;
         App.state.saveState();
@@ -293,6 +281,14 @@
     
                 if (taskIndex !== -1) {
                     const taskName = tasks[taskIndex].name;
+                    
+                    // ⭐ Si la tarea tiene un timer activo, detenerlo
+                    if (App.focusTimer && App.focusTimer.hasActiveTimer && App.focusTimer.hasActiveTimer(taskId)) {
+                        console.log(`🛑 Deteniendo timer de tarea eliminada: ${taskName}`);
+                        App.focusTimer.stopTimer();
+                        App.focusTimer.removeFabBadge();
+                    }
+                    
                     tasks.splice(taskIndex, 1);
                     state.tasksByDate[dateStr] = tasks;
                     _save();

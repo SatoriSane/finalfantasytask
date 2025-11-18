@@ -118,6 +118,17 @@
                 };
             }
             
+            // ⭐ AJUSTE AUTOMÁTICO DE PESO SEGÚN HORA PROGRAMADA
+            let weightChanged = false;
+            if (scheduleTime && scheduleTime.time) {
+                // Usar la función centralizada para calcular peso
+                const mission = App.state.getMissionById(missionId);
+                if (mission) {
+                    App.state.calculateAndAssignMissionWeight(mission, scheduleTime);
+                    weightChanged = true;
+                }
+            }
+            
             // Actualizar la misión
             App.state.updateMission(missionId, updatedMission);
             
@@ -128,24 +139,47 @@
                 scheduledMission.scheduleTime = scheduleTime;
                 scheduledMission.scheduleDuration = scheduleDuration;
                 
-                // Actualizar en todas las tareas existentes de tasksByDate
-                const state = App.state.getState();
-                if (state.tasksByDate) {
-                    Object.keys(state.tasksByDate).forEach(dateKey => {
-                        const tasksForDate = state.tasksByDate[dateKey];
-                        if (Array.isArray(tasksForDate)) {
-                            tasksForDate.forEach(task => {
-                                if (task.missionId === missionId) {
-                                    task.scheduleTime = scheduleTime;
-                                    task.scheduleDuration = scheduleDuration;
-                                }
-                            });
-                        }
-                    });
-                }
+                console.log(`📝 Actualizando hora y duración en scheduledMission:`, {
+                    missionId,
+                    scheduleTime,
+                    scheduleDuration
+                });
+            }
+            
+            // ⭐ Actualizar en todas las tareas existentes de tasksByDate (siempre, no solo si hay scheduledMission)
+            const state = App.state.getState();
+            if (state.tasksByDate) {
+                Object.keys(state.tasksByDate).forEach(dateKey => {
+                    const tasksForDate = state.tasksByDate[dateKey];
+                    if (Array.isArray(tasksForDate)) {
+                        tasksForDate.forEach(task => {
+                            if (task.missionId === missionId) {
+                                task.scheduleTime = scheduleTime;
+                                task.scheduleDuration = scheduleDuration;
+                                console.log(`📝 Actualizando hora y duración en tarea ${task.id}:`, {
+                                    scheduleTime,
+                                    scheduleDuration
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // ⭐ Guardar el estado actualizado SIEMPRE
+            App.state.saveState();
+            
+            // Si el peso cambió, forzar re-renderizado de TODAY
+            if (weightChanged) {
+                console.log('🔄 Forzando actualización de TODAY por cambio de peso');
                 
-                // Guardar el estado actualizado
-                App.state.saveState();
+                // Limpiar el orden guardado manualmente para que se use el nuevo peso
+                const today = App.utils.getFormattedDate();
+                const savedOrder = App.state.getTodayTaskOrder(today);
+                if (savedOrder && savedOrder.length > 0) {
+                    console.log('🗑️ Limpiando orden manual guardado para permitir reordenamiento por peso');
+                    App.state.saveTodayTaskOrder([], today); // Parámetros correctos: (order, dateStr)
+                }
                 
                 // Emitir eventos para actualizar la UI
                 App.events.emit('scheduledMissionsUpdated');

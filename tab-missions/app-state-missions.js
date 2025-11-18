@@ -10,6 +10,32 @@
     const _get = () => App.state.get();
     const _save = () => App.state.saveState();
 
+    /**
+     * Calcula y asigna el peso (orderWeight) de una misión según su hora programada
+     * @param {Object} mission - La misión a la que asignar peso
+     * @param {Object|null} scheduleTime - Objeto con la hora programada {time: "HH:MM"} o null
+     * @returns {number} - El peso asignado
+     */
+    function calculateAndAssignMissionWeight(mission, scheduleTime = null) {
+        const state = _get();
+        
+        if (scheduleTime && scheduleTime.time) {
+            // Si tiene hora, calcular peso cronológico
+            const [hours, minutes] = scheduleTime.time.split(':').map(Number);
+            // Fórmula: peso = 1000 - (horas * 37.5 + minutos * 0.625)
+            // Distribuye 00:00 = 1000 hasta 23:59 = 100
+            const calculatedWeight = Math.round(1000 - (hours * 37.5 + minutes * 0.625));
+            mission.orderWeight = Math.max(100, Math.min(1000, calculatedWeight));
+            console.log(`🕐 Peso cronológico asignado para hora ${scheduleTime.time}: ${mission.orderWeight}`);
+        } else {
+            // Si NO tiene hora, asignar peso máximo para que aparezca al principio
+            const maxWeight = Math.max(...state.missions.map(m => m.orderWeight || 500), 1000);
+            mission.orderWeight = maxWeight + 1;
+            console.log(`✨ Peso máximo asignado (sin hora): ${mission.orderWeight}`);
+        }
+        
+        return mission.orderWeight;
+    }
 
     const missionState = {
         addMission: function(name, points, categoryId, dailyRepetitionsMax) {
@@ -128,6 +154,14 @@
             if (!missionToProgram) {
                 App.ui.general.showCustomAlert("La misión que intentas programar no fue encontrada.");
                 return;
+            }
+            
+            // ⭐ Verificar si la misión ya estaba programada
+            const wasAlreadyScheduled = state.scheduledMissions.some(sm => sm.missionId === missionId);
+            
+            // ⭐ Si es una misión nueva (no estaba programada), asignar peso automático
+            if (!wasAlreadyScheduled) {
+                calculateAndAssignMissionWeight(missionToProgram, scheduleTime);
             }
         
             const scheduledData = {
@@ -390,6 +424,9 @@
         getMissions: () => _get().missions,
         getScheduledMissions: () => _get().scheduledMissions,
         getScheduledMissionByOriginalMissionId: (id) => _get().scheduledMissions.find(sm => sm.missionId === id),
+        
+        // ⭐ Función centralizada para calcular peso de misiones
+        calculateAndAssignMissionWeight: calculateAndAssignMissionWeight,
     };
 
     Object.assign(App.state, missionState);

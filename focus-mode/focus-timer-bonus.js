@@ -279,6 +279,7 @@
 
     /**
      * Renderiza el badge del timer en el FAB
+     * Solo se muestra cuando el focus mode está CERRADO y hay un timer activo
      */
     function renderFabBadge() {
         const fab = document.getElementById('focusModeToggleBtn');
@@ -288,6 +289,11 @@
         const existingBadge = fab.querySelector('.focus-fab-timer-badge');
         if (existingBadge) {
             existingBadge.remove();
+        }
+
+        // ⭐ Solo mostrar badge si el focus mode está CERRADO
+        if (App.focusMode && App.focusMode.isActive && App.focusMode.isActive()) {
+            return; // Focus mode activo, no mostrar badge
         }
 
         // Si no hay timer activo, no mostrar badge
@@ -423,6 +429,14 @@
         }
     }
 
+    /**
+     * Verifica si hay un timer activo para una tarea específica
+     */
+    function hasActiveTimer(taskId) {
+        _loadTimerState();
+        return _activeTimer && _activeTimer.taskId === taskId;
+    }
+
     // API pública
     App.focusTimer = {
         startTimer,
@@ -431,6 +445,7 @@
         resumeInterval,
         getTimerState,
         hasBonusActive,
+        hasActiveTimer,
         calculatePoints,
         formatTimeRemaining,
         renderTimer,

@@ -26,6 +26,16 @@
             return null; // No hay duración estimada
         }
 
+        // ⭐ CRÍTICO: Si ya existe un timer activo para esta tarea, NO reiniciarlo
+        _loadTimerState();
+        if (_activeTimer && _activeTimer.taskId === task.id) {
+            console.log('⏱️ Timer ya existe para esta tarea, continuando desde donde estaba...');
+            // Reiniciar solo los intervalos de actualización
+            _startInterval();
+            _startFabInterval();
+            return { taskId: task.id, existing: true };
+        }
+
         // Convertir duración a milisegundos
         const durationValue = task.scheduleDuration.value;
         const durationUnit = task.scheduleDuration.unit;
@@ -106,6 +116,7 @@
     function resumeInterval() {
         if (_activeTimer && !_intervalId) {
             _startInterval();
+            _startFabInterval(); // ⭐ También reiniciar intervalo del FAB
         }
     }
 

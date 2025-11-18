@@ -129,6 +129,10 @@
             // Solo iniciar un nuevo timer si no existe uno activo para esta tarea
             if (!existingTimer) {
                 App.focusTimer.startTimer(task);
+            } else {
+                // ⭐ Si existe un timer, reiniciar los intervalos de actualización
+                console.log('🔄 Timer existente detectado, reiniciando intervalos...');
+                App.focusTimer.resumeInterval();
             }
             
             timerHTML = App.focusTimer.renderTimer(container, task);

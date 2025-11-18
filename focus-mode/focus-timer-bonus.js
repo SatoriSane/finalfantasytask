@@ -212,10 +212,21 @@
             message = state.bonusActive ? 'Bonus ×2' : 'Expirado';
         }
 
+        // ⭐ Verificar estado de la alarma
+        const alarmEnabled = App.focusAlarm ? App.focusAlarm.isEnabled() : false;
+
         return `
-            <div class="focus-timer-container ${bonusClass}">
-                <span class="focus-timer-time">${timeText}</span>
-                <span class="focus-timer-message">${message}</span>
+            <div class="focus-timer-wrapper">
+                <div class="focus-timer-container ${bonusClass}">
+                    <span class="focus-timer-time">${timeText}</span>
+                    <span class="focus-timer-message">${message}</span>
+                </div>
+                <label class="focus-alarm-toggle" 
+                       title="${alarmEnabled ? 'Notificar al finalizar' : 'Sin notificación'}">
+                    <input type="checkbox" class="alarm-checkbox" ${alarmEnabled ? 'checked' : ''}>
+                    <span class="alarm-switch"></span>
+                    <span class="alarm-label">Notificar al finalizar</span>
+                </label>
             </div>
         `;
     }
@@ -246,6 +257,15 @@
             
             // Actualizar puntos del botón inmediatamente
             _updateButtonPoints(taskId, false);
+            
+            // ⭐ Disparar alarma si está habilitada
+            if (App.focusAlarm && App.focusAlarm.isEnabled()) {
+                const todayTasks = App.state?.getTodayTasks ? App.state.getTodayTasks() : [];
+                const task = todayTasks.find(t => t.id === taskId);
+                if (task) {
+                    App.focusAlarm.trigger(task.name);
+                }
+            }
             
             // Notificar al usuario
             if (App.events?.emit) {

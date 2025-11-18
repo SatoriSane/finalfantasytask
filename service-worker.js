@@ -171,3 +171,56 @@ self.addEventListener('fetch', event => {
             })
     );
 });
+
+// ========================================
+// NOTIFICACIONES PUSH - FOCUS MODE ALARM
+// ========================================
+
+// Manejar click en notificación
+self.addEventListener('notificationclick', (event) => {
+    console.log('[Service Worker] Notificación clickeada:', event.action);
+    
+    event.notification.close();
+    
+    // Si el usuario hace click en "Completar"
+    if (event.action === 'complete') {
+        event.waitUntil(
+            clients.matchAll({ type: 'window', includeUncontrolled: true })
+                .then((clientList) => {
+                    // Si hay una ventana abierta, enfocarla
+                    for (const client of clientList) {
+                        if (client.url.includes(self.location.origin) && 'focus' in client) {
+                            return client.focus();
+                        }
+                    }
+                    // Si no hay ventana abierta, abrir una nueva
+                    if (clients.openWindow) {
+                        return clients.openWindow('/');
+                    }
+                })
+        );
+    } else if (event.action === 'dismiss') {
+        // Solo cerrar la notificación (ya se hizo arriba)
+        console.log('[Service Worker] Notificación descartada');
+    } else {
+        // Click en el cuerpo de la notificación (sin acción específica)
+        event.waitUntil(
+            clients.matchAll({ type: 'window', includeUncontrolled: true })
+                .then((clientList) => {
+                    for (const client of clientList) {
+                        if (client.url.includes(self.location.origin) && 'focus' in client) {
+                            return client.focus();
+                        }
+                    }
+                    if (clients.openWindow) {
+                        return clients.openWindow('/');
+                    }
+                })
+        );
+    }
+});
+
+// Manejar cierre de notificación
+self.addEventListener('notificationclose', (event) => {
+    console.log('[Service Worker] Notificación cerrada:', event.notification.tag);
+});

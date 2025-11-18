@@ -123,7 +123,9 @@
         
         // Verificar si ya hay un timer activo para esta tarea
         let timerHTML = '';
+        let hasTimer = false;
         if (App.focusTimer && task.scheduleDuration) {
+            hasTimer = true;
             const existingTimer = App.focusTimer.getTimerState(task.id);
             
             // Solo iniciar un nuevo timer si no existe uno activo para esta tarea
@@ -188,6 +190,11 @@
 
         // Adjuntar event listeners
         attachMissionEventListeners(task.id, callbacks);
+        
+        // ⭐ Adjuntar event listener del botón de alarma si hay timer
+        if (hasTimer) {
+            attachAlarmButtonListener();
+        }
     }
 
     /**
@@ -203,6 +210,24 @@
         container?.querySelector('.focus-close-btn')?.addEventListener('click', () => {
             if (callbacks.onClose) {
                 callbacks.onClose();
+            }
+        });
+    }
+
+    /**
+     * Adjunta event listener al toggle de alarma
+     */
+    function attachAlarmButtonListener() {
+        const alarmCheckbox = document.querySelector('.alarm-checkbox');
+        if (!alarmCheckbox || !App.focusAlarm) return;
+        
+        alarmCheckbox.addEventListener('change', async (e) => {
+            // El checkbox ya cambió visualmente, solo actualizamos el estado
+            const enabled = await App.focusAlarm.toggle();
+            
+            // Si el toggle falló (ej: permisos denegados), revertir el checkbox
+            if (enabled !== e.target.checked) {
+                e.target.checked = enabled;
             }
         });
     }

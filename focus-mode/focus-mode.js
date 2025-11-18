@@ -6,10 +6,52 @@
 (function(App) {
     'use strict';
 
+    // ⭐ STORAGE KEY para persistencia
+    const FOCUS_MODE_STORAGE_KEY = 'focusModeState';
+
     // Estado privado del modo enfoque
     let _isActive = false;
     let _currentFocusTaskId = null;
     let _initialized = false;
+
+    /**
+     * Guarda el estado del modo focus en localStorage
+     */
+    function _saveFocusState() {
+        const state = {
+            isActive: _isActive,
+            currentFocusTaskId: _currentFocusTaskId,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(FOCUS_MODE_STORAGE_KEY, JSON.stringify(state));
+    }
+
+    /**
+     * Carga el estado del modo focus desde localStorage
+     */
+    function _loadFocusState() {
+        try {
+            const saved = localStorage.getItem(FOCUS_MODE_STORAGE_KEY);
+            if (saved) {
+                const state = JSON.parse(saved);
+                // Solo restaurar si el timestamp es reciente (menos de 24 horas)
+                const hoursSinceUpdate = (Date.now() - state.timestamp) / (1000 * 60 * 60);
+                if (hoursSinceUpdate < 24) {
+                    return state;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading focus state:', error);
+        }
+        return null;
+    }
+
+    /**
+     * Limpia el estado del modo focus del localStorage
+     */
+    function _clearFocusState() {
+        localStorage.removeItem(FOCUS_MODE_STORAGE_KEY);
+    }
 
     /**
      * Inicializa el modo de enfoque
@@ -18,6 +60,15 @@
         try {
             _createFocusModeElements();
             _attachEventListeners();
+            
+            // ⭐ Restaurar estado si existe (para sincronización entre dispositivos)
+            const savedState = _loadFocusState();
+            if (savedState && savedState.isActive) {
+                console.log('🔄 Restaurando estado del modo focus desde localStorage');
+                // No activar automáticamente, solo guardar el estado para referencia
+                // El usuario debe reactivar manualmente
+            }
+            
             console.log('✅ Focus Mode initialized');
         } catch (error) {
             console.error('❌ Error initializing Focus Mode:', error);
@@ -88,6 +139,14 @@
             _currentFocusTaskId = result.nextScheduledTask.id;
             _renderScheduledMission(result.nextScheduledTask, result.minutesUntilNext, result.hasOtherAvailableTasks);
         }
+
+        // ⭐ Guardar estado para sincronización
+        _saveFocusState();
+        
+        // ⭐ Emitir evento para que GitHub Sync detecte el cambio
+        if (App.events?.emit) {
+            App.events.emit('stateChanged', { source: 'focusMode', action: 'activate' });
+        }
     }
 
     /**
@@ -109,6 +168,14 @@
         document.getElementById('focusModeOverlay')?.classList.remove('active');
         document.getElementById('focusModeContainer')?.classList.remove('active');
         document.body.classList.remove('focus-mode-active');
+
+        // ⭐ Limpiar estado guardado
+        _clearFocusState();
+        
+        // ⭐ Emitir evento para que GitHub Sync detecte el cambio
+        if (App.events?.emit) {
+            App.events.emit('stateChanged', { source: 'focusMode', action: 'deactivate' });
+        }
     }
 
     /**

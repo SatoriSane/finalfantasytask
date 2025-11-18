@@ -648,14 +648,14 @@ input[type="number"] {
 .duration-input-group {
     display: flex;
     gap: 0.4rem;
-    align-items: center;
+    align-items: stretch;
     flex: 1;
 }
 
 .duration-input-group input[type="number"] {
     flex: 1;
-    padding: 0.6rem;
-    font-size: 0.95rem;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
     border: 1px solid var(--ff-border);
     border-radius: var(--border-radius-sm);
     background-color: var(--ff-bg-dark);
@@ -664,13 +664,13 @@ input[type="number"] {
 }
 
 .duration-input-group select {
-    padding: 0.6rem 0.4rem;
-    font-size: 0.85rem;
+    padding: 0.8rem 0.6rem;
+    font-size: 1rem;
     border: 1px solid var(--ff-border);
     border-radius: var(--border-radius-sm);
     background-color: var(--ff-bg-dark);
     color: var(--ff-text-light);
-    min-width: 65px;
+    min-width: 70px;
 }
 
 /* Contenedor principal para los botones de día */

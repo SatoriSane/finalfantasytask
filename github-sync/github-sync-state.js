@@ -1,15 +1,12 @@
 /* ===================================
-   github-sync-state.js - GESTIÓN SIMPLIFICADA
-   Sistema de sincronización automática con GitHub
+   github-sync-state.js - CONTROL MANUAL
+   Sistema de sincronización manual con GitHub Gist
    
-   LÓGICA SIMPLE:
-   1. IMPORTAR: Antes de que el usuario interactúe (si >30s desde última sync)
-   2. EXPORTAR: Inmediatamente al detectar cambios (con agrupación inteligente de 500ms)
-   
-   SEGURIDAD:
-   - Exportación inmediata con agrupación para evitar pérdida de datos
-   - Importación just-in-time antes de interactuar
-   - Sin race conditions ni verificaciones periódicas innecesarias
+   FILOSOFÍA:
+   - El usuario decide cuándo importar y exportar
+   - Sin automatizaciones complejas
+   - Sin race conditions
+   - Control total sobre la sincronización
    =================================== */
 
 (function() {
@@ -19,11 +16,6 @@
         TOKEN: 'fftask_github_token',
         GIST_ID: 'fftask_gist_id',
         LAST_SYNC: 'fftask_last_sync'
-    };
-    
-    const TIMING = {
-        IMPORT_THRESHOLD: 30000,    // Importar si >30s desde última sync (30000ms)
-        EXPORT_GROUP_WINDOW: 500,   // Agrupar cambios en ventana de 500ms
     };
     
     const log = (...msg) => console.log('[GitHubSync]', ...msg);
@@ -36,35 +28,19 @@
         isSyncing: false,
         syncAction: null,  // 'import' o 'export'
         lastSync: 0,       // Timestamp de última sincronización
-        
-        exportTimer: null,
-        interactionListenerActive: false,
 
         /**
          * Inicializa el sistema
          */
         async init() {
-            log('▶ Iniciando sistema de sincronización simplificado...');
+            log('▶ Iniciando sistema de sincronización manual...');
             this.loadState();
-        
+            this.updateUI();
+            
             if (this.isConnected) {
-                log('🔗 Conectado. Configurando listeners...');
-                
-                // Actualizar UI para mostrar estado conectado
-                this.updateUI();
-                
-                // Importar datos frescos al iniciar
-                await this.importIfNeeded();
-                
-                // Configurar listeners
-                this.setupInteractionListener();
-                this.setupChangeListener();
-                
-                log('✅ Sistema listo.');
+                log('✅ Conectado a GitHub Gist.');
             } else {
-                log('⚠️ No conectado a GitHub.');
-                // Actualizar UI para mostrar estado desconectado
-                this.updateUI();
+                log('⚠️ No conectado. Usa el modal para conectar.');
             }
         },
     
@@ -77,11 +53,6 @@
             const lastSyncStr = localStorage.getItem(STORAGE.LAST_SYNC);
             this.lastSync = lastSyncStr ? parseInt(lastSyncStr, 10) : 0;
             this.isConnected = !!(this.token && this.gistId);
-            
-            log('Estado cargado:', {
-                connected: this.isConnected,
-                lastSync: this.lastSync ? new Date(this.lastSync).toLocaleString() : 'nunca'
-            });
         },
     
         /**
@@ -111,19 +82,10 @@
             }
 
             this.isConnected = true;
-            log('📁 Gist listo:', this.gistId);
-
-            // Actualizar UI para mostrar estado conectado
             this.updateUI();
-
-            // Importar datos al conectar
-            await this.importFromGist();
-
-            // Configurar listeners
-            this.setupInteractionListener();
-            this.setupChangeListener();
             
-            log('🟢 Sincronización activada.');
+            log('✅ Conectado exitosamente.');
+            log('💡 Usa los botones Importar/Exportar para sincronizar.');
             return true;
         },
     
@@ -189,21 +151,7 @@
         },
 
         /**
-         * REGLA 1: Importar si han pasado >30s desde última sync
-         */
-        async importIfNeeded() {
-            const timeSinceSync = Date.now() - this.lastSync;
-            
-            if (timeSinceSync > TIMING.IMPORT_THRESHOLD) {
-                log(`📥 Han pasado ${Math.round(timeSinceSync/1000)}s desde última sync. Importando...`);
-                await this.importFromGist();
-            } else {
-                log(`✅ Datos frescos (última sync hace ${Math.round(timeSinceSync/1000)}s)`);
-            }
-        },
-
-        /**
-         * Importa datos desde el Gist
+         * Importa datos desde el Gist (MANUAL)
          */
         async importFromGist() {
             if (!this.isConnected || !this.gistId || this.isSyncing) return;
@@ -244,18 +192,22 @@
                     return;
                 }
 
-                // Comparar datos actuales con los del backup
+                // Comparar datos antes de importar
                 const hasChanges = this.hasDataChanges(backup.data);
                 
                 if (!hasChanges) {
                     // No hay cambios, solo actualizar timestamp
                     this.lastSync = Date.now();
                     localStorage.setItem(STORAGE.LAST_SYNC, this.lastSync.toString());
+                    
+                    // Limpiar estado de cambios remotos (ya están sincronizados)
+                    localStorage.removeItem('fftask_github_remote_changes');
+                    
                     log('✅ Datos ya están sincronizados. No es necesario recargar.');
                     return;
                 }
 
-                log('📝 Cambios detectados. Aplicando actualización...');
+                log('📝 Cambios detectados. Importando datos...');
 
                 // Limpiar localStorage excepto datos de sincronización
                 const keepKeys = Object.values(STORAGE);
@@ -275,6 +227,14 @@
                 this.lastSync = Date.now();
                 localStorage.setItem(STORAGE.LAST_SYNC, this.lastSync.toString());
                 
+                // Limpiar estado de cambios remotos ANTES de recargar
+                localStorage.removeItem('fftask_github_remote_changes');
+                
+                // Actualizar snapshot para que no detecte cambios después de importar
+                const newSnapshot = this.takeSnapshotForCounter();
+                localStorage.setItem('fftask_github_snapshot', newSnapshot);
+                localStorage.removeItem('fftask_github_changes_count');
+                
                 log('✅ Datos importados. Recargando...');
                 setTimeout(() => window.location.reload(), 500);
             } catch (error) {
@@ -287,22 +247,7 @@
         },
 
         /**
-         * REGLA 2: Exportar inmediatamente con agrupación inteligente
-         */
-        scheduleExport() {
-            // Cancelar timer anterior si existe
-            clearTimeout(this.exportTimer);
-            
-            // Agrupar cambios en ventana de 500ms
-            this.exportTimer = setTimeout(async () => {
-                await this.exportToGist();
-            }, TIMING.EXPORT_GROUP_WINDOW);
-            
-            log(`📦 Cambio detectado. Exportando en ${TIMING.EXPORT_GROUP_WINDOW}ms...`);
-        },
-
-        /**
-         * Exporta datos al Gist
+         * Exporta datos al Gist (MANUAL)
          */
         async exportToGist() {
             if (!this.isConnected || !this.gistId || this.isSyncing) return;
@@ -310,7 +255,6 @@
             try {
                 this.isSyncing = true;
                 this.syncAction = 'export';
-                this.exportTimer = null; // Limpiar timer
                 this.updateUI();
 
                 log('�� Exportando al Gist...');
@@ -373,11 +317,16 @@
         },
 
         /**
-         * Compara datos del backup con los datos locales actuales
+         * Compara datos del Gist con datos locales
          * Retorna true si hay diferencias, false si son idénticos
          */
-        hasDataChanges(backupData) {
-            const excludeKeys = Object.values(STORAGE);
+        hasDataChanges(gistData) {
+            const excludeKeys = [
+                ...Object.values(STORAGE),
+                'fftask_github_snapshot',        // Snapshot del contador de exportación
+                'fftask_github_remote_changes',  // Estado del detector de importación
+                'fftask_github_changes_count'    // Contador de cambios locales
+            ];
             
             // Obtener datos locales actuales
             const currentData = {};
@@ -389,31 +338,38 @@
             }
             
             // Comparar número de claves
-            const backupKeys = Object.keys(backupData);
+            const gistKeys = Object.keys(gistData);
             const currentKeys = Object.keys(currentData);
             
-            if (backupKeys.length !== currentKeys.length) {
-                log(`📊 Diferencia en cantidad de claves: backup=${backupKeys.length}, local=${currentKeys.length}`);
+            if (gistKeys.length !== currentKeys.length) {
+                // Encontrar qué claves son diferentes
+                const onlyInGist = gistKeys.filter(k => !currentKeys.includes(k));
+                const onlyInLocal = currentKeys.filter(k => !gistKeys.includes(k));
+                
+                log(`📊 Diferencia en cantidad de claves: gist=${gistKeys.length}, local=${currentKeys.length}`);
+                if (onlyInGist.length > 0) log(`   Solo en Gist: ${onlyInGist.join(', ')}`);
+                if (onlyInLocal.length > 0) log(`   Solo en Local: ${onlyInLocal.join(', ')}`);
+                
                 return true;
             }
             
             // Comparar cada clave y valor
-            for (const key of backupKeys) {
+            for (const key of gistKeys) {
                 if (!(key in currentData)) {
-                    log(`📊 Clave nueva en backup: ${key}`);
+                    log(`📊 Clave nueva en gist: ${key}`);
                     return true;
                 }
                 
-                if (backupData[key] !== currentData[key]) {
+                if (gistData[key] !== currentData[key]) {
                     log(`📊 Valor diferente en clave: ${key}`);
                     return true;
                 }
             }
             
-            // Verificar claves que existen localmente pero no en backup
+            // Verificar claves que existen localmente pero no en gist
             for (const key of currentKeys) {
-                if (!(key in backupData)) {
-                    log(`📊 Clave local no existe en backup: ${key}`);
+                if (!(key in gistData)) {
+                    log(`📊 Clave local no existe en gist: ${key}`);
                     return true;
                 }
             }
@@ -422,59 +378,27 @@
         },
 
         /**
-         * Configura listener para detectar interacción del usuario
+         * Toma snapshot para el contador (igual lógica que github-sync-auto-export.js)
          */
-        setupInteractionListener() {
-            if (this.interactionListenerActive) return;
-            
-            const events = ['click', 'keydown', 'touchstart'];
-            const handler = async () => {
-                // Importar si es necesario antes de la interacción
-                await this.importIfNeeded();
-                
-                // Reactivar listener para próxima interacción
-                setTimeout(() => {
-                    events.forEach(event => {
-                        document.addEventListener(event, handler, { once: true, capture: true });
-                    });
-                }, 1000);
-            };
-            
-            events.forEach(event => {
-                document.addEventListener(event, handler, { once: true, capture: true });
-            });
-            
-            this.interactionListenerActive = true;
-            log('👂 Listener de interacción activado');
-        },
-
-        /**
-         * Configura listener para detectar cambios en la app
-         */
-        setupChangeListener() {
-            log('🎧 Escuchando cambios en la app...');
-            
-            // Eventos de la app
-            const events = [
-                'todayTasksUpdated',
-                'missionsUpdated',
-                'habitsUpdated',
-                'shopItemsUpdated',
-                'pointsUpdated',
-                'stateChanged'
+        takeSnapshotForCounter() {
+            const excludeKeys = [
+                'fftask_github_token', 
+                'fftask_gist_id', 
+                'fftask_last_sync',
+                'fftask_github_changes_count',
+                'fftask_github_snapshot',
+                'fftask_github_remote_changes'
             ];
+            const snapshot = {};
             
-            events.forEach(event => {
-                window.App?.events?.on(event, (data) => {
-                    // Ignorar eventos automáticos
-                    if (data?.autoGenerated || data?.source === 'autoTicket') {
-                        return;
-                    }
-                    
-                    log(`📢 Cambio detectado: ${event}`);
-                    this.scheduleExport();
-                });
-            });
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (!excludeKeys.includes(key)) {
+                    snapshot[key] = localStorage.getItem(key);
+                }
+            }
+            
+            return JSON.stringify(snapshot);
         },
 
         /**
@@ -504,14 +428,10 @@
          */
         disconnect() {
             log('🔌 Desconectando...');
-            
-            clearTimeout(this.exportTimer);
-            
             this.token = null;
             this.gistId = null;
             this.lastSync = 0;
             this.isConnected = false;
-            this.interactionListenerActive = false;
             
             Object.values(STORAGE).forEach(key => localStorage.removeItem(key));
             
@@ -528,7 +448,7 @@
                 isConnected: this.isConnected,
                 isSyncing: this.isSyncing,
                 syncAction: this.syncAction,
-                hasChanges: !!this.exportTimer, // Hay cambios pendientes si hay un timer activo
+                hasChanges: false,
                 lastSync: this.lastSync,
                 timeSinceSync: Math.round(timeSinceSync / 1000) // en segundos
             };

@@ -1,17 +1,13 @@
 /* ===================================
-   github-sync-ui.js - INTERFAZ MEJORADA
-   Maneja el modal y el botón con barra de progreso.
+   github-sync-ui.js - INTERFAZ MANUAL
+   Maneja el modal y el botón de sincronización.
    =================================== */
 
    (function() {
     'use strict';
 
     // Cache de elementos del DOM
-    let syncButton, syncIcon, syncText, syncProgressBar;
-
-    const TIMING = {
-        IMPORT_THRESHOLD_S: 30, // Umbral para importar (30 segundos)
-    };
+    let syncButton, syncIcon, syncText;
 
     /**
      * Busca y prepara los elementos del DOM una vez.
@@ -21,14 +17,6 @@
         if (syncButton) {
             syncIcon = syncButton.querySelector('.sync-icon');
             syncText = syncButton.querySelector('.sync-text');
-            // Crear y añadir la barra de progreso si no existe
-            if (!syncButton.querySelector('.sync-progress-bar')) {
-                syncProgressBar = document.createElement('div');
-                syncProgressBar.className = 'sync-progress-bar';
-                syncButton.appendChild(syncProgressBar);
-            } else {
-                syncProgressBar = syncButton.querySelector('.sync-progress-bar');
-            }
         }
     }
     
@@ -37,11 +25,11 @@
 
     window.GitHubSyncUI = {
         /**
-         * Actualiza el botón de sincronización con la nueva barra de progreso.
+         * Actualiza el botón de sincronización.
          */
         updateButton() {
             if (!syncButton) {
-                initializeDOMElements(); // Intenta inicializar de nuevo si falló
+                initializeDOMElements();
                 if (!syncButton) return;
             }
 
@@ -51,7 +39,6 @@
 
             if (status.isSyncing) {
                 syncButton.classList.add('syncing');
-                syncProgressBar.style.width = '0%';
 
                 if (status.syncAction === 'export') {
                     syncButton.classList.add('uploading');
@@ -66,18 +53,13 @@
                 syncButton.classList.add('connected');
                 syncIcon.textContent = '✓';
                 syncText.textContent = 'Sincronizado';
-                
-                // Barra de progreso basada en tiempo desde última sync
-                const progressPercentage = Math.min(100, (status.timeSinceSync / TIMING.IMPORT_THRESHOLD_S) * 100);
-                syncProgressBar.style.width = `${progressPercentage}%`;
-                
-                syncButton.title = `Última sync hace ${status.timeSinceSync}s`;
-
+                syncButton.title = status.lastSync > 0 
+                    ? `Última sync hace ${status.timeSinceSync}s` 
+                    : 'Conectado - Click para sincronizar';
             } else {
                 syncButton.classList.add('disconnected');
                 syncIcon.textContent = '🔗';
                 syncText.textContent = 'Conectar';
-                syncProgressBar.style.width = '0%';
                 syncButton.title = 'Haz clic para conectar con GitHub';
             }
         },
@@ -101,18 +83,18 @@
         getDisconnectedView() {
             return `
                 <div class="sync-modal-header">
-                    <h2>Sincronización Automática</h2>
+                    <h2>Sincronización con GitHub Gist</h2>
                     <div class="sync-status-indicator disconnected">
                         <span>⚠️ No conectado</span>
                     </div>
                 </div>
                 <div class="sync-info-box">
-                    <p><strong>Sincronización inteligente</strong> entre todos tus dispositivos usando un Gist privado de GitHub.</p>
+                    <p><strong>Sincronización manual</strong> entre todos tus dispositivos usando un Gist privado de GitHub.</p>
                     <ul style="margin-top: 0.75rem; font-size: 0.9rem;">
-                        <li>⚡ Exportación inmediata al hacer cambios (agrupada en 500ms)</li>
-                        <li>📥 Importación automática antes de interactuar (si >30s)</li>
+                        <li>📤 <strong>Exportar:</strong> Guarda tus datos en GitHub cuando quieras</li>
+                        <li>📥 <strong>Importar:</strong> Descarga datos desde GitHub cuando quieras</li>
                         <li>🔒 Datos seguros en tu cuenta de GitHub</li>
-                        <li>🚀 Sin verificaciones periódicas innecesarias</li>
+                        <li>✅ Control total sobre la sincronización</li>
                     </ul>
                 </div>
                 <form class="sync-connect-form" id="githubConnectForm">
@@ -127,48 +109,59 @@
                             <br><small style="opacity: 0.8;">💡 Consejo: Selecciona "No expiration" para que no caduque.</small>
                         </div>
                     </div>
-                    <button type="submit" class="primary" style="width: 100%;">🔗 Conectar y Activar</button>
+                    <button type="submit" class="primary" style="width: 100%;">🔗 Conectar</button>
                 </form>
             `;
         },
 
         getConnectedView(status) {
+            const lastSyncText = status.lastSync > 0 
+                ? `Hace ${status.timeSinceSync}s` 
+                : 'Nunca';
+            
             return `
                 <div class="sync-modal-header">
-                    <h2>Sincronización Automática</h2>
+                    <h2>Sincronización con GitHub Gist</h2>
                     <div class="sync-status-indicator connected">
-                        <span>✅ Activa</span>
+                        <span>✅ Conectado</span>
                     </div>
                 </div>
                 <div class="sync-status-info">
                     <div class="info-row">
                         <span class="info-label">Estado:</span>
-                        <span class="info-value">${status.isSyncing ? '🔄 Sincronizando...' : 'Activo'}</span>
+                        <span class="info-value">${status.isSyncing ? '🔄 Sincronizando...' : 'Listo'}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Última sincronización:</span>
-                        <span class="info-value">Hace ${status.timeSinceSync}s</span>
+                        <span class="info-value">${lastSyncText}</span>
                     </div>
-                    ${status.hasChanges ? `
-                    <div class="info-row">
-                        <span class="info-label">Cambios pendientes:</span>
-                        <span class="info-value" style="color: #f59e0b;">⚡ Exportando...</span>
-                    </div>` : ''}
                 </div>
-                <div class="sync-info-box">
-                    <h3>¿Cómo funciona?</h3>
-                    <ul>
-                        <li><strong>Exportación:</strong> ⚡ Inmediata al hacer cambios (agrupada en 500ms para evitar pérdida de datos).</li>
-                        <li><strong>Importación:</strong> 📥 Automática antes de interactuar si han pasado >30s desde última sync.</li>
-                        <li><strong>Seguridad:</strong> Sin race conditions ni verificaciones periódicas innecesarias.</li>
-                        <li><strong>Protección:</strong> Si el token expira, se desconecta automáticamente.</li>
-                    </ul>
+                
+                <div class="sync-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0;">
+                    <button class="sync-action-btn" id="importFromGistBtn" ${status.isSyncing ? 'disabled' : ''}>
+                        <span style="font-size: 1.5rem;">📥</span>
+                        <span style="font-weight: 600;">Importar</span>
+                        <span style="font-size: 0.85rem; opacity: 0.9;">Descargar desde GitHub</span>
+                    </button>
+                    <button class="sync-action-btn success" id="exportToGistBtn" ${status.isSyncing ? 'disabled' : ''}>
+                        <span style="font-size: 1.5rem;">📤</span>
+                        <span style="font-weight: 600;">Exportar</span>
+                        <span style="font-size: 0.85rem; opacity: 0.9;">Guardar en GitHub</span>
+                    </button>
                 </div>
-                <button class="sync-option-btn danger" id="disconnectGithubBtn">
+                
+                <div class="sync-info-box" style="margin-top: 1rem;">
+                    <p style="font-size: 0.9rem; opacity: 0.9;">
+                        <strong>💡 Consejo:</strong> Exporta después de hacer cambios importantes. 
+                        Importa al abrir la app en otro dispositivo.
+                    </p>
+                </div>
+                
+                <button class="sync-option-btn danger" id="disconnectGithubBtn" style="margin-top: 1rem;">
                     <span class="option-icon">🔌</span>
                     <div class="option-content">
                         <span class="option-title">Desconectar</span>
-                        <span class="option-description">Desactivar la sincronización automática.</span>
+                        <span class="option-description">Desactivar sincronización con GitHub</span>
                     </div>
                 </button>
             `;

@@ -1,6 +1,6 @@
 /* ===================================
-   github-sync-events.js - EVENTOS SIMPLIFICADOS
-   Solo maneja conexión/desconexión
+   github-sync-events.js - EVENTOS MANUALES
+   Maneja conexión, desconexión, importar y exportar
    =================================== */
 
    (function() {
@@ -38,6 +38,12 @@
         if (target.id === 'disconnectGithubBtn') {
             e.preventDefault();
             await handleDisconnect();
+        } else if (target.id === 'importFromGistBtn') {
+            e.preventDefault();
+            await handleImport();
+        } else if (target.id === 'exportToGistBtn') {
+            e.preventDefault();
+            await handleExport();
         }
     }
 
@@ -62,11 +68,8 @@
             await window.GitHubSync.connect(token);
             
             window.GitHubSyncUI.renderModal();
-            window.GitHubSyncUI.showMessage('¡Conectado! Sincronización automática activada', 'success');
+            window.GitHubSyncUI.showMessage('¡Conectado! Usa los botones para sincronizar', 'success');
             window.GitHubSyncUI.updateButton();
-            
-            // Iniciar escucha de cambios de la app
-            window.GitHubSync.listenToAppChanges();
         } catch (error) {
             window.GitHubSyncUI.renderModal();
             window.GitHubSyncUI.showMessage(`Error: ${error.message}`, 'error');
@@ -74,16 +77,63 @@
     }
 
     /**
+     * Importar desde Gist
+     */
+    async function handleImport() {
+        window.GitHubSyncUI.showLoading('Importando desde GitHub...');
+
+        try {
+            await window.GitHubSync.importFromGist();
+            
+            // Resetear detector de cambios remotos
+            if (window.GitHubSyncImport) {
+                window.GitHubSyncImport.reset();
+            }
+            
+            // Si llega aquí, no hubo cambios o hubo error
+            // Si hubo cambios, la página ya se recargó
+            window.GitHubSyncUI.renderModal();
+            window.GitHubSyncUI.updateButton();
+        } catch (error) {
+            window.GitHubSyncUI.renderModal();
+            window.GitHubSyncUI.showMessage(`Error al importar: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * Exportar a Gist
+     */
+    async function handleExport() {
+        window.GitHubSyncUI.showLoading('Exportando a GitHub...');
+
+        try {
+            await window.GitHubSync.exportToGist();
+            
+            // Resetear contador de cambios
+            if (window.GitHubSyncCounter) {
+                window.GitHubSyncCounter.reset();
+            }
+            
+            window.GitHubSyncUI.renderModal();
+            window.GitHubSyncUI.showMessage('✅ Datos exportados correctamente', 'success');
+            window.GitHubSyncUI.updateButton();
+        } catch (error) {
+            window.GitHubSyncUI.renderModal();
+            window.GitHubSyncUI.showMessage(`Error al exportar: ${error.message}`, 'error');
+        }
+    }
+
+    /**
      * Desconectar
      */
     async function handleDisconnect() {
-        if (!confirm('¿Desactivar la sincronización automática?')) {
+        if (!confirm('¿Desconectar GitHub Sync?')) {
             return;
         }
 
         window.GitHubSync.disconnect();
         window.GitHubSyncUI.renderModal();
-        window.GitHubSyncUI.showMessage('Sincronización desactivada', 'success');
+        window.GitHubSyncUI.showMessage('Desconectado de GitHub', 'success');
         window.GitHubSyncUI.updateButton();
     }
 

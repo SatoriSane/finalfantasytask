@@ -1,11 +1,9 @@
 /* ===================================
-   github-sync.css - ESTILOS CON BARRA DE PROGRESO
+   github-sync.css - ESTILOS MODO MANUAL
    =================================== */
 
 /* ========== BOTÓN DE SINCRONIZACIÓN ========== */
 .sync-btn {
-    position: relative; /* Clave para posicionar la barra de progreso */
-    overflow: hidden;   /* Evita que la barra se salga del borde redondeado */
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -32,19 +30,6 @@
     line-height: 1;
 }
 
-/* === NUEVO: BARRA DE PROGRESO SUTIL === */
-.sync-progress-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background: var(--ff-primary, #4a9eff);
-    width: 0%; /* Inicia oculta */
-    border-radius: 0 0 8px 8px;
-    opacity: 0.4;
-    transition: width 1s linear, background-color 0.3s ease; 
-}
-
 /* Estados */
 .sync-btn.connected {
     border-color: #4ade80;
@@ -53,11 +38,6 @@
 .sync-btn.connected .sync-icon {
     color: #4ade80;
 }
-
-.sync-btn.connected .sync-progress-bar {
-    background-color: #4ade80;
-}
-
 
 .sync-btn.disconnected .sync-icon {
     color: #94a3b8;
@@ -85,28 +65,6 @@
     color: #3b82f6;
 }
 
-.sync-btn.checking {
-    border-color: #a855f7;
-    opacity: 0.8;
-}
-
-.sync-btn.checking .sync-icon {
-    color: #a855f7;
-    animation: spin 1s linear infinite;
-}
-
-/* ⭐ NUEVO: Estado de prioridad (importación crítica) */
-.sync-btn.priority {
-    border-color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-    animation: priorityPulse 1s ease-in-out infinite;
-}
-
-.sync-btn.priority .sync-icon {
-    color: #ef4444;
-    animation: priorityBounce 0.6s ease-in-out infinite;
-}
-
 /* ========== ANIMACIONES ========== */
 @keyframes pulse {
     0%, 100% {
@@ -114,38 +72,6 @@
     }
     50% {
         box-shadow: 0 0 0 6px rgba(148, 163, 184, 0);
-    }
-}
-
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-1px); }
-}
-
-@keyframes priorityPulse {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
-    }
-    50% {
-        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-    }
-}
-
-@keyframes priorityBounce {
-    0%, 100% { 
-        transform: scale(1); 
-    }
-    50% { 
-        transform: scale(1.2); 
-    }
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
     }
 }
 
@@ -407,7 +333,54 @@
     font-size: 1.5rem;
 }
 
-/* ========== RESPONSIVE (sin cambios) ========== */
+/* ========== BOTONES DE ACCIÓN (IMPORTAR/EXPORTAR) ========== */
+.sync-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem 1rem;
+    background: var(--ff-card-bg, #1a2332);
+    border: 2px solid var(--ff-border, #2a3f5f);
+    border-radius: 12px;
+    color: var(--ff-text-light, #e0e6ed);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.sync-action-btn:hover:not(:disabled) {
+    background: var(--ff-card-hover, #243447);
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sync-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sync-action-btn.primary {
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.sync-action-btn.primary:hover:not(:disabled) {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.sync-action-btn.success {
+    border-color: rgba(74, 222, 128, 0.5);
+}
+
+.sync-action-btn.success:hover:not(:disabled) {
+    border-color: #4ade80;
+    background: rgba(74, 222, 128, 0.1);
+}
+
+/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
     .sync-btn {
         padding: 0.4rem 0.6rem;

@@ -10,7 +10,7 @@
     let syncButton, syncIcon, syncText, syncProgressBar;
 
     const TIMING = {
-        CHECK_INTERVAL_S: 30, // Debe coincidir con el de github-sync-state.js
+        IMPORT_THRESHOLD_S: 30, // Umbral para importar (30 segundos)
     };
 
     /**
@@ -49,16 +49,9 @@
             
             syncButton.className = 'sync-btn'; // Limpiar clases
 
-            // ⭐ PRIORIDAD: Mostrar cuando UI está bloqueada por importación prioritaria
-            if (status.uiBlocked) {
-                syncButton.classList.add('syncing', 'priority');
-                syncProgressBar.style.width = '0%';
-                syncIcon.textContent = '🚨';
-                syncText.textContent = 'Importando...';
-                syncButton.title = 'Importando datos actualizados antes de permitir cambios';
-            } else if (status.isSyncing) {
+            if (status.isSyncing) {
                 syncButton.classList.add('syncing');
-                syncProgressBar.style.width = '0%'; // Ocultar barra durante la acción
+                syncProgressBar.style.width = '0%';
 
                 if (status.syncAction === 'export') {
                     syncButton.classList.add('uploading');
@@ -68,29 +61,23 @@
                     syncButton.classList.add('downloading');
                     syncIcon.textContent = '📥';
                     syncText.textContent = 'Importando';
-                } else if (status.syncAction === 'check') {
-                    syncButton.classList.add('checking');
-                    syncIcon.textContent = '🔍';
-                    syncText.textContent = 'Verificando';
                 }
             } else if (status.isConnected) {
                 syncButton.classList.add('connected');
-                syncIcon.textContent = status.hasChanges ? '●' : '✓';
-                syncText.textContent = status.hasChanges ? 'Pendiente' : 'Sincronizado';
+                syncIcon.textContent = '✓';
+                syncText.textContent = 'Sincronizado';
                 
-                // --- LÓGICA DE LA BARRA DE PROGRESO ---
-                const progressPercentage = (status.nextCheckIn / TIMING.CHECK_INTERVAL_S) * 100;
-                syncProgressBar.style.width = `${Math.max(0, progressPercentage)}%`;
+                // Barra de progreso basada en tiempo desde última sync
+                const progressPercentage = Math.min(100, (status.timeSinceSync / TIMING.IMPORT_THRESHOLD_S) * 100);
+                syncProgressBar.style.width = `${progressPercentage}%`;
                 
-                syncButton.title = status.hasChanges 
-                    ? 'Cambios pendientes de exportar' 
-                    : `Próxima verificación en ${status.nextCheckIn}s`;
+                syncButton.title = `Última sync hace ${status.timeSinceSync}s`;
 
             } else {
                 syncButton.classList.add('disconnected');
                 syncIcon.textContent = '🔗';
                 syncText.textContent = 'Conectar';
-                syncProgressBar.style.width = '0%'; // Ocultar si no está conectado
+                syncProgressBar.style.width = '0%';
                 syncButton.title = 'Haz clic para conectar con GitHub';
             }
         },
@@ -120,12 +107,12 @@
                     </div>
                 </div>
                 <div class="sync-info-box">
-                    <p><strong>Sincronización en tiempo real</strong> entre todos tus dispositivos usando un Gist privado de GitHub.</p>
+                    <p><strong>Sincronización inteligente</strong> entre todos tus dispositivos usando un Gist privado de GitHub.</p>
                     <ul style="margin-top: 0.75rem; font-size: 0.9rem;">
-                        <li>⚡ Exportación instantánea al hacer cambios</li>
-                        <li>🚨 Importación prioritaria al iniciar la app</li>
+                        <li>⚡ Exportación inmediata al hacer cambios (agrupada en 500ms)</li>
+                        <li>📥 Importación automática antes de interactuar (si >30s)</li>
                         <li>🔒 Datos seguros en tu cuenta de GitHub</li>
-                        <li>🔄 Sin pérdida de datos ni conflictos</li>
+                        <li>🚀 Sin verificaciones periódicas innecesarias</li>
                     </ul>
                 </div>
                 <form class="sync-connect-form" id="githubConnectForm">
@@ -159,22 +146,22 @@
                         <span class="info-value">${status.isSyncing ? '🔄 Sincronizando...' : 'Activo'}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Próxima verificación:</span>
-                        <span class="info-value">${status.nextCheckIn}s</span>
+                        <span class="info-label">Última sincronización:</span>
+                        <span class="info-value">Hace ${status.timeSinceSync}s</span>
                     </div>
                     ${status.hasChanges ? `
                     <div class="info-row">
                         <span class="info-label">Cambios pendientes:</span>
-                        <span class="info-value" style="color: #f59e0b;">⚡ Exportando ahora...</span>
+                        <span class="info-value" style="color: #f59e0b;">⚡ Exportando...</span>
                     </div>` : ''}
                 </div>
                 <div class="sync-info-box">
                     <h3>¿Cómo funciona?</h3>
                     <ul>
-                        <li><strong>Exportación:</strong> ⚡ INSTANTÁNEA al hacer cualquier cambio.</li>
-                        <li><strong>Importación:</strong> 🚨 PRIORITARIA al iniciar o volver a la app (antes de permitir cambios).</li>
-                        <li><strong>Verificación:</strong> Cada 30s durante uso activo.</li>
-                        <li><strong>Protección:</strong> Si el token expira, se desconecta automáticamente y te avisa.</li>
+                        <li><strong>Exportación:</strong> ⚡ Inmediata al hacer cambios (agrupada en 500ms para evitar pérdida de datos).</li>
+                        <li><strong>Importación:</strong> 📥 Automática antes de interactuar si han pasado >30s desde última sync.</li>
+                        <li><strong>Seguridad:</strong> Sin race conditions ni verificaciones periódicas innecesarias.</li>
+                        <li><strong>Protección:</strong> Si el token expira, se desconecta automáticamente.</li>
                     </ul>
                 </div>
                 <button class="sync-option-btn danger" id="disconnectGithubBtn">

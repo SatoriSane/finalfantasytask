@@ -1,24 +1,29 @@
 /* ===================================
-   github-sync-state.js - GESTIÓN DE ESTADO
+   github-sync-state.js - GESTIÓN SIMPLIFICADA
    Sistema de sincronización automática con GitHub
-   Versión Unificada (Trigger por Contador de 2s)
+   
+   LÓGICA SIMPLE:
+   1. IMPORTAR: Antes de que el usuario interactúe (si >30s desde última sync)
+   2. EXPORTAR: Inmediatamente al detectar cambios (con agrupación inteligente de 500ms)
+   
+   SEGURIDAD:
+   - Exportación inmediata con agrupación para evitar pérdida de datos
+   - Importación just-in-time antes de interactuar
+   - Sin race conditions ni verificaciones periódicas innecesarias
    =================================== */
 
-   (function() {
+(function() {
     'use strict';
     
     const STORAGE = {
         TOKEN: 'fftask_github_token',
         GIST_ID: 'fftask_gist_id',
-        LAST_IMPORT: 'fftask_last_import',
-        DEVICE_ID: 'fftask_device_id'
+        LAST_SYNC: 'fftask_last_sync'
     };
     
     const TIMING = {
-        CHECK_INTERVAL_S: 30,       // Intervalo normal de verificación en segundos (30s)
-        IMMEDIATE_CHECK_S: 0,       // Verificación INMEDIATA (0s = siguiente tick)
-        DEBOUNCE_EXPORT: 0,         // SIN debounce = exportación INSTANTÁNEA
-        POST_EXPORT_PAUSE: 3000,    // Pausa reducida después de exportar (3s)
+        IMPORT_THRESHOLD: 30000,    // Importar si >30s desde última sync (30000ms)
+        EXPORT_GROUP_WINDOW: 500,   // Agrupar cambios en ventana de 500ms
     };
     
     const log = (...msg) => console.log('[GitHubSync]', ...msg);
@@ -26,45 +31,40 @@
     window.GitHubSync = {
         token: null,
         gistId: null,
-        deviceId: null,
         isConnected: false,
-    
-        isSyncing: false,
-        syncAction: null,
-        lastImport: null,
-    
-        lastActivity: Date.now(),
-        isPageVisible: true,
-        hasUserChanges: false,
-    
-        exportTimer: null,
-        counterInterval: null,
-        skipNextCheck: false,
-        nextCheckIn: TIMING.CHECK_INTERVAL_S,
         
-        isInitialCheckDone: false,  // ⭐ Bandera para saber si ya se hizo la verificación inicial
-        uiBlocked: false,            // ⭐ Bandera para bloquear UI durante importación crítica
-        pendingExport: false,        // ⭐ Bandera para exportación pendiente
-    
+        isSyncing: false,
+        syncAction: null,  // 'import' o 'export'
+        lastSync: 0,       // Timestamp de última sincronización
+        
+        exportTimer: null,
+        interactionListenerActive: false,
+
         /**
          * Inicializa el sistema
          */
         async init() {
-            log('▶ init() → Iniciando sistema de sincronización...');
+            log('▶ Iniciando sistema de sincronización simplificado...');
             this.loadState();
         
             if (this.isConnected) {
-                log('🔗 Usuario ya conectado, verificación PRIORITARIA antes de permitir interacción...');
+                log('🔗 Conectado. Configurando listeners...');
                 
-                // ⭐ CRÍTICO: Verificar INMEDIATAMENTE antes de que el usuario pueda hacer cambios
-                await this.checkAndImportPriority();
+                // Actualizar UI para mostrar estado conectado
+                this.updateUI();
                 
-                this.startActivityMonitoring();
-                this.startAutoCheck();
-                this.listenToAppChanges();
-                log('✅ Sistema de monitoreo iniciado.');
+                // Importar datos frescos al iniciar
+                await this.importIfNeeded();
+                
+                // Configurar listeners
+                this.setupInteractionListener();
+                this.setupChangeListener();
+                
+                log('✅ Sistema listo.');
             } else {
-                log('⚠️ No conectado a GitHub todavía.');
+                log('⚠️ No conectado a GitHub.');
+                // Actualizar UI para mostrar estado desconectado
+                this.updateUI();
             }
         },
     
@@ -74,17 +74,14 @@
         loadState() {
             this.token = localStorage.getItem(STORAGE.TOKEN);
             this.gistId = localStorage.getItem(STORAGE.GIST_ID);
-            this.deviceId = localStorage.getItem(STORAGE.DEVICE_ID);
-            this.lastImport = localStorage.getItem(STORAGE.LAST_IMPORT);
+            const lastSyncStr = localStorage.getItem(STORAGE.LAST_SYNC);
+            this.lastSync = lastSyncStr ? parseInt(lastSyncStr, 10) : 0;
             this.isConnected = !!(this.token && this.gistId);
-    
-            if (!this.deviceId) {
-                this.deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                localStorage.setItem(STORAGE.DEVICE_ID, this.deviceId);
-                log('🆕 Nuevo deviceId generado:', this.deviceId);
-            } else {
-                log('ℹ Device ID cargado:', this.deviceId);
-            }
+            
+            log('Estado cargado:', {
+                connected: this.isConnected,
+                lastSync: this.lastSync ? new Date(this.lastSync).toLocaleString() : 'nunca'
+            });
         },
     
         /**
@@ -116,13 +113,17 @@
             this.isConnected = true;
             log('📁 Gist listo:', this.gistId);
 
-            // ⭐ CRÍTICO: Verificar INMEDIATAMENTE después de conectar
-            await this.checkAndImportPriority();
+            // Actualizar UI para mostrar estado conectado
+            this.updateUI();
 
-            this.startActivityMonitoring();
-            this.startAutoCheck();
-            this.listenToAppChanges();
-            log('🟢 Sincronización automática iniciada.');
+            // Importar datos al conectar
+            await this.importFromGist();
+
+            // Configurar listeners
+            this.setupInteractionListener();
+            this.setupChangeListener();
+            
+            log('🟢 Sincronización activada.');
             return true;
         },
     
@@ -166,7 +167,6 @@
                                 content: JSON.stringify({
                                     version: '1.0',
                                     timestamp: new Date().toISOString(),
-                                    deviceId: this.deviceId,
                                     data: {}
                                 }, null, 2)
                             }
@@ -187,105 +187,33 @@
                 throw error;
             }
         },
-    
-        /**
-         * Monitorea actividad del usuario
-         */
-        startActivityMonitoring() {
-            log('👀 Iniciando monitoreo de actividad...');
-            
-            // Detecta cuando el usuario vuelve a la pestaña
-            document.addEventListener('visibilitychange', async () => {
-                this.isPageVisible = !document.hidden;
-                
-                if (this.isPageVisible && this.isInitialCheckDone) {
-                    // ⭐ CRÍTICO: Verificar INMEDIATAMENTE al volver para importar antes de interacción
-                    const inactiveTime = Date.now() - this.lastActivity;
-                    if (inactiveTime > 60000) { // Más de 1 minuto inactivo
-                        log('👋 Usuario volvió después de inactividad. Verificación PRIORITARIA...');
-                        await this.checkAndImportPriority();
-                    }
-                    this.lastActivity = Date.now();
-                }
-            });
-        
-            // Actualiza timestamp de actividad
-            const updateActivity = () => {
-                this.lastActivity = Date.now();
-            };
-        
-            ['mousemove', 'scroll', 'keydown', 'click', 'touchstart']
-                .forEach(event => document.addEventListener(event, updateActivity, { passive: true }));
-        },
-    
-        /**
-         * Inicia verificación automática (Mecanismo Unificado)
-         * El contador visual ahora también es el disparador del check.
-         */
-        startAutoCheck() {
-            log(`⏱ Iniciando verificación unificada (periódica: ${TIMING.CHECK_INTERVAL_S}s)...`);
-            
-            if (this.counterInterval) return; // Ya iniciado
-
-            // Contador y disparador de verificación (Unificado)
-            this.counterInterval = setInterval(async () => {
-                if (this.isPageVisible && !this.isSyncing) {
-                    this.nextCheckIn--;
-                    
-                    if (this.nextCheckIn <= 0) {
-                        // El contador llegó a cero (por 2s inmediato o 30s periódico)
-                        if (!this.skipNextCheck) {
-                           await this.checkAndImport();
-                        } else {
-                           log('⏭ Check saltado por bandera skipNextCheck.');
-                        }
-                        
-                        // Se reinicia a 30 segundos
-                        this.nextCheckIn = TIMING.CHECK_INTERVAL_S;
-                    }
-                    
-                    this.updateUI();
-                }
-            }, 1000);
-        },
 
         /**
-         * Programa una verificación para ejecutarse en 2 segundos.
-         * Reemplaza la lógica compleja de forceCheckAndImport.
+         * REGLA 1: Importar si han pasado >30s desde última sync
          */
-        scheduleImmediateCheck() {
-            if (!this.isConnected || !this.gistId) {
-                return;
-            }
+        async importIfNeeded() {
+            const timeSinceSync = Date.now() - this.lastSync;
             
-            // Forzar el contador a 2s si no hay una sincronización en curso
-            // o si el contador está en su estado normal (30s).
-            if (!this.isSyncing) {
-                log(`🚀 Verificación programada para ${TIMING.IMMEDIATE_CHECK_S}s.`);
-                this.nextCheckIn = TIMING.IMMEDIATE_CHECK_S;
-                this.updateUI();
+            if (timeSinceSync > TIMING.IMPORT_THRESHOLD) {
+                log(`📥 Han pasado ${Math.round(timeSinceSync/1000)}s desde última sync. Importando...`);
+                await this.importFromGist();
             } else {
-                log('⏳ Sincronización en curso, omitiendo programación inmediata.');
+                log(`✅ Datos frescos (última sync hace ${Math.round(timeSinceSync/1000)}s)`);
             }
         },
-    
-        /**
-         * ⭐ NUEVO: Verificación e importación PRIORITARIA
-         * Se ejecuta ANTES de que el usuario pueda interactuar
-         * Bloquea la UI si es necesario para evitar conflictos
-         */
-        async checkAndImportPriority() {
-            if (!this.isConnected || !this.gistId) {
-                return;
-            }
 
+        /**
+         * Importa datos desde el Gist
+         */
+        async importFromGist() {
+            if (!this.isConnected || !this.gistId || this.isSyncing) return;
+            
             try {
                 this.isSyncing = true;
-                this.syncAction = 'check';
-                this.uiBlocked = true;
+                this.syncAction = 'import';
                 this.updateUI();
 
-                log('🚨 VERIFICACIÓN PRIORITARIA - Importando antes de permitir cambios...');
+                log('📥 Importando desde Gist...');
                 const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
                     headers: {
                         'Authorization': `token ${this.token}`,
@@ -294,109 +222,9 @@
                 });
 
                 if (!response.ok) {
-                    log('❌ Error al obtener Gist:', response.status);
-                    
-                    // Si es error 401 o 404, token/gist inválido
                     if (response.status === 401 || response.status === 404) {
-                        log('🔴 TOKEN O GIST INVÁLIDO en verificación prioritaria');
-                        if (window.App?.events) {
-                            App.events.emit('shownotifyMessage', 
-                                '⚠️ Error de sincronización: Token o Gist inválido. Por favor reconecta GitHub Sync.');
-                        }
-                        this.isInitialCheckDone = true;
-                        
-                        // Desconectar automáticamente
-                        setTimeout(() => {
-                            this.disconnect();
-                            this.updateUI();
-                        }, 2000);
-                    }
-                    return;
-                }
-                
-                const gist = await response.json();
-                const content = gist.files['fftask-backup.json']?.content;
-                
-                if (!content) {
-                    log('⚠️ No se encontró contenido en el Gist');
-                    this.isInitialCheckDone = true;
-                    return;
-                }
-
-                const backup = JSON.parse(content);
-                const isDifferentDevice = backup.deviceId !== this.deviceId;
-                const isNewer = new Date(backup.timestamp) > new Date(this.lastImport || 0);
-
-                if (isDifferentDevice && isNewer) {
-                    log('📥 IMPORTACIÓN PRIORITARIA: Cambios detectados desde otro dispositivo');
-                    log('   - Device remoto:', backup.deviceId);
-                    log('   - Device local:', this.deviceId);
-                    log('   - Timestamp remoto:', backup.timestamp);
-                    log('   - Última importación:', this.lastImport || 'nunca');
-                    await this.importData(backup);
-                } else {
-                    log('✅ No hay cambios nuevos. Usuario puede interactuar.');
-                    this.isInitialCheckDone = true;
-                }
-            } catch (error) {
-                console.error('[GitHubSync] ❌ Error en verificación prioritaria:', error);
-                this.isInitialCheckDone = true;
-            } finally {
-                this.isSyncing = false;
-                this.syncAction = null;
-                this.uiBlocked = false;
-                this.updateUI();
-                
-                // ⭐ NUEVO: Si hay exportación pendiente, ejecutarla ahora
-                if (this.pendingExport && !this.uiBlocked) {
-                    log('📦 Ejecutando exportación pendiente después de verificación prioritaria...');
-                    this.pendingExport = false;
-                    setTimeout(() => this.exportData(), 500);
-                }
-            }
-        },
-
-        /**
-         * Verifica cambios remotos e importa automáticamente
-         */
-        async checkAndImport() {
-            // Usa el guardián de concurrencia normal
-            if (!this.isConnected || !this.gistId || this.isSyncing) {
-                if (this.isSyncing) {
-                    log('⏳ Ya hay una sincronización en curso, omitiendo...');
-                }
-                return;
-            }
-    
-            try {
-                this.isSyncing = true;
-                this.syncAction = 'check';
-                this.updateUI();
-    
-                log('🔍 Verificando cambios remotos...');
-                const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
-                    headers: {
-                        'Authorization': `token ${this.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-    
-                if (!response.ok) {
-                    log('❌ Error al obtener Gist:', response.status);
-                    
-                    // Si es error 401 o 404, token/gist inválido
-                    if (response.status === 401 || response.status === 404) {
-                        log('🔴 TOKEN O GIST INVÁLIDO en verificación periódica');
-                        if (window.App?.events) {
-                            App.events.emit('shownotifyMessage', 
-                                '⚠️ Error de sincronización: Token o Gist inválido. Por favor reconecta GitHub Sync.');
-                        }
-                        
-                        // Desconectar automáticamente
-                        setTimeout(() => {
-                            this.disconnect();
-                            this.updateUI();
-                        }, 2000);
+                        log('❌ Token o Gist inválido');
+                        this.handleInvalidAuth();
                     }
                     return;
                 }
@@ -408,120 +236,86 @@
                     log('⚠️ No se encontró contenido en el Gist');
                     return;
                 }
-    
+
                 const backup = JSON.parse(content);
-                const isDifferentDevice = backup.deviceId !== this.deviceId;
-                const isNewer = new Date(backup.timestamp) > new Date(this.lastImport || 0);
-    
-                if (isDifferentDevice && isNewer) {
-                    log('📥 Cambios detectados desde otro dispositivo:');
-                    log('   - Device remoto:', backup.deviceId);
-                    log('   - Device local:', this.deviceId);
-                    log('   - Timestamp remoto:', backup.timestamp);
-                    log('   - Última importación:', this.lastImport || 'nunca');
-                    await this.importData(backup);
-                } else {
-                    log('✅ No hay cambios nuevos.');
+                
+                if (!backup?.data) {
+                    log('⚠️ Backup sin datos');
+                    return;
                 }
+
+                // Comparar datos actuales con los del backup
+                const hasChanges = this.hasDataChanges(backup.data);
+                
+                if (!hasChanges) {
+                    // No hay cambios, solo actualizar timestamp
+                    this.lastSync = Date.now();
+                    localStorage.setItem(STORAGE.LAST_SYNC, this.lastSync.toString());
+                    log('✅ Datos ya están sincronizados. No es necesario recargar.');
+                    return;
+                }
+
+                log('📝 Cambios detectados. Aplicando actualización...');
+
+                // Limpiar localStorage excepto datos de sincronización
+                const keepKeys = Object.values(STORAGE);
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const key = localStorage.key(i);
+                    if (!keepKeys.includes(key)) {
+                        localStorage.removeItem(key);
+                    }
+                }
+
+                // Importar nuevos datos
+                Object.entries(backup.data).forEach(([key, value]) => {
+                    localStorage.setItem(key, value);
+                });
+
+                // Actualizar timestamp
+                this.lastSync = Date.now();
+                localStorage.setItem(STORAGE.LAST_SYNC, this.lastSync.toString());
+                
+                log('✅ Datos importados. Recargando...');
+                setTimeout(() => window.location.reload(), 500);
             } catch (error) {
-                console.error('[GitHubSync] ❌ Error al verificar cambios:', error);
+                console.error('[GitHubSync] ❌ Error al importar:', error);
             } finally {
                 this.isSyncing = false;
                 this.syncAction = null;
                 this.updateUI();
-                
-                // ⭐ NUEVO: Si hay exportación pendiente, ejecutarla ahora
-                if (this.pendingExport) {
-                    log('📦 Ejecutando exportación pendiente después de verificación...');
-                    this.pendingExport = false;
-                    setTimeout(() => this.exportData(), 500);
-                }
             }
         },
-    
+
         /**
-         * Importa datos automáticamente
+         * REGLA 2: Exportar inmediatamente con agrupación inteligente
          */
-        async importData(backup) {
-            if (!backup?.data) {
-                log('⚠️ Backup sin datos, omitiendo importación');
-                return;
-            }
+        scheduleExport() {
+            // Cancelar timer anterior si existe
+            clearTimeout(this.exportTimer);
             
-            this.syncAction = 'import';
-            this.updateUI();
-    
-            log('⬇️ Importando datos desde Gist...');
-            const keepKeys = Object.values(STORAGE);
-    
-            // Limpiar localStorage excepto datos de sincronización
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-                const key = localStorage.key(i);
-                if (!keepKeys.includes(key)) {
-                    localStorage.removeItem(key);
-                }
-            }
-    
-            // Importar nuevos datos
-            Object.entries(backup.data).forEach(([key, value]) => {
-                localStorage.setItem(key, value);
-            });
-    
-            // Actualizar timestamp de importación
-            const now = new Date().toISOString();
-            this.lastImport = now;
-            localStorage.setItem(STORAGE.LAST_IMPORT, now);
+            // Agrupar cambios en ventana de 500ms
+            this.exportTimer = setTimeout(async () => {
+                await this.exportToGist();
+            }, TIMING.EXPORT_GROUP_WINDOW);
             
-            log('✅ Datos importados correctamente. Recargando página...');
-            setTimeout(() => window.location.reload(), 500);
+            log(`📦 Cambio detectado. Exportando en ${TIMING.EXPORT_GROUP_WINDOW}ms...`);
         },
-    
+
         /**
-         * Marca que el usuario hizo cambios
+         * Exporta datos al Gist
          */
-        markUserChanges() {
-            this.hasUserChanges = true;
-            
-            if (TIMING.DEBOUNCE_EXPORT === 0) {
-                // ⭐ EXPORTACIÓN INSTANTÁNEA - Sin debounce
-                log('📦 Cambio detectado → EXPORTACIÓN INSTANTÁNEA');
-                if (this.isConnected && this.gistId) {
-                    if (!this.isSyncing) {
-                        this.exportData();
-                    } else {
-                        // ⭐ NUEVO: Si está sincronizando, programar exportación para después
-                        log('⏳ Sincronización en curso, exportación pendiente...');
-                        this.pendingExport = true;
-                    }
-                }
-            } else {
-                // Exportación con debounce (si se configura)
-                clearTimeout(this.exportTimer);
-                log(`📦 Cambio detectado → exportación programada en ${TIMING.DEBOUNCE_EXPORT}ms.`);
-                
-                this.exportTimer = setTimeout(() => {
-                    if (this.isConnected && this.gistId) {
-                        this.exportData();
-                    }
-                }, TIMING.DEBOUNCE_EXPORT);
-            }
-        },
-    
-        /**
-         * Exporta datos automáticamente
-         */
-        async exportData() {
+        async exportToGist() {
             if (!this.isConnected || !this.gistId || this.isSyncing) return;
             
             try {
                 this.isSyncing = true;
                 this.syncAction = 'export';
+                this.exportTimer = null; // Limpiar timer
                 this.updateUI();
-    
-                log('📤 Exportando datos actualizados al Gist...');
+
+                log('�� Exportando al Gist...');
                 const data = this.collectAppData();
-                data.deviceId = this.deviceId;
-    
+
                 const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
                     method: 'PATCH',
                     headers: {
@@ -537,56 +331,15 @@
                         }
                     })
                 });
-    
+
                 if (response.ok) {
-                    const now = new Date().toISOString();
-                    this.lastImport = now;
-                    localStorage.setItem(STORAGE.LAST_IMPORT, now);
-                    this.hasUserChanges = false;
-                    this.skipNextCheck = true;
-                    
-                    // Asegurar que el próximo check periódico sea en 30s
-                    this.nextCheckIn = TIMING.CHECK_INTERVAL_S;
-                    
-                    // Desactivar el salto del check después de la pausa
-                    setTimeout(() => {
-                        this.skipNextCheck = false;
-                        log('▶ Pausa post-exportación finalizada. Próximo check normal habilitado.');
-                    }, TIMING.POST_EXPORT_PAUSE);
-                    
+                    this.lastSync = Date.now();
+                    localStorage.setItem(STORAGE.LAST_SYNC, this.lastSync.toString());
                     log('✅ Datos exportados correctamente.');
-                    
-                    // ⭐ NUEVO: Si hay exportación pendiente, ejecutarla ahora
-                    if (this.pendingExport) {
-                        log('📦 Ejecutando exportación pendiente...');
-                        this.pendingExport = false;
-                        // Pequeño delay para evitar rate limiting
-                        setTimeout(() => this.exportData(), 500);
-                    }
                 } else {
-                    // ⚠️ ERROR: Token inválido o expirado
-                    const errorText = await response.text();
-                    log('❌ FALLO AL EXPORTAR:', response.status, errorText);
-                    
-                    // Si es error 401 (Unauthorized) o 404 (Not Found), el token/gist es inválido
                     if (response.status === 401 || response.status === 404) {
-                        log('🔴 TOKEN O GIST INVÁLIDO - Desconectando...');
-                        this.hasUserChanges = false; // Limpiar bandera para no mostrar "Pendiente"
-                        
-                        // Mostrar alerta al usuario
-                        if (window.App?.events) {
-                            App.events.emit('shownotifyMessage', 
-                                '⚠️ Error de sincronización: Token o Gist inválido. Por favor reconecta GitHub Sync.');
-                        }
-                        
-                        // Desconectar automáticamente
-                        setTimeout(() => {
-                            this.disconnect();
-                            this.updateUI();
-                        }, 2000);
-                    } else {
-                        // Otro tipo de error, limpiar bandera pero mantener conexión
-                        this.hasUserChanges = false;
+                        log('❌ Token o Gist inválido');
+                        this.handleInvalidAuth();
                     }
                 }
             } catch (error) {
@@ -597,7 +350,7 @@
                 this.updateUI();
             }
         },
-    
+
         /**
          * Recopila datos de la app
          */
@@ -606,7 +359,6 @@
             const data = { 
                 version: '1.0', 
                 timestamp: new Date().toISOString(),
-                deviceId: this.deviceId,
                 data: {} 
             };
             
@@ -619,47 +371,127 @@
             
             return data;
         },
-    
+
         /**
-         * Escucha eventos de cambios en la app
+         * Compara datos del backup con los datos locales actuales
+         * Retorna true si hay diferencias, false si son idénticos
          */
-        listenToAppChanges() {
-            log('🎧 Escuchando eventos de la app...');
+        hasDataChanges(backupData) {
+            const excludeKeys = Object.values(STORAGE);
+            
+            // Obtener datos locales actuales
+            const currentData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (!excludeKeys.includes(key)) {
+                    currentData[key] = localStorage.getItem(key);
+                }
+            }
+            
+            // Comparar número de claves
+            const backupKeys = Object.keys(backupData);
+            const currentKeys = Object.keys(currentData);
+            
+            if (backupKeys.length !== currentKeys.length) {
+                log(`📊 Diferencia en cantidad de claves: backup=${backupKeys.length}, local=${currentKeys.length}`);
+                return true;
+            }
+            
+            // Comparar cada clave y valor
+            for (const key of backupKeys) {
+                if (!(key in currentData)) {
+                    log(`📊 Clave nueva en backup: ${key}`);
+                    return true;
+                }
+                
+                if (backupData[key] !== currentData[key]) {
+                    log(`📊 Valor diferente en clave: ${key}`);
+                    return true;
+                }
+            }
+            
+            // Verificar claves que existen localmente pero no en backup
+            for (const key of currentKeys) {
+                if (!(key in backupData)) {
+                    log(`📊 Clave local no existe en backup: ${key}`);
+                    return true;
+                }
+            }
+            
+            return false;
+        },
+
+        /**
+         * Configura listener para detectar interacción del usuario
+         */
+        setupInteractionListener() {
+            if (this.interactionListenerActive) return;
+            
+            const events = ['click', 'keydown', 'touchstart'];
+            const handler = async () => {
+                // Importar si es necesario antes de la interacción
+                await this.importIfNeeded();
+                
+                // Reactivar listener para próxima interacción
+                setTimeout(() => {
+                    events.forEach(event => {
+                        document.addEventListener(event, handler, { once: true, capture: true });
+                    });
+                }, 1000);
+            };
+            
+            events.forEach(event => {
+                document.addEventListener(event, handler, { once: true, capture: true });
+            });
+            
+            this.interactionListenerActive = true;
+            log('👂 Listener de interacción activado');
+        },
+
+        /**
+         * Configura listener para detectar cambios en la app
+         */
+        setupChangeListener() {
+            log('🎧 Escuchando cambios en la app...');
+            
+            // Eventos de la app
             const events = [
                 'todayTasksUpdated',
                 'missionsUpdated',
                 'habitsUpdated',
                 'shopItemsUpdated',
                 'pointsUpdated',
-                'stateChanged'  // ⭐ Evento genérico para capturar TODOS los cambios
+                'stateChanged'
             ];
+            
             events.forEach(event => {
                 window.App?.events?.on(event, (data) => {
-        
-                    // 🚫 Ignorar generación automática de tickets
-                    if (event === 'habitsAutoUpdated') {
-                        log('🎟 Ignorado: generación automática de tickets.');
+                    // Ignorar eventos automáticos
+                    if (data?.autoGenerated || data?.source === 'autoTicket') {
                         return;
                     }
-        
-                    // 🚫 Ignorar actualizaciones automáticas de puntos
-                    if (event === 'pointsUpdated' && data?.source === 'autoTicket') {
-                        log('🎟 Ignorado: actualización automática de puntos.');
-                        return;
-                    }
-        
-                    // 🚫 Ignorar actualizaciones automáticas de hábitos
-                    if (event === 'habitsUpdated' && data?.autoGenerated === true) {
-                        log('🎟 Ignorado: actualización automática de hábitos.');
-                        return;
-                    }
-        
+                    
                     log(`📢 Cambio detectado: ${event}`);
-                    this.markUserChanges();
+                    this.scheduleExport();
                 });
             });
         },
-    
+
+        /**
+         * Maneja autenticación inválida
+         */
+        handleInvalidAuth() {
+            if (window.App?.events) {
+                App.events.emit('shownotifyMessage', 
+                    '⚠️ Error de sincronización: Token inválido. Reconecta GitHub Sync.');
+            }
+            
+            setTimeout(() => {
+                this.disconnect();
+                this.updateUI();
+            }, 2000);
+        },
+
         /**
          * Actualiza UI
          */
@@ -671,40 +503,39 @@
          * Desconecta GitHub Sync
          */
         disconnect() {
-            log('🔌 Desconectando GitHub Sync...');
+            log('🔌 Desconectando...');
             
-            clearInterval(this.counterInterval);
             clearTimeout(this.exportTimer);
             
             this.token = null;
             this.gistId = null;
-            this.lastImport = null;
+            this.lastSync = 0;
             this.isConnected = false;
+            this.interactionListenerActive = false;
             
             Object.values(STORAGE).forEach(key => localStorage.removeItem(key));
             
-            log('✅ Desconectado correctamente.');
+            log('✅ Desconectado.');
         },
     
         /**
          * Obtiene estado actual
          */
         getStatus() {
+            const timeSinceSync = Date.now() - this.lastSync;
+            
             return {
                 isConnected: this.isConnected,
                 isSyncing: this.isSyncing,
                 syncAction: this.syncAction,
-                nextCheckIn: this.nextCheckIn,
-                hasChanges: this.hasUserChanges,
-                deviceId: this.deviceId,
-                lastImport: this.lastImport,
-                uiBlocked: this.uiBlocked,
-                isInitialCheckDone: this.isInitialCheckDone
+                hasChanges: !!this.exportTimer, // Hay cambios pendientes si hay un timer activo
+                lastSync: this.lastSync,
+                timeSinceSync: Math.round(timeSinceSync / 1000) // en segundos
             };
         }
     };
     
-    // Auto-inicialización con soporte async
+    // Auto-inicialización
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', async () => {
             await window.GitHubSync.init();

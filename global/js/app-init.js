@@ -14,11 +14,10 @@
     const log = (...msg) => console.log('[AppInit]', ...msg);
 
     /**
-     * Procesa tareas iniciales DESPUÉS de que GitHub Sync haya verificado.
-     * Esto evita procesar datos que podrían ser sobrescritos por una importación.
+     * Procesa tareas iniciales de la app
      */
     const processInitialTasks = () => {
-        log('🚀 Procesando tareas iniciales de la app...');
+        log('🚀 Procesando tareas iniciales...');
         
         if (window.App?.state?.processScheduledMissionsForToday) {
             App.state.processScheduledMissionsForToday();
@@ -27,47 +26,17 @@
         log('✅ Tareas iniciales completadas.');
     };
 
-    /**
-     * Espera a que la sincronización inicial de GitHub termine si está en curso.
-     * Incluye un timeout para no bloquear la app indefinidamente.
-     */
-    const waitForInitialSync = async () => {
-        if (!window.GitHubSync?.isConnected) {
-            log('GitHub no conectado, continuando sin esperar.');
-            return;
-        }
-
-        log('⏳ Esperando la verificación inicial de GitHub Sync...');
-        let attempts = 0;
-        const maxAttempts = 50; // 50 * 100ms = 5 segundos de timeout
-
-        while (window.GitHubSync.isSyncing && attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-
-        if (attempts >= maxAttempts) {
-            log('⚠️ Timeout esperando a GitHub Sync. La app podría tener datos desactualizados.');
-        } else {
-            log('✅ Verificación de GitHub Sync completada.');
-        }
-    };
-
     // ------------------- INICIO COORDINADO DE LA APP -------------------
     document.addEventListener('DOMContentLoaded', async () => {
-        log('📱 DOMContentLoaded - Orquestando inicio de la aplicación...');
+        log('📱 DOMContentLoaded - Iniciando aplicación...');
 
-        // 1. Inicializar el módulo de sincronización PRIMERO.
-        await window.GitHubSync.init();
+        // 1. Inicializar GitHub Sync (importará automáticamente si es necesario)
+        if (window.GitHubSync) {
+            await window.GitHubSync.init();
+        }
 
-        // 2. Esperar a que la posible sincronización inicial termine.
-        await waitForInitialSync();
-
-        // 3. Ahora que los datos están (potencialmente) actualizados, procesar lógica de la app.
+        // 2. Procesar lógica de la app
         processInitialTasks();
-
-        // NOTA: La lógica de `processAllChallengesOnLoad` se mantiene donde esté (p. ej., script.js)
-        // ya que depende de que otros estados se carguen primero.
     });
 
     // ------------------- Service Worker & Actualización -------------------

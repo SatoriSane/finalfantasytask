@@ -164,10 +164,8 @@
         // ⭐ Guardar estado para sincronización
         _saveFocusState();
         
-        // ⭐ Emitir evento para que GitHub Sync detecte el cambio
-        if (App.events?.emit) {
-            App.events.emit('stateChanged', { source: 'focusMode', action: 'activate' });
-        }
+        // ℹ️ El estado se guarda en localStorage y se sincronizará automáticamente
+        // en la próxima exportación normal (no necesita evento especial)
     }
 
     /**
@@ -193,10 +191,8 @@
         // ⭐ Limpiar estado guardado
         _clearFocusState();
         
-        // ⭐ Emitir evento para que GitHub Sync detecte el cambio
-        if (App.events?.emit) {
-            App.events.emit('stateChanged', { source: 'focusMode', action: 'deactivate' });
-        }
+        // ℹ️ El estado se limpia de localStorage y se sincronizará automáticamente
+        // en la próxima exportación normal (no necesita evento especial)
     }
 
     /**

@@ -299,7 +299,12 @@
          * Recopila datos de la app
          */
         collectAppData() {
-            const excludeKeys = Object.values(STORAGE);
+            const excludeKeys = [
+                ...Object.values(STORAGE),
+                'fftask_github_snapshot',        // Snapshot del contador de exportación
+                'fftask_github_remote_changes',  // Estado del detector de importación
+                'fftask_github_changes_count'    // Contador de cambios locales
+            ];
             const data = { 
                 version: '1.0', 
                 timestamp: new Date().toISOString(),

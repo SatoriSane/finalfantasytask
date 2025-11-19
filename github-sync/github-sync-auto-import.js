@@ -21,23 +21,23 @@
     /**
      * Inicializa el detector de cambios remotos
      */
-    function init() {
+    async function init() {
         if (!window.GitHubSync?.isConnected) {
             return;
         }
 
+        // PRIMERO: Verificar inmediatamente (antes de cualquier log)
+        await checkRemoteChanges();
+
         log('▶ Detector de cambios remotos activado');
 
-        // Restaurar estado desde localStorage
+        // Restaurar estado desde localStorage (por si la verificación falló)
         const savedState = localStorage.getItem(STORAGE_KEY);
-        if (savedState === 'true') {
+        if (savedState === 'true' && !hasRemoteChanges) {
             hasRemoteChanges = true;
             log('📊 Estado restaurado: hay cambios remotos pendientes');
             updateButton();
         }
-
-        // Verificar inmediatamente
-        checkRemoteChanges();
 
         // Luego verificar cada 30 segundos
         checkInterval = setInterval(checkRemoteChanges, CONFIG.CHECK_INTERVAL);

@@ -72,17 +72,21 @@
             
             if (!backup?.data) return;
 
-            // Comparar con datos locales usando la función de github-sync-state.js
-            const hasChanges = window.GitHubSync.hasDataChanges(backup.data);
+            // Comparar timestamps: ¿El Gist es más reciente que nuestra última sync?
+            const gistTimestamp = new Date(backup.timestamp).getTime();
+            const lastSyncTimestamp = window.GitHubSync?.lastSync || 0;
             
-            if (hasChanges && !hasRemoteChanges) {
-                // Nuevos cambios detectados
+            // Solo detectar cambios remotos si el Gist es MÁS RECIENTE que nuestra última sync
+            const gistIsNewer = gistTimestamp > lastSyncTimestamp;
+            
+            if (gistIsNewer && !hasRemoteChanges) {
+                // El Gist tiene cambios más recientes que nuestra última sincronización
                 hasRemoteChanges = true;
                 localStorage.setItem(STORAGE_KEY, 'true');
-                log('📥 Cambios remotos detectados');
+                log('📥 Cambios remotos detectados (Gist más reciente)');
                 updateButton();
-            } else if (!hasChanges && hasRemoteChanges) {
-                // Ya no hay cambios (usuario importó manualmente o desde otro dispositivo)
+            } else if (!gistIsNewer && hasRemoteChanges) {
+                // El Gist ya no es más reciente (exportamos o importamos)
                 hasRemoteChanges = false;
                 localStorage.removeItem(STORAGE_KEY);
                 log('✅ Cambios remotos ya sincronizados');

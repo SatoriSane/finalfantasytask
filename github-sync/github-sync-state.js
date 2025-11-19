@@ -329,27 +329,29 @@
             
             const normalized = JSON.parse(JSON.stringify(data)); // Deep clone
             
-            // Normalizar retos de abstinencia (eliminar campos que cambian automáticamente)
+            // Normalizar retos de abstinencia (eliminar SOLO campos que cambian automáticamente por tiempo)
             if (normalized.habits && normalized.habits.challenges && Array.isArray(normalized.habits.challenges)) {
                 normalized.habits.challenges = normalized.habits.challenges.map(challenge => {
-                    // Mantener solo campos esenciales que NO cambian automáticamente
-                    return {
-                        id: challenge.id,
-                        name: challenge.name,
-                        initialInterval: challenge.initialInterval,
-                        weeklyFrequency: challenge.weeklyFrequency,
-                        successDays: challenge.successDays,
-                        baseTicketPoints: challenge.baseTicketPoints,
-                        isActive: challenge.isActive,
-                        createdAt: challenge.createdAt,
-                        // Excluir campos automáticos:
-                        // - availableTickets (cambia con el tiempo)
-                        // - lastTicketGeneratedTime (cambia con el tiempo)
-                        // - lastConsumptionTime (cambia con acciones)
-                        // - consumptionHistory (cambia con acciones)
-                        // - abstinenceHistory (cambia con acciones)
-                        // - bestAbstinenceTime (cambia con acciones)
-                    };
+                    const cleaned = { ...challenge };
+                    
+                    // Excluir SOLO campos que cambian automáticamente por tiempo:
+                    delete cleaned.availableTickets;           // Cambia cada X horas automáticamente
+                    delete cleaned.lastTicketGeneratedTime;    // Cambia cada X horas automáticamente
+                    
+                    // Normalizar arrays de historial (ordenar por timestamp para comparación consistente)
+                    if (cleaned.consumptionHistory && Array.isArray(cleaned.consumptionHistory)) {
+                        cleaned.consumptionHistory = [...cleaned.consumptionHistory].sort((a, b) => 
+                            (a.timestamp || '').localeCompare(b.timestamp || '')
+                        );
+                    }
+                    
+                    if (cleaned.abstinenceHistory && Array.isArray(cleaned.abstinenceHistory)) {
+                        cleaned.abstinenceHistory = [...cleaned.abstinenceHistory].sort((a, b) => 
+                            (a.startTime || '').localeCompare(b.startTime || '')
+                        );
+                    }
+                    
+                    return cleaned;
                 });
                 
                 // Ordenar para comparación consistente

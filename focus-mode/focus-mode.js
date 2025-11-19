@@ -219,7 +219,22 @@
         const callbacks = {
             onStartEarly: (taskId) => {
                 const task = App.state.getTodayTasks().find(t => t.id === taskId);
-                if (task) _renderFocusedMission(task);
+                if (task) {
+                    _renderFocusedMission(task);
+                    
+                    // ⭐ Guardar estado actualizado
+                    _saveFocusState();
+                    
+                    // ⭐ Emitir evento para exportar inmediatamente
+                    // (cambio importante: iniciar misión programada anticipadamente)
+                    if (App.events?.emit) {
+                        App.events.emit('stateChanged', { 
+                            source: 'focusMode', 
+                            action: 'startEarly',
+                            taskId: taskId 
+                        });
+                    }
+                }
             },
             onSkip: (taskId) => {
                 const result = App.focusScheduled.getNextAvailableTask(taskId);
@@ -231,6 +246,17 @@
                     _renderScheduledMission(result.nextScheduledTask, result.minutesUntilNext, result.hasOtherAvailableTasks);
                 } else {
                     App.focusRender.renderEmptyState({ onClose: deactivate });
+                }
+                
+                // ⭐ Guardar estado actualizado y emitir evento
+                // (cambio importante: saltar a otra misión)
+                _saveFocusState();
+                if (App.events?.emit) {
+                    App.events.emit('stateChanged', { 
+                        source: 'focusMode', 
+                        action: 'skip',
+                        taskId: taskId 
+                    });
                 }
             },
             onClose: deactivate,

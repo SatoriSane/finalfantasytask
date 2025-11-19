@@ -322,6 +322,53 @@
         },
 
         /**
+         * Normaliza datos para comparación (elimina campos que cambian automáticamente)
+         */
+        normalizeDataForComparison(data) {
+            if (!data) return data;
+            
+            const normalized = JSON.parse(JSON.stringify(data)); // Deep clone
+            
+            // Normalizar retos de abstinencia (eliminar campos que cambian automáticamente)
+            if (normalized.habits && normalized.habits.challenges && Array.isArray(normalized.habits.challenges)) {
+                normalized.habits.challenges = normalized.habits.challenges.map(challenge => {
+                    // Mantener solo campos esenciales que NO cambian automáticamente
+                    return {
+                        id: challenge.id,
+                        name: challenge.name,
+                        initialInterval: challenge.initialInterval,
+                        weeklyFrequency: challenge.weeklyFrequency,
+                        successDays: challenge.successDays,
+                        baseTicketPoints: challenge.baseTicketPoints,
+                        isActive: challenge.isActive,
+                        createdAt: challenge.createdAt,
+                        // Excluir campos automáticos:
+                        // - availableTickets (cambia con el tiempo)
+                        // - lastTicketGeneratedTime (cambia con el tiempo)
+                        // - lastConsumptionTime (cambia con acciones)
+                        // - consumptionHistory (cambia con acciones)
+                        // - abstinenceHistory (cambia con acciones)
+                        // - bestAbstinenceTime (cambia con acciones)
+                    };
+                });
+                
+                // Ordenar para comparación consistente
+                normalized.habits.challenges.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+            }
+            
+            // Normalizar arrays de misiones (ordenar por ID para comparación consistente)
+            if (normalized.missions && Array.isArray(normalized.missions)) {
+                normalized.missions.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+            }
+            
+            if (normalized.scheduledMissions && Array.isArray(normalized.scheduledMissions)) {
+                normalized.scheduledMissions.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+            }
+            
+            return normalized;
+        },
+
+        /**
          * Compara datos del Gist con datos locales
          * Retorna true si hay diferencias, false si son idénticos
          */
@@ -365,8 +412,47 @@
                     return true;
                 }
                 
-                if (gistData[key] !== currentData[key]) {
-                    log(`📊 Valor diferente en clave: ${key}`);
+                if (currentData[key] !== gistData[key]) {
+                    // Para pointsAppState, normalizar antes de comparar
+                    if (key === 'pointsAppState') {
+                        try {
+                            log(`🔍 Normalizando ${key} para comparación...`);
+                            const gistValue = JSON.parse(gistData[key]);
+                            const localValue = JSON.parse(currentData[key]);
+                            
+                            const normalizedGist = this.normalizeDataForComparison(gistValue);
+                            const normalizedLocal = this.normalizeDataForComparison(localValue);
+                            
+                            const gistStr = JSON.stringify(normalizedGist);
+                            const localStr = JSON.stringify(normalizedLocal);
+                            
+                            if (gistStr === localStr) {
+                                // Son iguales después de normalizar, ignorar diferencia
+                                log(`✅ ${key} es idéntico después de normalizar (ignorando timestamps automáticos)`);
+                                continue;
+                            } else {
+                                log(`⚠️ ${key} sigue siendo diferente después de normalizar`);
+                                log(`   Longitud Gist: ${gistStr.length}, Local: ${localStr.length}`);
+                            }
+                        } catch (e) {
+                            log(`❌ Error al normalizar ${key}:`, e.message);
+                            // Si falla la normalización, continuar con comparación normal
+                        }
+                    }
+                    
+                    // Mostrar más detalles sobre la diferencia
+                    try {
+                        const gistValue = JSON.parse(gistData[key]);
+                        const localValue = JSON.parse(currentData[key]);
+                        
+                        if (Array.isArray(gistValue) && Array.isArray(localValue)) {
+                            log(`📊 Valor diferente en clave: ${key} (gist: ${gistValue.length} items, local: ${localValue.length} items)`);
+                        } else {
+                            log(`📊 Valor diferente en clave: ${key}`);
+                        }
+                    } catch (e) {
+                        log(`📊 Valor diferente en clave: ${key} (valores no-JSON)`);
+                    }
                     return true;
                 }
             }

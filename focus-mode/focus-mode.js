@@ -198,7 +198,7 @@
         if (!_isActive) return;
 
         _isActive = false;
-        _currentFocusTaskId = null;
+        // ⭐ NO limpiar _currentFocusTaskId aquí - mantenerlo para persistencia
         
         App.focusScheduled.stopScheduledCountdown();
         
@@ -211,11 +211,9 @@
         document.getElementById('focusModeContainer')?.classList.remove('active');
         document.body.classList.remove('focus-mode-active');
 
-        // ⭐ Limpiar estado guardado
-        _clearFocusState();
-        
-        // ℹ️ El estado se limpia de localStorage y se sincronizará automáticamente
-        // en la próxima exportación normal (no necesita evento especial)
+        // ⭐ NO limpiar el estado guardado al cerrar
+        // El estado se mantiene para que al reabrir se recuerde qué misión estaba activa
+        // Solo se limpia cuando se completa la misión o se cambia de misión
     }
 
     /**
@@ -260,6 +258,9 @@
                 }
             },
             onSkip: (taskId) => {
+                // ⭐ Limpiar estado de la misión anterior al saltar
+                _clearFocusState();
+                
                 const result = App.focusScheduled.getNextAvailableTask(taskId);
                 if (result.task) {
                     _currentFocusTaskId = result.task.id;
@@ -361,17 +362,26 @@
             
             App.focusRender.showCelebration();
             
+            // ⭐ Limpiar estado de la misión completada
+            _clearFocusState();
+            
             setTimeout(() => {
                 const result = App.focusScheduled.getNextAvailableTask();
                 
                 if (result.task) {
                     _currentFocusTaskId = result.task.id;
                     _renderFocusedMission(result.task);
+                    // Guardar estado de la nueva misión
+                    _saveFocusState();
                 } else if (result.nextScheduledTask) {
                     _currentFocusTaskId = result.nextScheduledTask.id;
                     _renderScheduledMission(result.nextScheduledTask, result.minutesUntilNext, result.hasOtherAvailableTasks);
+                    // Guardar estado de la nueva misión
+                    _saveFocusState();
                 } else {
                     App.focusRender.renderEmptyState({ onClose: deactivate });
+                    // No hay más misiones, limpiar estado
+                    _currentFocusTaskId = null;
                 }
             }, 800);
         }

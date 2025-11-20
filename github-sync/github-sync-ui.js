@@ -119,6 +119,15 @@
                 ? `Hace ${status.timeSinceSync}s` 
                 : 'Nunca';
             
+            // Detectar si hay cambios para importar o exportar
+            const hasRemoteChanges = window.GitHubSyncImport?.hasChanges() || false;
+            const localChanges = window.GitHubSyncCounter?.getCount() || 0;
+            const hasLocalChanges = localChanges > 0;
+            
+            // Clases para los botones
+            const importClass = hasRemoteChanges ? 'sync-action-btn has-changes' : 'sync-action-btn';
+            const exportClass = hasLocalChanges ? 'sync-action-btn success has-changes' : 'sync-action-btn success';
+            
             return `
                 <div class="sync-modal-header">
                     <h2>Sincronización con GitHub Gist</h2>
@@ -138,15 +147,17 @@
                 </div>
                 
                 <div class="sync-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0;">
-                    <button class="sync-action-btn" id="importFromGistBtn" ${status.isSyncing ? 'disabled' : ''}>
+                    <button class="${importClass}" id="importFromGistBtn" ${status.isSyncing ? 'disabled' : ''}>
                         <span style="font-size: 1.5rem;">📥</span>
                         <span style="font-weight: 600;">Importar</span>
                         <span style="font-size: 0.85rem; opacity: 0.9;">Descargar desde GitHub</span>
+                        ${hasRemoteChanges ? '<span class="changes-badge">Cambios disponibles</span>' : ''}
                     </button>
-                    <button class="sync-action-btn success" id="exportToGistBtn" ${status.isSyncing ? 'disabled' : ''}>
+                    <button class="${exportClass}" id="exportToGistBtn" ${status.isSyncing ? 'disabled' : ''}>
                         <span style="font-size: 1.5rem;">📤</span>
                         <span style="font-weight: 600;">Exportar</span>
                         <span style="font-size: 0.85rem; opacity: 0.9;">Guardar en GitHub</span>
+                        ${hasLocalChanges ? `<span class="changes-badge">${localChanges} cambios</span>` : ''}
                     </button>
                 </div>
                 

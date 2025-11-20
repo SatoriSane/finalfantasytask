@@ -349,6 +349,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
+    position: relative;
 }
 
 .sync-action-btn:hover:not(:disabled) {
@@ -378,6 +379,74 @@
 .sync-action-btn.success:hover:not(:disabled) {
     border-color: #4ade80;
     background: rgba(74, 222, 128, 0.1);
+}
+
+/* ========== MARCO ILUMINADO PARA CAMBIOS PENDIENTES ========== */
+.sync-action-btn.has-changes {
+    animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Importar con cambios remotos - azul */
+.sync-action-btn.has-changes:not(.success) {
+    border-color: #3b82f6;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 
+                0 0 40px rgba(59, 130, 246, 0.2),
+                inset 0 0 20px rgba(59, 130, 246, 0.1);
+    background: rgba(59, 130, 246, 0.15);
+}
+
+/* Exportar con cambios locales - verde */
+.sync-action-btn.success.has-changes {
+    border-color: #4ade80;
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.4), 
+                0 0 40px rgba(74, 222, 128, 0.2),
+                inset 0 0 20px rgba(74, 222, 128, 0.1);
+    background: rgba(74, 222, 128, 0.15);
+}
+
+/* Badge de cambios */
+.changes-badge {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Animación de pulso para el marco iluminado */
+@keyframes glowPulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 
+                    0 0 40px rgba(59, 130, 246, 0.2),
+                    inset 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.6), 
+                    0 0 60px rgba(59, 130, 246, 0.3),
+                    inset 0 0 30px rgba(59, 130, 246, 0.15);
+    }
+}
+
+/* Animación específica para exportar (verde) */
+.sync-action-btn.success.has-changes {
+    animation: glowPulseGreen 2s ease-in-out infinite;
+}
+
+@keyframes glowPulseGreen {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(74, 222, 128, 0.4), 
+                    0 0 40px rgba(74, 222, 128, 0.2),
+                    inset 0 0 20px rgba(74, 222, 128, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(74, 222, 128, 0.6), 
+                    0 0 60px rgba(74, 222, 128, 0.3),
+                    inset 0 0 30px rgba(74, 222, 128, 0.15);
+    }
 }
 
 /* ========== RESPONSIVE ========== */

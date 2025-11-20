@@ -61,34 +61,9 @@
             _createFocusModeElements();
             _attachEventListeners();
             
-            // ⭐ Restaurar estado si existe (para sincronización entre dispositivos)
-            const savedState = _loadFocusState();
-            if (savedState && savedState.isActive && savedState.currentFocusTaskId) {
-                console.log('🔄 Restaurando estado del modo focus desde localStorage');
-                // Auto-activar después de un pequeño delay para asegurar que App.state esté listo
-                setTimeout(() => {
-                    const task = App.state?.getTodayTasks()?.find(t => t.id === savedState.currentFocusTaskId);
-                    if (task) {
-                        console.log('✅ Auto-activando modo focus con tarea:', task.name);
-                        _isActive = true;
-                        _currentFocusTaskId = task.id;
-                        
-                        document.getElementById('focusModeOverlay')?.classList.add('active');
-                        document.getElementById('focusModeContainer')?.classList.add('active');
-                        document.body.classList.add('focus-mode-active');
-                        
-                        if (App.focusTimer) {
-                            App.focusTimer.resumeInterval();
-                            App.focusTimer.removeFabBadge();
-                        }
-                        
-                        _renderFocusedMission(task);
-                    } else {
-                        console.warn('⚠️ No se encontró la tarea guardada, limpiando estado');
-                        _clearFocusState();
-                    }
-                }, 500);
-            }
+            // ⭐ NO auto-restaurar aquí - dejar que activate() lo maneje
+            // La auto-restauración se hace solo cuando el usuario abre el focus mode manualmente
+            // Esto evita doble renderización en la primera apertura
             
             console.log('✅ Focus Mode initialized');
         } catch (error) {

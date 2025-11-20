@@ -134,6 +134,29 @@
     function activate() {
         if (_isActive) return;
 
+        // ⭐ Verificar si hay un estado guardado de una misión ya iniciada
+        const savedState = _loadFocusState();
+        if (savedState && savedState.isActive && savedState.currentFocusTaskId) {
+            const savedTask = App.state?.getTodayTasks()?.find(t => t.id === savedState.currentFocusTaskId);
+            if (savedTask && !savedTask.completed) {
+                console.log('🔄 Misión ya iniciada detectada, mostrando vista de completar:', savedTask.name);
+                _isActive = true;
+                _currentFocusTaskId = savedTask.id;
+                
+                if (App.focusTimer) {
+                    App.focusTimer.resumeInterval();
+                    App.focusTimer.removeFabBadge();
+                }
+                
+                document.getElementById('focusModeOverlay')?.classList.add('active');
+                document.getElementById('focusModeContainer')?.classList.add('active');
+                document.body.classList.add('focus-mode-active');
+                
+                _renderFocusedMission(savedTask);
+                return;
+            }
+        }
+
         const result = App.focusScheduled.getNextAvailableTask();
         
         if (!result.task && !result.nextScheduledTask) {

@@ -6,22 +6,12 @@
 
     /**
      * Obtiene la primera tarea incompleta disponible ahora (respetando el orden guardado)
-     * PRIORIDAD: Tareas programadas <1h > Tareas sin hora/pasadas > Tareas programadas >1h
      * 
-     * TOLERANCIA: 1 HORA (60 MINUTOS)
-     * - Tareas programadas <1h: PRIORIDAD MÁXIMA - Vista programada con opciones
-     * - Tareas SIN hora o con hora PASADA: Vista normal de completar
-     * - Tareas programadas >1h: Última prioridad - Vista programada con opciones
-     * 
-     * COMPORTAMIENTO:
-     * - Tareas programadas <1h (ej: 15 min, 30 min, 45 min): Vista programada con opciones
-     *   - SIEMPRE aparecen PRIMERO
-     *   - Muestra mensaje de espera, countdown y opciones
-     *   - Permite "Iniciar Ahora" o "Hacer Otra Misión" (si hay disponibles)
-     *   - Auto-cambia a vista normal cuando countdown llega a 0
-     * - Tareas SIN hora: Vista normal de completar
-     * - Tareas con hora PASADA: Vista normal de completar
-     * - Tareas programadas >1h: Vista programada (solo si no hay otras)
+     * NUEVA PRIORIDAD (según especificación del usuario):
+     * 1. Misiones programadas con hora que YA PASÓ (contador corre inmediatamente)
+     * 2. Misiones programadas para dentro de MENOS de 1 hora (pregunta si quiere iniciar ahora)
+     * 3. La misión sin completar que esté en PRIMERA POSICIÓN en la lista de misiones para hoy
+     * 4. La misión sin completar programada para dentro de MÁS de 1 hora (más cercana a la hora actual)
      * 
      * Retorna un objeto con:
      * - task: la tarea disponible para completar ahora (o null si no hay)
@@ -60,9 +50,33 @@
             ? orderedTasks.filter(t => t.id !== skipTaskId)
             : orderedTasks;
         
-        // PRIORIDAD 1: Buscar tareas programadas con hora FUTURA y <2h
-        // Estas deben aparecer PRIMERO con vista programada
-        const scheduledTasksNear = tasksToConsider
+        // ⭐ PRIORIDAD 1: Misiones programadas con hora que YA PASÓ
+        // Estas se ejecutan inmediatamente (vista normal de completar)
+        const tasksWithPastTime = tasksToConsider.filter(task => {
+            if (!task.scheduleTime || !task.scheduleTime.time) return false;
+            const minutesUntil = App.focusUtils.getMinutesUntilAvailable(task);
+            return minutesUntil <= 0; // Hora ya pasó
+        });
+        
+        if (tasksWithPastTime.length > 0) {
+            const selectedTask = tasksWithPastTime[0];
+            console.log('🔍 PRIORIDAD 1: Tarea con hora pasada encontrada:', {
+                taskId: selectedTask.id,
+                taskName: selectedTask.name,
+                scheduleTime: selectedTask.scheduleTime.time
+            });
+            
+            return { 
+                task: selectedTask, 
+                nextScheduledTask: null, 
+                minutesUntilNext: 0,
+                hasOtherAvailableTasks: false
+            };
+        }
+        
+        // ⭐ PRIORIDAD 2: Misiones programadas para dentro de MENOS de 1 hora
+        // Pregunta si quiere iniciar ahora (vista programada con opciones)
+        const tasksScheduledSoon = tasksToConsider
             .filter(task => {
                 if (!task.scheduleTime || !task.scheduleTime.time) return false;
                 const minutesUntil = App.focusUtils.getMinutesUntilAvailable(task);
@@ -74,17 +88,17 @@
             }))
             .sort((a, b) => a.minutesUntil - b.minutesUntil);
         
-        if (scheduledTasksNear.length > 0) {
-            const nextScheduled = scheduledTasksNear[0];
+        if (tasksScheduledSoon.length > 0) {
+            const nextScheduled = tasksScheduledSoon[0];
             
-            // Verificar si hay otras tareas disponibles (sin hora o con hora pasada)
-            const hasOtherAvailableTasks = orderedTasks.some(task => 
+            // Verificar si hay otras tareas disponibles
+            const hasOtherAvailableTasks = tasksToConsider.some(task => 
                 task.id !== nextScheduled.task.id && 
                 !task.completed &&
-                App.focusUtils.isTaskAvailableNow(task)
+                (!task.scheduleTime || !task.scheduleTime.time)
             );
             
-            console.log('🔍 Tarea programada <1h encontrada:', {
+            console.log('🔍 PRIORIDAD 2: Tarea programada <1h encontrada:', {
                 taskId: nextScheduled.task.id,
                 taskName: nextScheduled.task.name,
                 minutesUntil: nextScheduled.minutesUntil,
@@ -99,26 +113,34 @@
             };
         }
         
-        // PRIORIDAD 2: Buscar tareas sin hora o con hora ya pasada
-        const availableTask = tasksToConsider.find(task => App.focusUtils.isTaskAvailableNow(task));
+        // ⭐ PRIORIDAD 3: La misión sin completar en PRIMERA POSICIÓN en la lista
+        // (sin importar si tiene hora programada o no, siempre que no sea futura)
+        const firstTaskInList = tasksToConsider.find(task => {
+            // Si no tiene hora programada, es válida
+            if (!task.scheduleTime || !task.scheduleTime.time) return true;
+            
+            // Si tiene hora programada, solo es válida si ya pasó
+            const minutesUntil = App.focusUtils.getMinutesUntilAvailable(task);
+            return minutesUntil <= 0;
+        });
         
-        if (availableTask) {
-            console.log('🔍 Tarea disponible encontrada:', {
-                taskId: availableTask.id,
-                taskName: availableTask.name,
-                hasScheduleTime: !!availableTask.scheduleTime
+        if (firstTaskInList) {
+            console.log('🔍 PRIORIDAD 3: Primera tarea en lista encontrada:', {
+                taskId: firstTaskInList.id,
+                taskName: firstTaskInList.name,
+                hasScheduleTime: !!firstTaskInList.scheduleTime
             });
             
             return { 
-                task: availableTask, 
+                task: firstTaskInList, 
                 nextScheduledTask: null, 
                 minutesUntilNext: 0,
                 hasOtherAvailableTasks: false
             };
         }
         
-        // PRIORIDAD 3: Buscar tareas programadas >1h (solo si no hay otras opciones)
-        const scheduledTasksFar = tasksToConsider
+        // ⭐ PRIORIDAD 4: Misión programada para dentro de MÁS de 1 hora (más cercana)
+        const tasksScheduledLater = tasksToConsider
             .filter(task => {
                 if (!task.scheduleTime || !task.scheduleTime.time) return false;
                 const minutesUntil = App.focusUtils.getMinutesUntilAvailable(task);
@@ -130,38 +152,19 @@
             }))
             .sort((a, b) => a.minutesUntil - b.minutesUntil);
         
-        if (scheduledTasksFar.length > 0) {
-            const nextScheduled = scheduledTasksFar[0];
+        if (tasksScheduledLater.length > 0) {
+            const nextScheduled = tasksScheduledLater[0];
             
-            const hasOtherAvailableTasks = orderedTasks.some(task => 
-                task.id !== nextScheduled.task.id && 
-                !task.completed &&
-                App.focusUtils.isTaskAvailableNow(task)
-            );
-            
-            console.log('🔍 Tarea programada >1h encontrada:', {
+            console.log('🔍 PRIORIDAD 4: Tarea programada >1h encontrada:', {
                 taskId: nextScheduled.task.id,
                 taskName: nextScheduled.task.name,
-                minutesUntil: nextScheduled.minutesUntil,
-                hasOtherAvailableTasks
+                minutesUntil: nextScheduled.minutesUntil
             });
             
             return { 
                 task: null, 
                 nextScheduledTask: nextScheduled.task, 
                 minutesUntilNext: nextScheduled.minutesUntil,
-                hasOtherAvailableTasks
-            };
-        }
-        
-        // PRIORIDAD 3: Si no hay tareas programadas, tomar la primera sin hora
-        const taskWithoutSchedule = tasksToConsider.find(task => !task.scheduleTime || !task.scheduleTime.time);
-        
-        if (taskWithoutSchedule) {
-            return { 
-                task: taskWithoutSchedule, 
-                nextScheduledTask: null, 
-                minutesUntilNext: 0,
                 hasOtherAvailableTasks: false
             };
         }

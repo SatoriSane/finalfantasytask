@@ -4,9 +4,11 @@
 
     // Estado del timer
     const STORAGE_KEY = 'focusTimerState';
+    const BONUS_TRANSFER_KEY = 'focusBonusTransfer';
     let _activeTimer = null;
     let _intervalId = null;
     let _fabIntervalId = null;
+    let _bonusTransferMs = 0; // Tiempo bonus a transferir a la siguiente tarea
 
     /**
      * Estructura del timer activo:
@@ -19,11 +21,23 @@
      */
 
     /**
-     * Inicia un timer para una tarea con duración estimada
+     * Inicia un timer para una tarea con duración estimada o con tiempo transferido
+     * @param {Object} task - La tarea para la cual iniciar el timer
+     * @param {boolean} showTransferAnimation - Si es true, muestra animación de transferencia
      */
-    function startTimer(task) {
-        if (!task.scheduleDuration || !task.scheduleDuration.value) {
-            return null; // No hay duración estimada
+    function startTimer(task, showTransferAnimation = false) {
+        // ⭐ NUEVO: Cargar tiempo bonus transferido primero
+        _loadBonusTransfer();
+        const hasTransfer = _bonusTransferMs > 0;
+        
+        // Si no hay duración Y no hay tiempo transferido, no crear timer
+        if (!task.scheduleDuration && !hasTransfer) {
+            return null;
+        }
+        
+        // Si no hay duración pero SÍ hay tiempo transferido, usar solo el tiempo transferido
+        if (!task.scheduleDuration && hasTransfer) {
+            console.log(`⚡ Tarea sin duración pero con tiempo transferido: ${formatTimeRemaining(_bonusTransferMs)}`);
         }
 
         // ⭐ CRÍTICO: Si ya existe un timer activo para esta tarea, NO reiniciarlo
@@ -36,56 +50,135 @@
             return { taskId: task.id, existing: true };
         }
 
-        // Convertir duración a milisegundos
-        const durationValue = task.scheduleDuration.value;
-        const durationUnit = task.scheduleDuration.unit;
-        const durationMs = durationUnit === 'hours' 
-            ? durationValue * 60 * 60 * 1000 
-            : durationValue * 60 * 1000;
-
-        // Agregar clase de inicio para animación
-        const timerElement = document.querySelector('.focus-timer-container');
-        if (timerElement) {
-            timerElement.classList.add('timer-starting');
+        // Convertir duración a milisegundos (si existe)
+        let originalDurationMs = 0;
+        
+        if (task.scheduleDuration && task.scheduleDuration.value) {
+            const durationValue = task.scheduleDuration.value;
+            const durationUnit = task.scheduleDuration.unit;
+            originalDurationMs = durationUnit === 'hours' 
+                ? durationValue * 60 * 60 * 1000 
+                : durationValue * 60 * 1000;
+        }
+        
+        // Calcular duración total (original + transferido)
+        const totalDurationMs = originalDurationMs + (hasTransfer ? _bonusTransferMs : 0);
+        
+        // Si después de todo no hay duración, salir
+        if (totalDurationMs === 0) {
+            return null;
         }
 
-        // Esperar 2 segundos de animación
-        setTimeout(() => {
-            // Remover clase de inicio y agregar clase de activo
-            if (timerElement) {
-                timerElement.classList.remove('timer-starting');
-                timerElement.classList.add('timer-started');
-            }
-            
-            // Esperar 1 segundo adicional mostrando el tiempo completo
-            setTimeout(() => {
-                // Crear el timer y empezar el countdown
-                _activeTimer = {
-                    taskId: task.id,
-                    startTime: Date.now(),
-                    durationMs: durationMs,
-                    bonusActive: true
-                };
+        // ⭐ FLUJO CORRECTO:
+        // 1. Crear timer con tiempo ORIGINAL primero
+        // 2. Renderizar HTML (muestra tiempo original)
+        // 3. Animar la transferencia
+        // 4. Actualizar timer a tiempo TOTAL
+        
+        // Crear el timer con tiempo ORIGINAL (no total)
+        _activeTimer = {
+            taskId: task.id,
+            startTime: Date.now(),
+            durationMs: originalDurationMs, // ⭐ Iniciar con tiempo ORIGINAL
+            bonusActive: true
+        };
 
+        _saveTimerState();
+        _startInterval();
+        _startFabInterval();
+        
+        // Si hay transferencia con animación, ejecutarla DESPUÉS de que el HTML esté renderizado
+        if (hasTransfer && showTransferAnimation) {
+            // Esperar un frame para que el HTML se renderice con tiempo original
+            setTimeout(() => {
+                _animateTransferAndUpdate(task, originalDurationMs, _bonusTransferMs, totalDurationMs);
+                _bonusTransferMs = 0;
+                _clearBonusTransfer();
+            }, 100);
+        } else {
+            // Si hay transferencia pero sin animación, actualizar directamente al tiempo total
+            if (hasTransfer) {
+                _activeTimer.durationMs = totalDurationMs;
                 _saveTimerState();
-                _startInterval();
-                _startFabInterval(); // Iniciar intervalo del FAB
-                
-                // Forzar actualización del display
-                setTimeout(() => {
-                    updateTimerDisplay(task.id);
-                }, 50);
-            }, 1000); // 1 segundo mostrando tiempo inicial
-        }, 2000); // 2 segundos de animación
+                _bonusTransferMs = 0;
+                _clearBonusTransfer();
+            }
+        }
 
         // Retornar un objeto temporal para indicar que el timer se está iniciando
-        return { taskId: task.id, starting: true };
+        return { taskId: task.id, starting: true, hasTransfer: hasTransfer };
     }
 
     /**
-     * Detiene el timer actual (solo cuando se completa la tarea)
+     * Anima la transferencia de tiempo bonus Y actualiza el timer al tiempo total
+     * PASO 1: Mostrar tiempo original (2s)
+     * PASO 2: Animación de transferencia sutil (1.5s)
+     * PASO 3: Actualizar timer a tiempo total y mostrar con pulso (0.6s)
      */
-    function stopTimer() {
+    function _animateTransferAndUpdate(task, originalMs, transferMs, totalMs) {
+        const timerElement = document.querySelector('.focus-timer-container');
+        if (!timerElement) {
+            console.warn('⚠️ No se encontró .focus-timer-container para animar');
+            return;
+        }
+        
+        const timeDisplay = timerElement.querySelector('.focus-timer-time');
+        if (!timeDisplay) {
+            console.warn('⚠️ No se encontró .focus-timer-time para animar');
+            return;
+        }
+        
+        // PASO 1: Mostrar tiempo ORIGINAL con animación de inicio
+        timerElement.classList.add('timer-starting');
+        console.log(`🎬 PASO 1: Mostrando tiempo original ${formatTimeRemaining(originalMs)}`);
+        
+        setTimeout(() => {
+            timerElement.classList.remove('timer-starting');
+            
+            // PASO 2: Mostrar animación de transferencia SUTIL (no tapa toda la pantalla)
+            console.log(`🎬 PASO 2: Mostrando animación de transferencia +${formatTimeRemaining(transferMs)}`);
+            _showSubtleTransferAnimation(transferMs, () => {
+                
+                // PASO 3: ACTUALIZAR el timer al tiempo TOTAL
+                console.log(`🎬 PASO 3: Actualizando timer a tiempo total ${formatTimeRemaining(totalMs)}`);
+                
+                // ⭐ CRÍTICO: Actualizar la duración del timer activo
+                if (_activeTimer && _activeTimer.taskId === task.id) {
+                    _activeTimer.durationMs = totalMs;
+                    // Mantener el mismo startTime para que el countdown sea correcto
+                    _saveTimerState();
+                }
+                
+                // Mostrar tiempo TOTAL con pulso de confirmación
+                timerElement.classList.add('timer-started');
+                timeDisplay.textContent = formatTimeRemaining(totalMs);
+                
+                setTimeout(() => {
+                    timerElement.classList.remove('timer-started');
+                    console.log('✅ Animación de transferencia completada y timer actualizado');
+                    
+                    // Forzar actualización del display
+                    updateTimerDisplay(task.id);
+                }, 600);
+            });
+        }, 2000);
+    }
+
+    /**
+     * Detiene el timer actual y captura el tiempo bonus restante para transferir
+     * @param {boolean} captureBonus - Si es true, guarda el tiempo restante para la siguiente tarea
+     */
+    function stopTimer(captureBonus = false) {
+        // Capturar tiempo bonus restante antes de detener
+        if (captureBonus && _activeTimer) {
+            const state = getTimerState(_activeTimer.taskId);
+            if (state && state.bonusActive && state.remainingMs > 0) {
+                _bonusTransferMs = state.remainingMs;
+                _saveBonusTransfer();
+                console.log(`⏱️ Tiempo bonus capturado para transferir: ${formatTimeRemaining(_bonusTransferMs)}`);
+            }
+        }
+        
         if (_intervalId) {
             clearInterval(_intervalId);
             _intervalId = null;
@@ -186,22 +279,41 @@
      * Renderiza el componente visual del timer
      */
     function renderTimer(container, task) {
-        // Verificar si la tarea tiene duración estimada
-        if (!task.scheduleDuration || !task.scheduleDuration.value) {
-            return ''; // No hay duración, no mostrar timer
+        // ⭐ NUEVO: Verificar si hay timer activo (puede ser por duración o por tiempo transferido)
+        let state = getTimerState(task.id);
+        
+        // Si no hay estado de timer, verificar si la tarea tiene duración o hay tiempo transferido
+        if (!state) {
+            _loadBonusTransfer();
+            const hasTransfer = _bonusTransferMs > 0;
+            
+            if (!task.scheduleDuration && !hasTransfer) {
+                return ''; // No hay duración ni tiempo transferido, no mostrar timer
+            }
         }
 
-        const state = getTimerState(task.id);
+        state = getTimerState(task.id);
         
         let timeText, bonusClass, message;
         
         if (!state) {
-            // Si no hay estado aún (timer no iniciado), mostrar tiempo inicial completo
-            const durationValue = task.scheduleDuration.value;
-            const durationUnit = task.scheduleDuration.unit;
-            const durationMs = durationUnit === 'hours' 
-                ? durationValue * 60 * 60 * 1000 
-                : durationValue * 60 * 1000;
+            // Si no hay estado aún (timer no iniciado), calcular tiempo inicial
+            let durationMs = 0;
+            
+            // Calcular duración de la tarea (si tiene)
+            if (task.scheduleDuration && task.scheduleDuration.value) {
+                const durationValue = task.scheduleDuration.value;
+                const durationUnit = task.scheduleDuration.unit;
+                durationMs = durationUnit === 'hours' 
+                    ? durationValue * 60 * 60 * 1000 
+                    : durationValue * 60 * 1000;
+            }
+            
+            // Sumar tiempo bonus transferido (si hay)
+            _loadBonusTransfer();
+            if (_bonusTransferMs > 0) {
+                durationMs += _bonusTransferMs;
+            }
             
             timeText = formatTimeRemaining(durationMs);
             bonusClass = 'active';
@@ -442,6 +554,127 @@
     }
 
     /**
+     * Guarda el tiempo bonus a transferir
+     */
+    function _saveBonusTransfer() {
+        if (_bonusTransferMs > 0) {
+            localStorage.setItem(BONUS_TRANSFER_KEY, _bonusTransferMs.toString());
+        }
+    }
+
+    /**
+     * Carga el tiempo bonus a transferir
+     */
+    function _loadBonusTransfer() {
+        try {
+            const saved = localStorage.getItem(BONUS_TRANSFER_KEY);
+            if (saved) {
+                _bonusTransferMs = parseInt(saved, 10);
+            }
+        } catch (error) {
+            console.error('Error loading bonus transfer:', error);
+            _bonusTransferMs = 0;
+        }
+    }
+
+    /**
+     * Limpia el tiempo bonus transferido
+     */
+    function _clearBonusTransfer() {
+        localStorage.removeItem(BONUS_TRANSFER_KEY);
+    }
+
+    /**
+     * Obtiene el tiempo bonus disponible para transferir
+     */
+    function getBonusTransfer() {
+        _loadBonusTransfer();
+        return _bonusTransferMs;
+    }
+
+    /**
+     * ⚠️ DEPRECADO: Ya no se convierte tiempo a puntos, siempre se transfiere como countdown
+     * Esta función se mantiene por compatibilidad pero siempre retorna 0
+     */
+    function convertBonusToPoints() {
+        console.warn('⚠️ convertBonusToPoints está deprecado - el tiempo siempre se transfiere como countdown');
+        return 0;
+    }
+
+    /**
+     * Muestra animación SUTIL de transferencia (no tapa toda la pantalla)
+     */
+    function _showSubtleTransferAnimation(transferMs, onComplete) {
+        const timerElement = document.querySelector('.focus-timer-container');
+        if (!timerElement) {
+            onComplete();
+            return;
+        }
+        
+        // Crear badge de transferencia encima del timer (no modal fullscreen)
+        const transferBadge = document.createElement('div');
+        transferBadge.className = 'bonus-transfer-badge';
+        transferBadge.innerHTML = `
+            <div class="transfer-badge-icon">⚡</div>
+            <div class="transfer-badge-time">+${formatTimeRemaining(transferMs)}</div>
+        `;
+        
+        // Insertar después del timer
+        timerElement.parentNode.insertBefore(transferBadge, timerElement.nextSibling);
+        
+        // Animar entrada
+        setTimeout(() => transferBadge.classList.add('active'), 50);
+        
+        // Animar salida y remover
+        setTimeout(() => {
+            transferBadge.classList.remove('active');
+            transferBadge.classList.add('fade-out');
+            
+            setTimeout(() => {
+                transferBadge.remove();
+                onComplete();
+            }, 400);
+        }, 1500);
+    }
+
+    /**
+     * Muestra animación COMPLETA de transferencia (modal fullscreen - DEPRECADA)
+     * Mantenida por compatibilidad pero ya no se usa
+     */
+    function _showTransferAnimation(transferMs, onComplete) {
+        const container = document.getElementById('focusModeContainer');
+        if (!container) {
+            onComplete();
+            return;
+        }
+        
+        // Crear elemento de animación
+        const animation = document.createElement('div');
+        animation.className = 'bonus-transfer-animation';
+        animation.innerHTML = `
+            <div class="transfer-icon">⚡</div>
+            <div class="transfer-time">+${formatTimeRemaining(transferMs)}</div>
+            <div class="transfer-message">Tiempo bonus transferido</div>
+        `;
+        
+        document.body.appendChild(animation);
+        
+        // Animar y remover
+        setTimeout(() => {
+            animation.classList.add('active');
+        }, 50);
+        
+        setTimeout(() => {
+            animation.classList.add('fade-out');
+        }, 2000);
+        
+        setTimeout(() => {
+            animation.remove();
+            onComplete();
+        }, 2500);
+    }
+
+    /**
      * Inicializa el sistema de timer (restaura estado si existe)
      */
     function init() {
@@ -484,6 +717,8 @@
         renderFabBadge,
         updateFabBadge,
         removeFabBadge,
+        getBonusTransfer,
+        convertBonusToPoints,
         init
     };
 

@@ -121,23 +121,38 @@
 
         const data = App.focusUtils.getTaskData(task);
         
-        // Verificar si ya hay un timer activo para esta tarea
+        // ⭐ NUEVO: Verificar si hay timer activo o tiempo bonus transferido
         let timerHTML = '';
         let hasTimer = false;
-        if (App.focusTimer && task.scheduleDuration) {
-            hasTimer = true;
+        
+        if (App.focusTimer) {
             const existingTimer = App.focusTimer.getTimerState(task.id);
+            const bonusTransfer = App.focusTimer.getBonusTransfer();
             
-            // Solo iniciar un nuevo timer si no existe uno activo para esta tarea
-            if (!existingTimer) {
-                App.focusTimer.startTimer(task);
-            } else {
-                // ⭐ Si existe un timer, reiniciar los intervalos de actualización
-                console.log('🔄 Timer existente detectado, reiniciando intervalos...');
-                App.focusTimer.resumeInterval();
+            // ⭐ CRÍTICO: Mostrar timer si:
+            // 1. La tarea tiene duración, O
+            // 2. Hay tiempo bonus para transferir, O
+            // 3. Ya existe un timer activo para esta tarea (incluso sin duración original)
+            if (task.scheduleDuration || bonusTransfer > 0 || existingTimer) {
+                hasTimer = true;
+                
+                // Solo iniciar un nuevo timer si no existe uno activo para esta tarea
+                if (!existingTimer) {
+                    const showTransferAnimation = bonusTransfer > 0;
+                    
+                    if (!task.scheduleDuration && bonusTransfer > 0) {
+                        console.log('⚡ Tarea sin duración recibe tiempo bonus transferido');
+                    }
+                    
+                    App.focusTimer.startTimer(task, showTransferAnimation);
+                } else {
+                    // ⭐ Si existe un timer, reiniciar los intervalos de actualización
+                    console.log('🔄 Timer existente detectado, reiniciando intervalos...');
+                    App.focusTimer.resumeInterval();
+                }
+                
+                timerHTML = App.focusTimer.renderTimer(container, task);
             }
-            
-            timerHTML = App.focusTimer.renderTimer(container, task);
         }
         
         // Calcular puntos con bonus si aplica

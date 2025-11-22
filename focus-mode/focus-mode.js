@@ -315,11 +315,12 @@
             
             if (stillHasReps) {
                 if (App.focusTimer && task.scheduleDuration) {
-                    App.focusTimer.stopTimer();
+                    // ⭐ NUEVO: Capturar tiempo bonus para transferir a la siguiente repetición
+                    App.focusTimer.stopTimer(true);
                     // Esperar un poco antes de reiniciar para que el usuario vea la celebración
                     setTimeout(() => {
-                        App.focusTimer.startTimer(task);
-                        // El timer ya tiene su propio delay de 2s y animación
+                        // Iniciar con animación de transferencia
+                        App.focusTimer.startTimer(task, true);
                     }, 800);
                 }
                 
@@ -332,7 +333,8 @@
                 
                 return;
             } else {
-                if (App.focusTimer) App.focusTimer.stopTimer();
+                // ⭐ NUEVO: Capturar tiempo bonus para transferir a la siguiente tarea
+                if (App.focusTimer) App.focusTimer.stopTimer(true);
             }
             
             App.focusRender.showCelebration();
@@ -344,18 +346,29 @@
                 const result = App.focusScheduled.getNextAvailableTask();
                 
                 if (result.task) {
+                    // ⭐ NUEVO: El tiempo bonus SIEMPRE se transfiere (incluso a tareas sin duración)
+                    // El timer se iniciará automáticamente en _renderFocusedMission con animación
                     _currentFocusTaskId = result.task.id;
                     _renderFocusedMission(result.task);
-                    // Guardar estado de la nueva misión
                     _saveFocusState();
                 } else if (result.nextScheduledTask) {
+                    // ⭐ NUEVO: Para tareas programadas, también transferir el tiempo
+                    // El usuario podrá usar ese tiempo cuando inicie la tarea
                     _currentFocusTaskId = result.nextScheduledTask.id;
                     _renderScheduledMission(result.nextScheduledTask, result.minutesUntilNext, result.hasOtherAvailableTasks);
-                    // Guardar estado de la nueva misión
                     _saveFocusState();
                 } else {
+                    // No hay más tareas - el tiempo bonus se pierde (incentivo para seguir trabajando)
+                    if (App.focusTimer) {
+                        const bonusTransfer = App.focusTimer.getBonusTransfer();
+                        if (bonusTransfer > 0) {
+                            console.log('⚠️ No hay más tareas - tiempo bonus no utilizado');
+                            // Limpiar el bonus no utilizado
+                            App.focusTimer.stopTimer(false);
+                        }
+                    }
+                    
                     App.focusRender.renderEmptyState({ onClose: deactivate });
-                    // No hay más misiones, limpiar estado
                     _currentFocusTaskId = null;
                 }
             }, 800);

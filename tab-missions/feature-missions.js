@@ -169,7 +169,7 @@
             // ⭐ Guardar el estado actualizado SIEMPRE
             App.state.saveState();
             
-            // Si el peso cambió, forzar re-renderizado de TODAY
+            // Si el peso cambió, limpiar orden manual
             if (weightChanged) {
                 console.log('🔄 Forzando actualización de TODAY por cambio de peso');
                 
@@ -178,13 +178,14 @@
                 const savedOrder = App.state.getTodayTaskOrder(today);
                 if (savedOrder && savedOrder.length > 0) {
                     console.log('🗑️ Limpiando orden manual guardado para permitir reordenamiento por peso');
-                    App.state.saveTodayTaskOrder([], today); // Parámetros correctos: (order, dateStr)
+                    App.state.saveTodayTaskOrder([], today);
                 }
-                
-                // Emitir eventos para actualizar la UI
-                App.events.emit('scheduledMissionsUpdated');
-                App.events.emit('todayTasksUpdated');
             }
+            
+            // ⭐ SIEMPRE emitir eventos para actualizar la UI (no solo si weightChanged)
+            console.log('🔄 Emitiendo eventos para actualizar UI');
+            App.events.emit('scheduledMissionsUpdated');
+            App.events.emit('todayTasksUpdated');
             
             closeModal();
         });

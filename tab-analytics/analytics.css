@@ -731,71 +731,108 @@
     font-weight: 600;
 }
 
-/* Desglose por reto */
-.habits-challenges-breakdown {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-    padding: 1rem;
+/* Lista elegante de retos */
+.challenges-elegant-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.challenge-elegant-card {
+    background: linear-gradient(135deg, rgba(75, 123, 236, 0.1), rgba(75, 123, 236, 0.05));
+    border: 1px solid rgba(75, 123, 236, 0.2);
+    border-radius: 16px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.challenge-elegant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(75, 123, 236, 0.2);
+    border-color: rgba(75, 123, 236, 0.4);
+}
+
+.challenge-elegant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.breakdown-title {
-    font-size: 0.875rem;
-    color: var(--ff-text-light);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 0.75rem;
-    font-weight: 600;
+.challenge-elegant-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ff-text);
+    margin: 0;
 }
 
-.challenges-list {
+.challenge-elegant-points {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ff-accent);
+    background: rgba(75, 123, 236, 0.15);
+    padding: 0.375rem 0.875rem;
+    border-radius: 8px;
+}
+
+.challenge-elegant-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.challenge-metric-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.challenge-breakdown-item {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 0.75rem;
-    transition: background 0.2s ease;
-}
-
-.challenge-breakdown-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.challenge-breakdown-header {
+.metric-main {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    gap: 0.75rem;
 }
 
-.challenge-name {
-    font-weight: 600;
-    color: var(--ff-text);
-    font-size: 0.9rem;
+.metric-icon {
+    font-size: 1.5rem;
+    line-height: 1;
 }
 
-.challenge-points {
-    color: var(--ff-accent);
+.metric-value {
+    font-size: 1.75rem;
     font-weight: 700;
-    font-size: 0.9rem;
+    color: var(--ff-text);
+    line-height: 1;
 }
 
-.challenge-breakdown-stats {
+.metric-label {
+    font-size: 0.875rem;
+    color: var(--ff-text-light);
+    font-weight: 500;
+}
+
+.metric-breakdown {
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
+    margin-left: 2.25rem;
 }
 
-.breakdown-stat {
+.metric-detail {
     font-size: 0.8rem;
     color: var(--ff-text-light);
-    background: rgba(255, 255, 255, 0.1);
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background 0.2s ease;
+}
+
+.metric-detail:hover {
+    background: rgba(255, 255, 255, 0.12);
 }
 
 /* Total de hábitos */
@@ -836,6 +873,35 @@
     }
     
     .habit-stat-value {
+        font-size: 1.25rem;
+    }
+    
+    .challenge-elegant-card {
+        padding: 1rem;
+    }
+    
+    .challenge-elegant-name {
+        font-size: 1rem;
+    }
+    
+    .challenge-elegant-points {
+        font-size: 1.1rem;
+        padding: 0.25rem 0.625rem;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .metric-icon {
+        font-size: 1.25rem;
+    }
+    
+    .metric-breakdown {
+        margin-left: 0;
+    }
+    
+    .habits-total-value {
         font-size: 1.25rem;
     }
 }

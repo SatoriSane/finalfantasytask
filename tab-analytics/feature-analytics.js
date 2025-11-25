@@ -466,59 +466,47 @@ function _calculateStats() {
                         <h3 class="section-title">Hábitos y Abstinencias</h3>
                     </div>
                     
-                    <div class="habits-summary-grid">
-                        <div class="habit-stat-card">
-                            <div class="habit-stat-icon">🎫</div>
-                            <div class="habit-stat-content">
-                                <div class="habit-stat-value">${stats.habitsData.totalTicketsSold}</div>
-                                <div class="habit-stat-label">Tickets vendidos</div>
-                                <div class="habit-stat-points">${stats.habitsData.pointsFromTickets} pts</div>
-                            </div>
-                        </div>
-                        
-                        ${stats.habitsData.totalAuctionWins > 0 ? `
-                        <div class="habit-stat-card highlight">
-                            <div class="habit-stat-icon">🏆</div>
-                            <div class="habit-stat-content">
-                                <div class="habit-stat-value">${stats.habitsData.totalAuctionWins}</div>
-                                <div class="habit-stat-label">Subastas realizadas</div>
-                                <div class="habit-stat-points">${stats.habitsData.pointsFromAuctions} pts</div>
-                            </div>
-                        </div>
-                        ` : ''}
-                        
-                        ${stats.habitsData.totalResistances > 0 ? `
-                        <div class="habit-stat-card">
-                            <div class="habit-stat-icon">🛡️</div>
-                            <div class="habit-stat-content">
-                                <div class="habit-stat-value">${stats.habitsData.totalResistances}</div>
-                                <div class="habit-stat-label">Resistencias</div>
-                                <div class="habit-stat-points">${stats.habitsData.pointsFromResistances} pts</div>
-                            </div>
-                        </div>
-                        ` : ''}
-                    </div>
-                    
                     ${Object.keys(stats.habitsData.challengeBreakdown).length > 0 ? `
-                    <div class="habits-challenges-breakdown">
-                        <h4 class="breakdown-title">Desglose por Reto</h4>
-                        <div class="challenges-list">
-                            ${Object.entries(stats.habitsData.challengeBreakdown)
-                                .sort((a, b) => b[1].points - a[1].points)
-                                .map(([name, data]) => `
-                                <div class="challenge-breakdown-item">
-                                    <div class="challenge-breakdown-header">
-                                        <span class="challenge-name">${name}</span>
-                                        <span class="challenge-points">${data.points} pts</span>
+                    <div class="challenges-elegant-list">
+                        ${Object.entries(stats.habitsData.challengeBreakdown)
+                            .sort((a, b) => b[1].points - a[1].points)
+                            .map(([name, data]) => {
+                                const totalTickets = data.tickets + data.auctions;
+                                return `
+                                <div class="challenge-elegant-card">
+                                    <div class="challenge-elegant-header">
+                                        <h4 class="challenge-elegant-name">${name}</h4>
+                                        <span class="challenge-elegant-points">${data.points} pts</span>
                                     </div>
-                                    <div class="challenge-breakdown-stats">
-                                        ${data.tickets > 0 ? `<span class="breakdown-stat">🎫 ${data.tickets}</span>` : ''}
-                                        ${data.auctions > 0 ? `<span class="breakdown-stat">🏆 ${data.auctions}</span>` : ''}
-                                        ${data.resistances > 0 ? `<span class="breakdown-stat">🛡️ ${data.resistances}</span>` : ''}
+                                    
+                                    <div class="challenge-elegant-metrics">
+                                        ${totalTickets > 0 ? `
+                                        <div class="challenge-metric-group">
+                                            <div class="metric-main">
+                                                <span class="metric-icon">🎫</span>
+                                                <span class="metric-value">${totalTickets}</span>
+                                                <span class="metric-label">tickets totales</span>
+                                            </div>
+                                            <div class="metric-breakdown">
+                                                ${data.tickets > 0 ? `<span class="metric-detail">💰 ${data.tickets} vendidos</span>` : ''}
+                                                ${data.auctions > 0 ? `<span class="metric-detail">🏆 ${data.auctions} subastados</span>` : ''}
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                        
+                                        ${data.resistances > 0 ? `
+                                        <div class="challenge-metric-group">
+                                            <div class="metric-main">
+                                                <span class="metric-icon">🛡️</span>
+                                                <span class="metric-value">${data.resistances}</span>
+                                                <span class="metric-label">resistencias</span>
+                                            </div>
+                                        </div>
+                                        ` : ''}
                                     </div>
                                 </div>
-                            `).join('')}
-                        </div>
+                            `;
+                            }).join('')}
                     </div>
                     ` : ''}
                     

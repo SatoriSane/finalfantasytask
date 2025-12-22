@@ -36,6 +36,7 @@ if (typeof SubastaConstantes === 'undefined') {
         let isAuctionActive = false;
         let activeBidders = [];
         let lastBidder = null;
+        let isSpeedX5 = false; // Estado de velocidad x5
 
         // Estado martillo
         let isInHammerSequence = false;
@@ -46,6 +47,11 @@ if (typeof SubastaConstantes === 'undefined') {
         // --- Funciones auxiliares ---
         const updatePriceDisplay = () => {
             priceDisplay.textContent = `⭐${Math.round(currentPrice)} pts`;
+        };
+        
+        // Obtener configuración de timing según velocidad actual
+        const getTimingConfig = () => {
+            return isSpeedX5 ? SubastaConstantes.TIMING_CONFIG_X5 : SubastaConstantes.TIMING_CONFIG;
         };
 
         // --- Helpers de UI del área de precio ---
@@ -71,12 +77,16 @@ const animateFinalPrice = (startPrice, endPrice, baseDuration = null) => {
     if (baseDuration !== null) {
         // Si se especifica duración manualmente, usarla
         duration = baseDuration;
+        // Ajustar por velocidad x5
+        if (isSpeedX5) duration = duration / 5;
     } else {
         // Calcular duración automáticamente
         const increaseRatio = endPrice / startPrice; // ej: 2.0 = doble, 3.0 = triple
         const increasePercent = (increaseRatio - 1) * 100; // ej: 100% = doble, 200% = triple
         const durationSeconds = Math.max(1, increasePercent / 50); // 1 seg por cada 50%
         duration = durationSeconds * 1000; // convertir a milisegundos
+        // Ajustar por velocidad x5
+        if (isSpeedX5) duration = duration / 5;
         
         console.log(`💰 Precio: ${Math.round(startPrice)} → ${Math.round(endPrice)} | Aumento: ${increasePercent.toFixed(1)}% | Duración: ${durationSeconds.toFixed(1)}s`);
     }
@@ -463,16 +473,18 @@ const createWinnerAvatar = (winner) => {
             
                 if (removedBidders.length > 0) {
                     console.log(`💨 Se retiraron por miedo: ${removedBidders.map(b => b.name).join(', ')}`);
+                    const timingConfig = getTimingConfig();
                     setTimeout(() => {
                         if (isAuctionActive) processHammer();
-                    }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500);
+                    }, timingConfig.MESSAGE_DELAY || 1500);
                     setTimeout(() => {
                         showRetreatMessagesInBackground(removedBidders, bidder);
-                    }, (SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500) + 800);
+                    }, (timingConfig.MESSAGE_DELAY || 1500) + 800);
                 } else {
+                    const timingConfig = getTimingConfig();
                     setTimeout(() => {
                         if (isAuctionActive) processHammer();
-                    }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500);
+                    }, timingConfig.MESSAGE_DELAY || 1500);
                 }
             
             } else {
@@ -673,11 +685,13 @@ const checkForSingleWinner = () => {
         // Animar precio desde inicial hasta final
         animateFinalPrice(basePrice, finalPrice, 4000);
 
+        const timingConfig = getTimingConfig();
+        const animDuration = isSpeedX5 ? 800 : 4000;
         setTimeout(() => {
             takeBtn.style.display = 'block';
             takeBtn.textContent = `💰 ¡ACEPTAR ${finalPrice} pts!`;
             takeBtn.classList.add('pulse-victory');
-        }, SubastaConstantes.TIMING_CONFIG.FINAL_DELAY + 4000); // Esperar a que termine la animación
+        }, timingConfig.FINAL_DELAY + animDuration); // Esperar a que termine la animación
 
         return true;
     }
@@ -755,11 +769,13 @@ const checkForSingleWinner = () => {
             // Animar precio desde inicial hasta final
             animateFinalPrice(basePrice, finalPrice);
             
+            const timingConfig = getTimingConfig();
+            const animDuration = isSpeedX5 ? 800 : 4000;
             setTimeout(() => {
                 takeBtn.style.display = 'block';
                 takeBtn.textContent = `💰 ¡ACEPTAR ${finalPrice} pts!`;
                 takeBtn.classList.add('pulse-victory');
-            }, SubastaConstantes.TIMING_CONFIG.FINAL_DELAY + 4000); // Esperar a que termine la animación
+            }, timingConfig.FINAL_DELAY + animDuration); // Esperar a que termine la animación
         };
         
         // 🔄 Función auxiliar mejorada: Procesar incremento y continuar
@@ -787,9 +803,10 @@ const checkForSingleWinner = () => {
         
             // 🚨 Si es puja extrema, iniciar martillo después de un pequeño delay; si no, turno normal
             if (isExtremeBid) {
+                const timingConfig = getTimingConfig();
                 setTimeout(() => {
                     if (isAuctionActive) processHammer();
-                }, SubastaConstantes.TIMING_CONFIG.MESSAGE_DELAY || 1500);
+                }, timingConfig.MESSAGE_DELAY || 1500);
             } else {
                 scheduleNextTurn();
             }
@@ -805,6 +822,7 @@ const checkForSingleWinner = () => {
                 hammerStep = 0;
         
                 // Espera especial solo antes del primer mensaje
+                const timingConfig = getTimingConfig();
                 setTimeout(() => {
                     if (!isAuctionActive) return;
         
@@ -817,7 +835,7 @@ const checkForSingleWinner = () => {
                     }
         
                     continueHammer();
-                }, SubastaConstantes.TIMING_CONFIG.HAMMER_FIRST_DELAY || 2500);
+                }, timingConfig.HAMMER_FIRST_DELAY || 2500);
             } else {
                 addMessage(SubastaConstantes.getHammerMessage(hammerStep), 'system');
                 hammerStep++;
@@ -832,6 +850,7 @@ const checkForSingleWinner = () => {
         };
         
         const continueHammer = () => {
+            const timingConfig = getTimingConfig();
             setTimeout(() => {
                 if (!isAuctionActive) return;
         
@@ -852,23 +871,24 @@ const checkForSingleWinner = () => {
                 } else {
                     processHammer();
                 }
-            }, SubastaConstantes.TIMING_CONFIG.HAMMER_PAUSE);
+            }, timingConfig.HAMMER_PAUSE);
         };
         
 
         const scheduleNextTurn = (isHammerInterruption = false) => {
             if(!isAuctionActive) return;
             
+            const timingConfig = getTimingConfig();
             let delay;
             
             if(isHammerInterruption){
-                delay = Math.min(SubastaConstantes.TIMING_CONFIG.HAMMER_PAUSE, 800 + Math.random()*700);
+                delay = Math.min(timingConfig.HAMMER_PAUSE, 800 + Math.random()*700);
                 console.log(`⚡ Próximo turno tras interrupción: ${delay}ms (≤ HAMMER_PAUSE)`);
             }
             else {
                 // Timing normal
-                delay = SubastaConstantes.TIMING_CONFIG.BID_INTERVAL_MIN + 
-                        Math.random() * (SubastaConstantes.TIMING_CONFIG.BID_INTERVAL_MAX - SubastaConstantes.TIMING_CONFIG.BID_INTERVAL_MIN);
+                delay = timingConfig.BID_INTERVAL_MIN + 
+                        Math.random() * (timingConfig.BID_INTERVAL_MAX - timingConfig.BID_INTERVAL_MIN);
                 console.log(`⏱️ Próximo turno normal: ${delay}ms`);
             }
             
@@ -897,22 +917,43 @@ const checkForSingleWinner = () => {
             // Animar precio desde inicial hasta final
             animateFinalPrice(basePrice, finalPrice, 4000);
             
+            const timingConfig = getTimingConfig();
+            const animDuration = isSpeedX5 ? 800 : 4000;
             setTimeout(()=>{
                 takeBtn.style.display='block';
                 takeBtn.textContent=`💰 ¡ACEPTAR ${finalPrice} pts!`;
                 takeBtn.classList.add('pulse-victory');
-            }, SubastaConstantes.TIMING_CONFIG.FINAL_DELAY + 4000); // Esperar a que termine la animación
+            }, timingConfig.FINAL_DELAY + animDuration); // Esperar a que termine la animación
         };
 
         // --- Eventos ---
+        const toggleSpeed = () => {
+            if(!isAuctionActive) return;
+            isSpeedX5 = !isSpeedX5;
+            const speedText = isSpeedX5 ? '⚡ x5 ACTIVADO' : '⚡ VELOCIDAD x5';
+            startBtn.textContent = speedText;
+            
+            // Agregar/quitar clase visual
+            if(isSpeedX5) {
+                startBtn.classList.add('speed-active');
+            } else {
+                startBtn.classList.remove('speed-active');
+            }
+            
+            console.log(`⚡ Velocidad cambiada: ${isSpeedX5 ? 'x5' : 'Normal'}`);
+        };
+        
         const startAuction = () => {
             if(isAuctionActive) return;
             isAuctionActive=true;
             isInHammerSequence=false;
             hammerStep=0;
             hammerBonusChance=0;
+            isSpeedX5=false;
 
-            startBtn.style.display='none';
+            // En lugar de esconder el botón, cambiar su función a velocidad x5
+            startBtn.textContent='⚡ VELOCIDAD x5';
+            startBtn.onclick = toggleSpeed;
             takeBtn.style.display='none';
             closeBtn.style.display='none';
             closeBtn.disabled=true;
@@ -954,6 +995,10 @@ const checkForSingleWinner = () => {
             modal.classList.remove('visible');
             // Resetear área de precio para la próxima apertura
             setPriceAreaInitial();
+            // Restaurar botón de inicio
+            startBtn.textContent='🎪 INICIAR SUBASTA';
+            startBtn.onclick = startAuction;
+            startBtn.classList.remove('speed-active');
             closeBtn.style.display='block';
             closeBtn.disabled=false;
         };
@@ -961,6 +1006,7 @@ const checkForSingleWinner = () => {
         closeBtn.onclick = closeModal;
         startBtn.onclick = startAuction;
         takeBtn.onclick = takePrice;
+        startBtn.textContent='🎪 INICIAR SUBASTA';
 
         startBtn.style.display='block';
         takeBtn.style.display='none';

@@ -412,6 +412,28 @@
     box-shadow: var(--shadow-md);
 }
 
+/* Botón de velocidad x5 durante la subasta */
+.start-btn.speed-active {
+    background: linear-gradient(135deg, #4dabf7, #339af0);
+    color: white;
+    border: 1px solid rgba(77, 171, 247, 0.5);
+    animation: speedPulse 2s ease-in-out infinite;
+}
+
+.start-btn.speed-active:hover {
+    background: linear-gradient(135deg, #339af0, #228be6);
+    box-shadow: 0 8px 20px rgba(77, 171, 247, 0.4);
+}
+
+@keyframes speedPulse {
+    0%, 100% { 
+        box-shadow: 0 0 15px rgba(77, 171, 247, 0.3);
+    }
+    50% { 
+        box-shadow: 0 0 25px rgba(77, 171, 247, 0.5);
+    }
+}
+
 
 .take-btn {
     background: linear-gradient(135deg, var(--auction-gold), var(--auction-gold-light));

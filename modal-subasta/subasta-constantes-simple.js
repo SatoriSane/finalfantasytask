@@ -15,6 +15,16 @@
             FINAL_DELAY: 500,
             HAMMER_FIRST_DELAY: 4500,
         },
+        // ⚡ CONFIGURACIÓN DE TIMING x5 (VELOCIDAD ACELERADA)
+        TIMING_CONFIG_X5: {
+            MESSAGE_DELAY: 600,
+            PRICE_ANIMATION_DURATION: 240,
+            BID_INTERVAL_MIN: 400,
+            BID_INTERVAL_MAX: 900,
+            HAMMER_PAUSE: 600,
+            FINAL_DELAY: 100,
+            HAMMER_FIRST_DELAY: 900,
+        },
         // 🔥 Rango de puja extrema en puntos
         EXTREME_BID_RANGE: {
             min: 2,

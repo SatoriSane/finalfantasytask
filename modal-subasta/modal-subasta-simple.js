@@ -688,6 +688,7 @@ const checkForSingleWinner = () => {
         const timingConfig = getTimingConfig();
         const animDuration = isSpeedX5 ? 800 : 4000;
         setTimeout(() => {
+            startBtn.style.display = 'none'; // Ocultar botón de velocidad
             takeBtn.style.display = 'block';
             takeBtn.textContent = `💰 ¡ACEPTAR ${finalPrice} pts!`;
             takeBtn.classList.add('pulse-victory');
@@ -772,6 +773,7 @@ const checkForSingleWinner = () => {
             const timingConfig = getTimingConfig();
             const animDuration = isSpeedX5 ? 800 : 4000;
             setTimeout(() => {
+                startBtn.style.display = 'none'; // Ocultar botón de velocidad
                 takeBtn.style.display = 'block';
                 takeBtn.textContent = `💰 ¡ACEPTAR ${finalPrice} pts!`;
                 takeBtn.classList.add('pulse-victory');
@@ -920,6 +922,7 @@ const checkForSingleWinner = () => {
             const timingConfig = getTimingConfig();
             const animDuration = isSpeedX5 ? 800 : 4000;
             setTimeout(()=>{
+                startBtn.style.display='none'; // Ocultar botón de velocidad
                 takeBtn.style.display='block';
                 takeBtn.textContent=`💰 ¡ACEPTAR ${finalPrice} pts!`;
                 takeBtn.classList.add('pulse-victory');
@@ -930,7 +933,7 @@ const checkForSingleWinner = () => {
         const toggleSpeed = () => {
             if(!isAuctionActive) return;
             isSpeedX5 = !isSpeedX5;
-            const speedText = isSpeedX5 ? '⚡ x5 ACTIVADO' : '⚡ VELOCIDAD x5';
+            const speedText = isSpeedX5 ? '⚡ Acelerado x5' : '⏱️ Acelerar x5';
             startBtn.textContent = speedText;
             
             // Agregar/quitar clase visual
@@ -952,7 +955,7 @@ const checkForSingleWinner = () => {
             isSpeedX5=false;
 
             // En lugar de esconder el botón, cambiar su función a velocidad x5
-            startBtn.textContent='⚡ VELOCIDAD x5';
+            startBtn.textContent='⏱️ Acelerar x5';
             startBtn.onclick = toggleSpeed;
             takeBtn.style.display='none';
             closeBtn.style.display='none';

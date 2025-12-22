@@ -412,25 +412,39 @@
     box-shadow: var(--shadow-md);
 }
 
-/* Botón de velocidad x5 durante la subasta */
+/* Botón de velocidad x5 durante la subasta - Estética sutil */
 .start-btn.speed-active {
-    background: linear-gradient(135deg, #4dabf7, #339af0);
-    color: white;
-    border: 1px solid rgba(77, 171, 247, 0.5);
-    animation: speedPulse 2s ease-in-out infinite;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(224, 193, 92, 0.2));
+    color: var(--text-gold);
+    border: 1px solid rgba(212, 175, 55, 0.6);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.start-btn.speed-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: speedShimmer 3s ease-in-out infinite;
 }
 
 .start-btn.speed-active:hover {
-    background: linear-gradient(135deg, #339af0, #228be6);
-    box-shadow: 0 8px 20px rgba(77, 171, 247, 0.4);
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(224, 193, 92, 0.3));
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    transform: translateY(-2px);
 }
 
-@keyframes speedPulse {
-    0%, 100% { 
-        box-shadow: 0 0 15px rgba(77, 171, 247, 0.3);
+@keyframes speedShimmer {
+    0% { 
+        left: -100%;
     }
-    50% { 
-        box-shadow: 0 0 25px rgba(77, 171, 247, 0.5);
+    50%, 100% { 
+        left: 100%;
     }
 }
 

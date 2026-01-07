@@ -184,19 +184,6 @@
             container.innerHTML = `<div class="sync-loading"><div class="spinner"></div><span>${message}</span></div>`;
         },
 
-        showMessage(message, type = 'success') {
-            const container = document.getElementById('githubSyncModalContent');
-            if (!container) return;
-
-            const icon = type === 'success' ? '✅' : '❌';
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `sync-message ${type}`;
-            messageDiv.innerHTML = `<span class="message-icon">${icon}</span><span>${message}</span>`;
-
-            container.insertBefore(messageDiv, container.firstChild);
-            setTimeout(() => messageDiv.remove(), 5000);
-        },
-
         openModal() {
             const modal = document.getElementById('githubSyncModal');
             if (modal) {

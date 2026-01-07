@@ -58,7 +58,9 @@
         const token = document.getElementById('githubTokenInput')?.value?.trim();
         
         if (!token) {
-            window.GitHubSyncUI.showMessage('Ingresa un token válido', 'error');
+            if (window.App?.events) {
+                App.events.emit('shownotifyMessage', '❌ Ingresa un token válido');
+            }
             return;
         }
 
@@ -68,11 +70,17 @@
             await window.GitHubSync.connect(token);
             
             window.GitHubSyncUI.renderModal();
-            window.GitHubSyncUI.showMessage('¡Conectado! Usa los botones para sincronizar', 'success');
             window.GitHubSyncUI.updateButton();
+            
+            if (window.App?.events) {
+                App.events.emit('shownotifyMessage', '✅ ¡Conectado! Usa los botones para sincronizar');
+            }
         } catch (error) {
             window.GitHubSyncUI.renderModal();
-            window.GitHubSyncUI.showMessage(`Error: ${error.message}`, 'error');
+            
+            if (window.App?.events) {
+                App.events.emit('shownotifyMessage', `❌ Error: ${error.message}`);
+            }
         }
     }
 
@@ -92,11 +100,20 @@
             
             // Si llega aquí, no hubo cambios o hubo error
             // Si hubo cambios, la página ya se recargó
-            window.GitHubSyncUI.renderModal();
+            window.GitHubSyncUI.closeModal();
             window.GitHubSyncUI.updateButton();
+            
+            // Notificación general de la app
+            if (window.App?.events) {
+                App.events.emit('shownotifyMessage', '✅ Datos importados correctamente');
+            }
         } catch (error) {
             window.GitHubSyncUI.renderModal();
-            window.GitHubSyncUI.showMessage(`Error al importar: ${error.message}`, 'error');
+            
+            // Notificación general de error
+            if (window.App?.events) {
+                App.events.emit('shownotifyMessage', `❌ Error al importar: ${error.message}`);
+            }
         }
     }
 
@@ -114,12 +131,20 @@
                 window.GitHubSyncCounter.reset();
             }
             
-            window.GitHubSyncUI.renderModal();
-            window.GitHubSyncUI.showMessage('✅ Datos exportados correctamente', 'success');
+            window.GitHubSyncUI.closeModal();
             window.GitHubSyncUI.updateButton();
+            
+            // Notificación general de la app
+            if (window.App?.events) {
+                App.events.emit('shownotifyMessage', '✅ Datos exportados correctamente');
+            }
         } catch (error) {
             window.GitHubSyncUI.renderModal();
-            window.GitHubSyncUI.showMessage(`Error al exportar: ${error.message}`, 'error');
+            
+            // Notificación general de error
+            if (window.App?.events) {
+                App.events.emit('shownotifyMessage', `❌ Error al exportar: ${error.message}`);
+            }
         }
     }
 
@@ -133,8 +158,11 @@
 
         window.GitHubSync.disconnect();
         window.GitHubSyncUI.renderModal();
-        window.GitHubSyncUI.showMessage('Desconectado de GitHub', 'success');
         window.GitHubSyncUI.updateButton();
+        
+        if (window.App?.events) {
+            App.events.emit('shownotifyMessage', '✅ Desconectado de GitHub');
+        }
     }
 
     // Inicializar

@@ -448,6 +448,43 @@
     }
 }
 
+/* Botón de velocidad x20 durante la subasta - Estética extrema */
+.start-btn.speed-extreme {
+    background: linear-gradient(135deg, rgba(255, 50, 50, 0.3), rgba(255, 100, 100, 0.25));
+    color: #ff5555;
+    border: 1px solid rgba(255, 50, 50, 0.7);
+    box-shadow: 0 0 16px rgba(255, 50, 50, 0.3);
+    position: relative;
+    overflow: hidden;
+    animation: extremePulse 1s ease-in-out infinite;
+}
+
+.start-btn.speed-extreme::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: speedShimmer 1s ease-in-out infinite;
+}
+
+.start-btn.speed-extreme:hover {
+    background: linear-gradient(135deg, rgba(255, 50, 50, 0.4), rgba(255, 100, 100, 0.35));
+    box-shadow: 0 4px 20px rgba(255, 50, 50, 0.4);
+    transform: translateY(-2px);
+}
+
+@keyframes extremePulse {
+    0%, 100% {
+        box-shadow: 0 0 16px rgba(255, 50, 50, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 24px rgba(255, 50, 50, 0.5);
+    }
+}
+
 
 .take-btn {
     background: linear-gradient(135deg, var(--auction-gold), var(--auction-gold-light));

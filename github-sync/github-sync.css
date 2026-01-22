@@ -8,39 +8,59 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.5rem 0.75rem;
-    background: var(--ff-bg-medium, #1a2332);
+    background: transparent;
+    border: 1px solid rgba(var(--ff-accent-rgb), 0.2);
     border-radius: var(--border-radius-sm, 8px);
     color: var(--ff-text-light, #e0e6ed);
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
     user-select: none;
 }
 
 .sync-btn:hover {
-    background: var(--ff-bg-light, #243447);
-    border-color: var(--ff-primary, #4a9eff);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
+    background: rgba(var(--ff-accent-rgb), 0.1);
+    border-color: rgba(var(--ff-accent-rgb), 0.4);
+    transform: translateY(-1px);
 }
 
 .sync-btn .sync-icon {
-    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
+}
+
+.sync-btn .sync-icon svg {
+    display: block;
 }
 
 /* Estados */
 .sync-btn.connected {
-    border-color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.3);
 }
 
 .sync-btn.connected .sync-icon {
     color: #4ade80;
 }
 
+.sync-btn.connected:hover {
+    background: rgba(74, 222, 128, 0.1);
+    border-color: rgba(74, 222, 128, 0.5);
+}
+
+.sync-btn.disconnected {
+    border-color: rgba(148, 163, 184, 0.2);
+}
+
 .sync-btn.disconnected .sync-icon {
     color: #94a3b8;
+}
+
+.sync-btn.disconnected:hover {
+    background: rgba(148, 163, 184, 0.05);
+    border-color: rgba(148, 163, 184, 0.3);
 }
 
 .sync-btn.syncing {
@@ -48,16 +68,16 @@
 }
 
 .sync-btn.uploading {
-    border-color: #f59e0b;
+    border-color: rgba(var(--ff-accent-rgb), 0.5);
     animation: pulse 1.5s ease-in-out infinite;
 }
 
 .sync-btn.uploading .sync-icon {
-    color: #f59e0b;
+    color: var(--ff-accent);
 }
 
 .sync-btn.downloading {
-    border-color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.5);
     animation: pulse 1.5s ease-in-out infinite;
 }
 

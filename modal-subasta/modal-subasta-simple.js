@@ -36,7 +36,7 @@ if (typeof SubastaConstantes === 'undefined') {
         let isAuctionActive = false;
         let activeBidders = [];
         let lastBidder = null;
-        let isSpeedX5 = false; // Estado de velocidad x5
+        let speedMode = 0; // 0 = normal, 1 = x5, 2 = x20
 
         // Estado martillo
         let isInHammerSequence = false;
@@ -51,7 +51,9 @@ if (typeof SubastaConstantes === 'undefined') {
         
         // Obtener configuración de timing según velocidad actual
         const getTimingConfig = () => {
-            return isSpeedX5 ? SubastaConstantes.TIMING_CONFIG_X5 : SubastaConstantes.TIMING_CONFIG;
+            if (speedMode === 2) return SubastaConstantes.TIMING_CONFIG_X20;
+            if (speedMode === 1) return SubastaConstantes.TIMING_CONFIG_X5;
+            return SubastaConstantes.TIMING_CONFIG;
         };
 
         // --- Helpers de UI del área de precio ---
@@ -77,16 +79,18 @@ const animateFinalPrice = (startPrice, endPrice, baseDuration = null) => {
     if (baseDuration !== null) {
         // Si se especifica duración manualmente, usarla
         duration = baseDuration;
-        // Ajustar por velocidad x5
-        if (isSpeedX5) duration = duration / 5;
+        // Ajustar por velocidad
+        if (speedMode === 2) duration = duration / 20;
+        else if (speedMode === 1) duration = duration / 5;
     } else {
         // Calcular duración automáticamente
         const increaseRatio = endPrice / startPrice; // ej: 2.0 = doble, 3.0 = triple
         const increasePercent = (increaseRatio - 1) * 100; // ej: 100% = doble, 200% = triple
         const durationSeconds = Math.max(1, increasePercent / 50); // 1 seg por cada 50%
         duration = durationSeconds * 1000; // convertir a milisegundos
-        // Ajustar por velocidad x5
-        if (isSpeedX5) duration = duration / 5;
+        // Ajustar por velocidad
+        if (speedMode === 2) duration = duration / 20;
+        else if (speedMode === 1) duration = duration / 5;
         
         console.log(`💰 Precio: ${Math.round(startPrice)} → ${Math.round(endPrice)} | Aumento: ${increasePercent.toFixed(1)}% | Duración: ${durationSeconds.toFixed(1)}s`);
     }
@@ -686,7 +690,7 @@ const checkForSingleWinner = () => {
         animateFinalPrice(basePrice, finalPrice, 4000);
 
         const timingConfig = getTimingConfig();
-        const animDuration = isSpeedX5 ? 800 : 4000;
+        const animDuration = speedMode === 2 ? 200 : (speedMode === 1 ? 800 : 4000);
         setTimeout(() => {
             startBtn.style.display = 'none'; // Ocultar botón de velocidad
             takeBtn.style.display = 'block';
@@ -771,7 +775,7 @@ const checkForSingleWinner = () => {
             animateFinalPrice(basePrice, finalPrice);
             
             const timingConfig = getTimingConfig();
-            const animDuration = isSpeedX5 ? 800 : 4000;
+            const animDuration = speedMode === 2 ? 200 : (speedMode === 1 ? 800 : 4000);
             setTimeout(() => {
                 startBtn.style.display = 'none'; // Ocultar botón de velocidad
                 takeBtn.style.display = 'block';
@@ -920,7 +924,7 @@ const checkForSingleWinner = () => {
             animateFinalPrice(basePrice, finalPrice, 4000);
             
             const timingConfig = getTimingConfig();
-            const animDuration = isSpeedX5 ? 800 : 4000;
+            const animDuration = speedMode === 2 ? 200 : (speedMode === 1 ? 800 : 4000);
             setTimeout(()=>{
                 startBtn.style.display='none'; // Ocultar botón de velocidad
                 takeBtn.style.display='block';
@@ -932,18 +936,29 @@ const checkForSingleWinner = () => {
         // --- Eventos ---
         const toggleSpeed = () => {
             if(!isAuctionActive) return;
-            isSpeedX5 = !isSpeedX5;
-            const speedText = isSpeedX5 ? '⚡ Acelerado x5' : '⏱️ Acelerar x5';
-            startBtn.textContent = speedText;
             
-            // Agregar/quitar clase visual
-            if(isSpeedX5) {
+            // Ciclar entre modos: 0 → 1 → 2 → 0
+            speedMode = (speedMode + 1) % 3;
+            
+            let speedText, speedLabel;
+            if (speedMode === 0) {
+                speedText = '⏱️ Acelerar x5';
+                speedLabel = 'Normal';
+                startBtn.classList.remove('speed-active', 'speed-extreme');
+            } else if (speedMode === 1) {
+                speedText = '⚡ Acelerado x5';
+                speedLabel = 'x5';
                 startBtn.classList.add('speed-active');
+                startBtn.classList.remove('speed-extreme');
             } else {
+                speedText = '🚀 EXTREMO x20';
+                speedLabel = 'x20';
                 startBtn.classList.remove('speed-active');
+                startBtn.classList.add('speed-extreme');
             }
             
-            console.log(`⚡ Velocidad cambiada: ${isSpeedX5 ? 'x5' : 'Normal'}`);
+            startBtn.textContent = speedText;
+            console.log(`⚡ Velocidad cambiada: ${speedLabel}`);
         };
         
         const startAuction = () => {
@@ -952,9 +967,9 @@ const checkForSingleWinner = () => {
             isInHammerSequence=false;
             hammerStep=0;
             hammerBonusChance=0;
-            isSpeedX5=false;
+            speedMode=0;
 
-            // En lugar de esconder el botón, cambiar su función a velocidad x5
+            // En lugar de esconder el botón, cambiar su función a velocidad
             startBtn.textContent='⏱️ Acelerar x5';
             startBtn.onclick = toggleSpeed;
             takeBtn.style.display='none';

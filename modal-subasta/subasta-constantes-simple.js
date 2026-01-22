@@ -25,6 +25,16 @@
             FINAL_DELAY: 100,
             HAMMER_FIRST_DELAY: 900,
         },
+        // 🚀 CONFIGURACIÓN DE TIMING x20 (VELOCIDAD EXTREMA)
+        TIMING_CONFIG_X20: {
+            MESSAGE_DELAY: 150,
+            PRICE_ANIMATION_DURATION: 60,
+            BID_INTERVAL_MIN: 100,
+            BID_INTERVAL_MAX: 225,
+            HAMMER_PAUSE: 150,
+            FINAL_DELAY: 25,
+            HAMMER_FIRST_DELAY: 225,
+        },
         // 🔥 Rango de puja extrema en puntos
         EXTREME_BID_RANGE: {
             min: 2,

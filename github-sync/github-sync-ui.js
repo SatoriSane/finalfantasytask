@@ -42,23 +42,23 @@
 
                 if (status.syncAction === 'export') {
                     syncButton.classList.add('uploading');
-                    syncIcon.textContent = '📤';
+                    syncIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
                     syncText.textContent = 'Exportando';
                 } else if (status.syncAction === 'import') {
                     syncButton.classList.add('downloading');
-                    syncIcon.textContent = '📥';
+                    syncIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>';
                     syncText.textContent = 'Importando';
                 }
             } else if (status.isConnected) {
                 syncButton.classList.add('connected');
-                syncIcon.textContent = '✓';
+                syncIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
                 syncText.textContent = '';
                 syncButton.title = status.lastSync > 0 
                     ? `Última sync hace ${status.timeSinceSync}s` 
                     : 'Conectado - Click para sincronizar';
             } else {
                 syncButton.classList.add('disconnected');
-                syncIcon.textContent = '🔗';
+                syncIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
                 syncText.textContent = 'Conectar';
                 syncButton.title = 'Haz clic para conectar con GitHub';
             }

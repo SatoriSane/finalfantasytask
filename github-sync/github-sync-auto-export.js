@@ -135,18 +135,18 @@
 
         if (changesCount > 0 && hasRemoteChanges) {
             // Hay cambios locales Y remotos (conflicto potencial)
-            syncIcon.textContent = '⚠️';
+            syncIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
             syncText.textContent = `${changesCount} ↑ / 1 ↓`;
             syncButton.title = `${changesCount} cambios para exportar, hay cambios para importar`;
             syncButton.style.borderColor = '#f59e0b';
             syncButton.style.background = 'rgba(245, 158, 11, 0.15)';
         } else if (changesCount > 0) {
-            // Solo cambios locales
-            syncIcon.textContent = '📤';
+            // Solo cambios locales - usar flecha hacia arriba
+            syncIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
             syncText.textContent = `${changesCount}`;
             syncButton.title = `${changesCount} cambios pendientes de exportar`;
-            syncButton.style.borderColor = '#f59e0b';
-            syncButton.style.background = 'rgba(245, 158, 11, 0.1)';
+            syncButton.style.borderColor = 'rgba(var(--ff-accent-rgb), 0.5)';
+            syncButton.style.background = 'rgba(var(--ff-accent-rgb), 0.15)';
         } else {
             // Sin cambios locales - dejar que github-sync-auto-import.js o github-sync-ui.js lo maneje
             if (hasRemoteChanges) {

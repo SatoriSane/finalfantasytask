@@ -36,7 +36,9 @@ if (typeof SubastaConstantes === 'undefined') {
         let isAuctionActive = false;
         let activeBidders = [];
         let lastBidder = null;
-        let speedMode = 0; // 0 = normal, 1 = x5, 2 = x20
+        
+        // Cargar velocidad guardada o usar normal por defecto
+        let speedMode = parseInt(localStorage.getItem('auctionSpeedMode') || '0', 10); // 0 = normal, 1 = x5, 2 = x20
 
         // Estado martillo
         let isInHammerSequence = false;
@@ -940,25 +942,38 @@ const checkForSingleWinner = () => {
             // Ciclar entre modos: 0 → 1 → 2 → 0
             speedMode = (speedMode + 1) % 3;
             
-            let speedText, speedLabel;
+            // Guardar en localStorage
+            localStorage.setItem('auctionSpeedMode', speedMode.toString());
+            
+            updateSpeedButton();
+            console.log(`⚡ Velocidad cambiada: ${getSpeedLabel()}`);
+        };
+        
+        const getSpeedLabel = () => {
+            if (speedMode === 0) return 'Normal';
+            if (speedMode === 1) return 'x5';
+            return 'x20';
+        };
+        
+        const updateSpeedButton = () => {
+            let speedText;
+            // El texto muestra la SIGUIENTE velocidad, no la actual
             if (speedMode === 0) {
+                // Velocidad actual: Normal → Siguiente: x5
                 speedText = '⏱️ Acelerar x5';
-                speedLabel = 'Normal';
                 startBtn.classList.remove('speed-active', 'speed-extreme');
             } else if (speedMode === 1) {
-                speedText = '⚡ Acelerado x5';
-                speedLabel = 'x5';
+                // Velocidad actual: x5 → Siguiente: x20
+                speedText = '🚀 Acelerar x20';
                 startBtn.classList.add('speed-active');
                 startBtn.classList.remove('speed-extreme');
             } else {
-                speedText = '🚀 EXTREMO x20';
-                speedLabel = 'x20';
+                // Velocidad actual: x20 → Siguiente: Normal
+                speedText = '⏱️ Velocidad Normal';
                 startBtn.classList.remove('speed-active');
                 startBtn.classList.add('speed-extreme');
             }
-            
             startBtn.textContent = speedText;
-            console.log(`⚡ Velocidad cambiada: ${speedLabel}`);
         };
         
         const startAuction = () => {
@@ -967,10 +982,10 @@ const checkForSingleWinner = () => {
             isInHammerSequence=false;
             hammerStep=0;
             hammerBonusChance=0;
-            speedMode=0;
+            // NO resetear speedMode - mantener la velocidad del usuario
 
             // En lugar de esconder el botón, cambiar su función a velocidad
-            startBtn.textContent='⏱️ Acelerar x5';
+            updateSpeedButton();
             startBtn.onclick = toggleSpeed;
             takeBtn.style.display='none';
             closeBtn.style.display='none';

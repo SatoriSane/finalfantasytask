@@ -52,7 +52,7 @@
             } else if (status.isConnected) {
                 syncButton.classList.add('connected');
                 syncIcon.textContent = '✓';
-                syncText.textContent = 'Sincronizado';
+                syncText.textContent = '';
                 syncButton.title = status.lastSync > 0 
                     ? `Última sync hace ${status.timeSinceSync}s` 
                     : 'Conectado - Click para sincronizar';
@@ -151,13 +151,13 @@
                         <span style="font-size: 1.5rem;">📥</span>
                         <span style="font-weight: 600;">Importar</span>
                         <span style="font-size: 0.85rem; opacity: 0.9;">Descargar desde GitHub</span>
-                        ${hasRemoteChanges ? '<span class="changes-badge">Cambios disponibles</span>' : ''}
+                        ${hasRemoteChanges ? '<span class="changes-badge"></span>' : ''}
                     </button>
                     <button class="${exportClass}" id="exportToGistBtn" ${status.isSyncing ? 'disabled' : ''}>
                         <span style="font-size: 1.5rem;">📤</span>
-                        <span style="font-weight: 600;">Exportar</span>
+                        <span style="font-weight: 600;"></span>
                         <span style="font-size: 0.85rem; opacity: 0.9;">Guardar en GitHub</span>
-                        ${hasLocalChanges ? `<span class="changes-badge">${localChanges} cambios</span>` : ''}
+                        ${hasLocalChanges ? `<span class="changes-badge">${localChanges}</span>` : ''}
                     </button>
                 </div>
                 

@@ -558,7 +558,7 @@ function _openQuickMissionModal() {
             }
         
             let descriptionIcon = '';
-            let categoryBadge = '';
+            let categoryInfo = null;
             if (task.missionId) {
                 const mission = App.state.getMissions().find(m => m.id === task.missionId);
                 
@@ -583,19 +583,19 @@ function _openQuickMissionModal() {
                 }
                 
                 const category = categoryId ? App.state.getCategoryById(categoryId) : null;
-                categoryBadge = category
-                    ? `<span class="category-badge" data-cat-id="${category.id}" title="Propósito: ${category.name}">${category.name}</span>`
-                    : `<span class="category-badge category-unknown" title="Sin propósito">Sin propósito</span>`;
+                categoryInfo = category
+                    ? { id: category.id, name: category.name, type: 'normal' }
+                    : { name: 'Sin propósito', type: 'unknown' };
                     
             } else {
                 // ⭐ NUEVO: Para tareas sin missionId, verificar si tienen categoryId
                 if (task.categoryId) {
                     const category = App.state.getCategoryById(task.categoryId);
-                    categoryBadge = category
-                        ? `<span class="category-badge" data-cat-id="${category.id}" title="Propósito: ${category.name}">${category.name}</span>`
-                        : `<span class="category-badge category-temp" title="Tarea rápida">Rápida</span>`;
+                    categoryInfo = category
+                        ? { id: category.id, name: category.name, type: 'normal' }
+                        : { name: 'Rápida', type: 'temp' };
                 } else {
-                    categoryBadge = `<span class="category-badge category-temp" title="Tarea rápida (sin propósito)">Rápida</span>`;
+                    categoryInfo = { name: 'Rápida', type: 'temp' };
                 }
             }
         
@@ -603,9 +603,20 @@ function _openQuickMissionModal() {
             const taskInfoContainer = document.createElement("div");
             taskInfoContainer.className = "task-info-container";
             
+            // Header de propósito (nuevo)
+            if (categoryInfo) {
+                const categoryHeader = document.createElement("div");
+                categoryHeader.className = "task-category-header";
+                const categoryClass = categoryInfo.type === 'unknown' ? 'category-unknown' : 
+                                     categoryInfo.type === 'temp' ? 'category-temp' : '';
+                const categoryId = categoryInfo.id ? `data-cat-id="${categoryInfo.id}"` : '';
+                categoryHeader.innerHTML = `<span class="category-label ${categoryClass}" ${categoryId}>${categoryInfo.name}</span>`;
+                taskInfoContainer.appendChild(categoryHeader);
+            }
+            
             const taskNameDiv = document.createElement("div");
             taskNameDiv.className = "task-name";
-            taskNameDiv.innerHTML = `${task.name} ${descriptionIcon} ${categoryBadge}`;
+            taskNameDiv.innerHTML = `${task.name} ${descriptionIcon}`;
             taskInfoContainer.appendChild(taskNameDiv);
         
             // Mostrar hora y duración si existen
@@ -758,16 +769,17 @@ function _openQuickMissionModal() {
 
             container.appendChild(taskCard);
         
-            const badgeEl = taskCard.querySelector('.category-badge');
-            if (badgeEl && badgeEl.dataset.catId) {
+            // Manejar filtro de categoría con las nuevas etiquetas
+            const categoryLabel = taskCard.querySelector('.category-label');
+            if (categoryLabel && categoryLabel.dataset.catId) {
                 // Añadir clase si está activamente filtrado
-                if (_currentCategoryFilter === badgeEl.dataset.catId) {
-                    badgeEl.classList.add('category-active-filter');
+                if (_currentCategoryFilter === categoryLabel.dataset.catId) {
+                    categoryLabel.classList.add('category-active-filter');
                 }
                 
-                badgeEl.addEventListener('click', (e) => {
+                categoryLabel.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const clickedCatId = badgeEl.dataset.catId;
+                    const clickedCatId = categoryLabel.dataset.catId;
                     
                     // Toggle: si ya está filtrado por esta categoría, quitar filtro
                     if (_currentCategoryFilter === clickedCatId) {

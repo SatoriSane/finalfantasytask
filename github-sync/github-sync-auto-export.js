@@ -143,7 +143,7 @@
         } else if (changesCount > 0) {
             // Solo cambios locales
             syncIcon.textContent = '📤';
-            syncText.textContent = `${changesCount} sin exportar`;
+            syncText.textContent = `${changesCount}`;
             syncButton.title = `${changesCount} cambios pendientes de exportar`;
             syncButton.style.borderColor = '#f59e0b';
             syncButton.style.background = 'rgba(245, 158, 11, 0.1)';

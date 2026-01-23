@@ -8,22 +8,22 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.5rem 0.75rem;
-    background: transparent;
-    border: 1px solid rgba(var(--ff-border-rgb, var(--ff-accent-rgb)), 0.15);
+    background: var(--ff-bg-medium);
+    border: 1px solid var(--ff-border);
     border-radius: var(--border-radius-sm, 8px);
-    color: var(--ff-text-dark);
+    color: var(--ff-text-light);
     font-size: 0.85rem;
-    font-weight: 400;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
     user-select: none;
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .sync-btn:hover {
-    background: rgba(var(--ff-accent-rgb), 0.05);
-    border-color: rgba(var(--ff-accent-rgb), 0.3);
-    opacity: 1;
+    background: var(--ff-bg-light);
+    border-color: var(--ff-accent);
+    opacity: 0.9;
 }
 
 .sync-btn .sync-icon {
@@ -39,33 +39,33 @@
 
 /* Estados */
 .sync-btn.connected {
-    border-color: rgba(var(--positive-color), 0.25);
-    opacity: 0.8;
+    border-color: var(--ff-border);
+    opacity: 0.7;
 }
 
 .sync-btn.connected .sync-icon {
-    color: var(--positive-color);
+    color: var(--ff-accent);
 }
 
 .sync-btn.connected:hover {
-    background: rgba(var(--positive-color), 0.08);
-    border-color: rgba(var(--positive-color), 0.4);
+    background: var(--ff-bg-light);
+    border-color: var(--ff-accent);
     opacity: 1;
 }
 
 .sync-btn.disconnected {
-    border-color: rgba(var(--ff-text-dark), 0.1);
-    opacity: 0.5;
+    border-color: var(--ff-border);
+    opacity: 0.4;
 }
 
 .sync-btn.disconnected .sync-icon {
-    color: var(--ff-text-dark);
+    color: var(--ff-text-light);
 }
 
 .sync-btn.disconnected:hover {
-    background: rgba(var(--ff-text-dark), 0.03);
-    border-color: rgba(var(--ff-text-dark), 0.2);
-    opacity: 0.8;
+    background: var(--ff-bg-light);
+    border-color: var(--ff-border);
+    opacity: 0.7;
 }
 
 .sync-btn.syncing {
@@ -73,7 +73,8 @@
 }
 
 .sync-btn.uploading {
-    border-color: rgba(var(--ff-accent-rgb), 0.5);
+    border-color: var(--ff-accent);
+    opacity: 1;
     animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -82,7 +83,8 @@
 }
 
 .sync-btn.downloading {
-    border-color: rgba(var(--ff-accent-rgb), 0.5);
+    border-color: var(--ff-accent);
+    opacity: 1;
     animation: pulse 1.5s ease-in-out infinite;
 }
 

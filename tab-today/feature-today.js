@@ -550,13 +550,6 @@ function _openQuickMissionModal() {
             progressBar.style.width = `${progressPercentage}%`;
             taskCard.appendChild(progressBar);
         
-            if (maxReps > 1) {
-                const badge = document.createElement("div");
-                badge.className = "repetition-badge";
-                badge.textContent = `${currentReps}/${maxReps}`;
-                taskCard.appendChild(badge);
-            }
-        
             let descriptionIcon = '';
             let categoryInfo = null;
             if (task.missionId) {
@@ -603,40 +596,47 @@ function _openQuickMissionModal() {
             const taskInfoContainer = document.createElement("div");
             taskInfoContainer.className = "task-info-container";
             
-            // Header de propósito (nuevo)
-            if (categoryInfo) {
-                const categoryHeader = document.createElement("div");
-                categoryHeader.className = "task-category-header";
-                const categoryClass = categoryInfo.type === 'unknown' ? 'category-unknown' : 
-                                     categoryInfo.type === 'temp' ? 'category-temp' : '';
-                const categoryId = categoryInfo.id ? `data-cat-id="${categoryInfo.id}"` : '';
-                categoryHeader.innerHTML = `<span class="category-label ${categoryClass}" ${categoryId}>${categoryInfo.name}</span>`;
-                taskInfoContainer.appendChild(categoryHeader);
-            }
-            
             const taskNameDiv = document.createElement("div");
             taskNameDiv.className = "task-name";
-            taskNameDiv.innerHTML = `${task.name} ${descriptionIcon}`;
+            
+            // Agregar repetition badge inline si hay múltiples repeticiones
+            let repetitionBadgeHTML = '';
+            if (maxReps > 1) {
+                repetitionBadgeHTML = `<span class="repetition-badge-inline">${currentReps}/${maxReps}</span> `;
+            }
+            
+            taskNameDiv.innerHTML = `${repetitionBadgeHTML}${task.name} ${descriptionIcon}`;
             taskInfoContainer.appendChild(taskNameDiv);
         
-            // Mostrar hora y duración si existen
-            if (task.scheduleTime || task.scheduleDuration) {
-                const scheduleInfoDiv = document.createElement("div");
-                scheduleInfoDiv.className = "task-schedule-info";
+            // Crear línea de metadata (categoría, hora, duración)
+            const hasScheduleInfo = task.scheduleTime || task.scheduleDuration;
+            if (categoryInfo || hasScheduleInfo) {
+                const metadataDiv = document.createElement("div");
+                metadataDiv.className = "task-metadata";
                 
-                let scheduleInfoHTML = '';
+                let metadataHTML = '';
+                
+                // Agregar categoría
+                if (categoryInfo) {
+                    const categoryClass = categoryInfo.type === 'unknown' ? 'category-unknown' : 
+                                         categoryInfo.type === 'temp' ? 'category-temp' : '';
+                    const categoryId = categoryInfo.id ? `data-cat-id="${categoryInfo.id}"` : '';
+                    metadataHTML += `<span class="category-badge-inline ${categoryClass}" ${categoryId}>${categoryInfo.name}</span>`;
+                }
+                
+                // Agregar hora y duración
                 if (task.scheduleTime && task.scheduleTime.time) {
-                    scheduleInfoHTML += `<span class="schedule-time">⏰ ${task.scheduleTime.time}</span>`;
+                    metadataHTML += `<span class="schedule-time">⏰ ${task.scheduleTime.time}</span>`;
                 }
                 if (task.scheduleDuration && task.scheduleDuration.value) {
                     const durationText = task.scheduleDuration.unit === 'hours' 
                         ? `${task.scheduleDuration.value}h`
                         : `${task.scheduleDuration.value}min`;
-                    scheduleInfoHTML += `<span class="schedule-duration">⏱️ ${durationText}</span>`;
+                    metadataHTML += `<span class="schedule-duration">⏱️ ${durationText}</span>`;
                 }
                 
-                scheduleInfoDiv.innerHTML = scheduleInfoHTML;
-                taskInfoContainer.appendChild(scheduleInfoDiv);
+                metadataDiv.innerHTML = metadataHTML;
+                taskInfoContainer.appendChild(metadataDiv);
             }
             
             taskCard.appendChild(taskInfoContainer);

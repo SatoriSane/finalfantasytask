@@ -1,0 +1,161 @@
+/* themes.css - Sistema de temas para FFTask */
+
+/* ========================================
+   TEMA POR DEFECTO: CYBERPUNK AZUL
+   Ya definido en base.css - este es el tema por defecto
+   ======================================== */
+
+/* ========================================
+   TEMA: PURPLE DREAM
+   ======================================== */
+[data-theme="purple"] {
+    --ff-primary-dark: #1A0F2E;
+    --ff-primary-dark-rgb: 26, 15, 46;
+    
+    --ff-secondary-light: #E9D5FF;
+    --ff-secondary-light-rgb: 233, 213, 255;
+
+    --ff-bg-dark: #1A0F2E;
+    --ff-bg-medium: #2D1B4E;
+    --ff-bg-light: #3D2A5F;
+    --ff-bg-light-rgb: 61, 42, 95;
+    
+    --ff-accent: #B794F6;
+    --ff-accent-rgb: 183, 148, 246;
+    --ff-primary-color: #B794F6;
+
+    --ff-text-light: #F3E8FF;
+    --ff-text-dark: #C4B5D9;
+    
+    --positive-color: #A78BFA;
+    --negative-color: #F472B6;
+    --ff-success-color: #A78BFA;
+    --positive-gradient: linear-gradient(90deg, #A78BFA, #B794F6);
+
+    --ff-border: #4C3A6B;
+    --ff-cyan: #B794F6;
+}
+
+/* ========================================
+   TEMA: EMERALD NIGHT
+   ======================================== */
+[data-theme="emerald"] {
+    --ff-primary-dark: #0A1F1A;
+    --ff-primary-dark-rgb: 10, 31, 26;
+    
+    --ff-secondary-light: #D1FAE5;
+    --ff-secondary-light-rgb: 209, 250, 229;
+
+    --ff-bg-dark: #0A1F1A;
+    --ff-bg-medium: #0F2F27;
+    --ff-bg-light: #1A4037;
+    --ff-bg-light-rgb: 26, 64, 55;
+    
+    --ff-accent: #10B981;
+    --ff-accent-rgb: 16, 185, 129;
+    --ff-primary-color: #10B981;
+
+    --ff-text-light: #ECFDF5;
+    --ff-text-dark: #86EFAC;
+    
+    --positive-color: #34D399;
+    --negative-color: #F87171;
+    --ff-success-color: #34D399;
+    --positive-gradient: linear-gradient(90deg, #34D399, #10B981);
+
+    --ff-border: #2A5A4B;
+    --ff-cyan: #10B981;
+}
+
+/* ========================================
+   TEMA: SUNSET ORANGE
+   ======================================== */
+[data-theme="sunset"] {
+    --ff-primary-dark: #1A1410;
+    --ff-primary-dark-rgb: 26, 20, 16;
+    
+    --ff-secondary-light: #FED7AA;
+    --ff-secondary-light-rgb: 254, 215, 170;
+
+    --ff-bg-dark: #1A1410;
+    --ff-bg-medium: #2D2318;
+    --ff-bg-light: #3F3020;
+    --ff-bg-light-rgb: 63, 48, 32;
+    
+    --ff-accent: #F59E0B;
+    --ff-accent-rgb: 245, 158, 11;
+    --ff-primary-color: #F59E0B;
+
+    --ff-text-light: #FEF3C7;
+    --ff-text-dark: #FCD34D;
+    
+    --positive-color: #FBBF24;
+    --negative-color: #EF4444;
+    --ff-success-color: #FBBF24;
+    --positive-gradient: linear-gradient(90deg, #FBBF24, #F59E0B);
+
+    --ff-border: #6B5A3B;
+    --ff-cyan: #F59E0B;
+}
+
+/* ========================================
+   TEMA: ROSE GOLD
+   ======================================== */
+[data-theme="rose"] {
+    --ff-primary-dark: #1F0A1A;
+    --ff-primary-dark-rgb: 31, 10, 26;
+    
+    --ff-secondary-light: #FCE7F3;
+    --ff-secondary-light-rgb: 252, 231, 243;
+
+    --ff-bg-dark: #1F0A1A;
+    --ff-bg-medium: #331828;
+    --ff-bg-light: #4A2438;
+    --ff-bg-light-rgb: 74, 36, 56;
+    
+    --ff-accent: #F472B6;
+    --ff-accent-rgb: 244, 114, 182;
+    --ff-primary-color: #F472B6;
+
+    --ff-text-light: #FDF2F8;
+    --ff-text-dark: #F9A8D4;
+    
+    --positive-color: #EC4899;
+    --negative-color: #DC2626;
+    --ff-success-color: #EC4899;
+    --positive-gradient: linear-gradient(90deg, #EC4899, #F472B6);
+
+    --ff-border: #6B3A5A;
+    --ff-cyan: #F472B6;
+}
+
+/* ========================================
+   TEMA: OCEAN BLUE (Variante azul más suave)
+   ======================================== */
+[data-theme="ocean"] {
+    --ff-primary-dark: #0C1B2E;
+    --ff-primary-dark-rgb: 12, 27, 46;
+    
+    --ff-secondary-light: #DBEAFE;
+    --ff-secondary-light-rgb: 219, 234, 254;
+
+    --ff-bg-dark: #0C1B2E;
+    --ff-bg-medium: #1E293B;
+    --ff-bg-light: #334155;
+    --ff-bg-light-rgb: 51, 65, 85;
+    
+    --ff-accent: #3B82F6;
+    --ff-accent-rgb: 59, 130, 246;
+    --ff-primary-color: #3B82F6;
+
+    --ff-text-light: #EFF6FF;
+    --ff-text-dark: #93C5FD;
+    
+    --positive-color: #60A5FA;
+    --negative-color: #F87171;
+    --ff-success-color: #60A5FA;
+    --positive-gradient: linear-gradient(90deg, #60A5FA, #3B82F6);
+
+    --ff-border: #475569;
+    --ff-cyan: #3B82F6;
+}

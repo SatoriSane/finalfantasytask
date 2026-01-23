@@ -21,3 +21,5 @@
 @import "focus-mode/focus-mode.css";
 @import "focus-mode/focus-scheduled.css";
 @import "pwa/pwa.css";
+@import "global/css/themes.css";
+@import "global/css/theme-selector.css";

@@ -1,0 +1,95 @@
+/* theme-selector.css - Estilos para el selector de temas */
+
+.theme-selector-container {
+    margin: 1.5rem 0 1rem 0;
+    padding: 1rem;
+    background: rgba(var(--ff-bg-light-rgb), 0.3);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--ff-border);
+}
+
+.theme-selector-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ff-text-light);
+    margin-bottom: 0.75rem;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    text-shadow: none;
+    border: none;
+    padding: 0;
+}
+
+.theme-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.theme-btn {
+    background: var(--ff-bg-medium);
+    border: 2px solid var(--ff-border);
+    border-radius: var(--border-radius-sm);
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.theme-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--ff-accent);
+    box-shadow: 0 4px 12px rgba(var(--ff-accent-rgb), 0.2);
+}
+
+.theme-btn.active {
+    border-color: var(--ff-accent);
+    background: rgba(var(--ff-accent-rgb), 0.1);
+    box-shadow: 0 0 0 2px rgba(var(--ff-accent-rgb), 0.3);
+}
+
+.theme-btn.active .theme-preview {
+    box-shadow: 0 0 8px rgba(var(--ff-accent-rgb), 0.5);
+}
+
+.theme-preview {
+    width: 100%;
+    height: 40px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.theme-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ff-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive: 2 columnas en móviles */
+@media (max-width: 480px) {
+    .theme-selector-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+    
+    .theme-preview {
+        height: 35px;
+    }
+    
+    .theme-name {
+        font-size: 0.7rem;
+    }
+}
+
+/* Ajuste para tablets */
+@media (min-width: 481px) and (max-width: 768px) {
+    .theme-selector-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

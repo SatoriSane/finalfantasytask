@@ -15,6 +15,10 @@
     <script src="focus-mode/focus-scheduled.js"></script>
     <script src="focus-mode/focus-render.js"></script>
     <script src="focus-mode/focus-alarm.js"></script>
+    
+    <!-- Theme Manager (cargar temprano para aplicar tema antes del render) -->
+    <script src="global/js/theme-manager.js"></script>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0A1128">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -196,6 +200,38 @@
                     <span id="pointsSpent" class="stats-value">0</span>
                 </div>
             </div>
+            
+            <!-- Selector de temas -->
+            <div class="theme-selector-container">
+                <h3 class="theme-selector-title">🎨 Tema de la aplicación</h3>
+                <div class="theme-selector-grid">
+                    <button class="theme-btn" data-theme="default" title="Cyberpunk Azul">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #00E4FF 0%, #0A1128 100%);"></div>
+                        <span class="theme-name">Cyberpunk</span>
+                    </button>
+                    <button class="theme-btn" data-theme="purple" title="Purple Dream">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #B794F6 0%, #1A0F2E 100%);"></div>
+                        <span class="theme-name">Purple</span>
+                    </button>
+                    <button class="theme-btn" data-theme="emerald" title="Emerald Night">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #10B981 0%, #0A1F1A 100%);"></div>
+                        <span class="theme-name">Emerald</span>
+                    </button>
+                    <button class="theme-btn" data-theme="sunset" title="Sunset Orange">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #F59E0B 0%, #1A1410 100%);"></div>
+                        <span class="theme-name">Sunset</span>
+                    </button>
+                    <button class="theme-btn" data-theme="rose" title="Rose Gold">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #F472B6 0%, #1F0A1A 100%);"></div>
+                        <span class="theme-name">Rose</span>
+                    </button>
+                    <button class="theme-btn" data-theme="ocean" title="Ocean Blue">
+                        <div class="theme-preview" style="background: linear-gradient(135deg, #3B82F6 0%, #0C1B2E 100%);"></div>
+                        <span class="theme-name">Ocean</span>
+                    </button>
+                </div>
+            </div>
+            
             <button id="openResetOptionsBtn" class="icon-btn settings-icon" aria-label="Opciones de reinicio" title="Opciones de reinicio">⚙️</button>
         </div>
     </div>

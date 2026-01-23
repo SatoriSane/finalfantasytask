@@ -147,7 +147,7 @@
 }
 
 .quick-mission-btn.confirm-btn:hover {
-    background: #72faff;
+    background: var(--ff-accent-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }

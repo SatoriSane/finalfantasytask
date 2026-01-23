@@ -19,12 +19,14 @@
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    color: white;
+    background: rgba(var(--ff-accent-rgb), 0.15);
+    border: 2px solid rgba(var(--ff-accent-rgb), 0.3);
+    color: var(--ff-accent);
     font-size: 1.8rem;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 2px 8px rgba(var(--ff-accent-rgb), 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -34,7 +36,9 @@
 
 .focus-fab:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    background: rgba(var(--ff-accent-rgb), 0.25);
+    border-color: rgba(var(--ff-accent-rgb), 0.5);
+    box-shadow: 0 4px 16px rgba(var(--ff-accent-rgb), 0.3);
 }
 
 .focus-fab:active {
@@ -178,7 +182,7 @@ body.focus-mode-active .focus-fab {
     top: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(180deg, var(--ff-bg-dark) 0%, rgba(10, 17, 40, 0.95) 100%);
+    background: linear-gradient(180deg, var(--ff-bg-dark) 0%, rgba(var(--ff-primary-dark-rgb), 0.95) 100%);
     padding: 0.9rem;
     padding-top: 1.3rem;
     text-align: center;
@@ -214,7 +218,7 @@ body.focus-mode-active .focus-fab {
     top: 1.2rem;
     right: 1.5rem;
     background: transparent;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--ff-text-dark);
     font-size: 1.5rem;
     width: 40px;
     height: 40px;
@@ -229,9 +233,9 @@ body.focus-mode-active .focus-fab {
 }
 
 .focus-close-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
-    color: rgba(255, 255, 255, 1);
+    background: rgba(var(--ff-accent-rgb), 0.2);
+    border-color: rgba(var(--ff-accent-rgb), 0.4);
+    color: var(--ff-text-light);
 }
 
 /* Sección Central - Título de la Misión */
@@ -413,7 +417,7 @@ body.focus-mode-active .focus-fab {
     right: 0;
     padding: 1rem;
     text-align: center;
-    background: linear-gradient(0deg, var(--ff-bg-dark) 0%, rgba(10, 17, 40, 0.9) 100%);
+    background: linear-gradient(0deg, var(--ff-bg-dark) 0%, rgba(var(--ff-primary-dark-rgb), 0.9) 100%);
     border-top: 1px solid rgba(var(--ff-accent-rgb), 0.1);
     z-index: 100001;
     backdrop-filter: blur(10px);
@@ -443,7 +447,7 @@ body.focus-mode-active .focus-fab {
     z-index: 100001;
     animation: fadeInUp 0.6s ease-out 0.7s both;
     pointer-events: none;
-    background: linear-gradient(0deg, var(--ff-bg-dark) 0%, rgba(10, 17, 40, 0.95) 50%, transparent 100%);
+    background: linear-gradient(0deg, var(--ff-bg-dark) 0%, rgba(var(--ff-primary-dark-rgb), 0.95) 50%, transparent 100%);
 }
 
 .focus-action-btn {
@@ -741,13 +745,13 @@ body.focus-mode-active .focus-fab {
 
 /* Botón de salir */
 .focus-exit-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--ff-accent) 0%, var(--ff-primary-color) 100%);
 }
 
 .focus-exit-btn:hover {
     box-shadow: 
-        0 12px 32px rgba(102, 126, 234, 0.4),
-        0 0 0 4px rgba(102, 126, 234, 0.15);
+        0 12px 32px rgba(var(--ff-accent-rgb), 0.4),
+        0 0 0 4px rgba(var(--ff-accent-rgb), 0.15);
 }
 
 /* ========================================
@@ -791,10 +795,10 @@ body.focus-mode-active .focus-fab {
 }
 
 /* Colores de confetti */
-.confetti-green { background: #58E478; }
-.confetti-purple { background: #667eea; }
-.confetti-pink { background: #764ba2; }
-.confetti-light { background: #f093fb; }
+.confetti-green { background: var(--positive-color); }
+.confetti-purple { background: var(--ff-accent); }
+.confetti-pink { background: var(--ff-primary-color); }
+.confetti-light { background: var(--ff-accent-hover); }
 
 /* ========================================
    TIMER BONUS - Minimalista y Discreto

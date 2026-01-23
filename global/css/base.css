@@ -43,6 +43,15 @@
     --ff-green: var(--positive-color);
     --ff-orange: #FF9500;
     --ff-red: var(--negative-color);
+    
+    /* Colores adicionales para coherencia de temas */
+    --ff-danger: #FF5A5F;
+    --ff-danger-hover: #FF8589;
+    --ff-warning: #FFB800;
+    --ff-warning-bg: rgba(255, 184, 0, 0.15);
+    --ff-accent-hover: #72FAFF;
+    --ff-white: #FFFFFF;
+    --ff-black: #000000;
 }
 
 /* 🔄 Resets y Estilos Generales */

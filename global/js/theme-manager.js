@@ -74,7 +74,9 @@
                         'emerald': 'Emerald Night',
                         'sunset': 'Sunset Orange',
                         'rose': 'Rose Gold',
-                        'ocean': 'Ocean Blue'
+                        'ocean': 'Ocean Blue',
+                        'dark-mono': 'Dark Monochrome',
+                        'light-mono': 'Light Monochrome'
                     };
                     App.events.emit('showToast', `🎨 Tema cambiado a ${themeNames[selectedTheme]}`);
                 }

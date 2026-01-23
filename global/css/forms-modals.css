@@ -301,8 +301,8 @@ input[type="number"] {
 }
 
 .reset-options-container .reset-option-btn.primary:hover {
-    background-color: #ff8589;
-    border-color: #ff8589;
+    background-color: var(--ff-danger-hover);
+    border-color: var(--ff-danger-hover);
     transform: translateY(-3px);
     box-shadow: var(--shadow-md);
 }
@@ -1117,8 +1117,8 @@ input[type="number"] {
 
 #editMissionModal #deleteMissionBtn:hover,
 #editShopItemModal #deleteShopItemBtn:hover {
-    background-color: #ff8589;
-    border-color: #ff8589;
+    background-color: var(--ff-danger-hover);
+    border-color: var(--ff-danger-hover);
 }
 
 /* --- Estilos para el nuevo layout del Modal de Edición de Misión --- */
@@ -1510,7 +1510,7 @@ input[type="number"] {
 }
 
 .success-goal {
-    background: linear-gradient(45deg, var(--positive-color), #2ecc71);
+    background: linear-gradient(45deg, var(--positive-color), var(--ff-success-color));
 }
 
 .success-goal .stat-label,

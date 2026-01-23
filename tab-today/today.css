@@ -273,7 +273,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #52c8ff1c;
+    background-color: rgba(var(--ff-accent-rgb), 0.11);
 }
 
 .floating-add-btn:hover {
@@ -375,8 +375,8 @@
         header.navbar #pointsValue { font-size: 1.4rem; }
         header.navbar .points-icon svg { width: 1.8rem; height: 1.8rem; }
     }
-    color: var(--ff-danger, #d33);
-    border: 2px solid var(--ff-danger, #d33);
+    color: var(--ff-danger);
+    border: 2px solid var(--ff-danger);
     padding: 0.5em 0.9em;
     border-radius: 6px;
     cursor: pointer;
@@ -384,8 +384,8 @@
 }
 
 .delete-temp-task-btn.danger:hover {
-    color: #b22;
-    border-color: #b22;
+    color: var(--ff-danger-hover);
+    border-color: var(--ff-danger-hover);
 }
 
 .modal-actions {
@@ -436,7 +436,7 @@
 
 .category-label.category-temp {
     background: linear-gradient(135deg, rgba(255, 184, 0, 0.25), rgba(255, 184, 0, 0.15));
-    color: #FFB800;
+    color: var(--ff-warning);
     border-color: rgba(255, 184, 0, 0.3);
 }
 
@@ -463,7 +463,7 @@
     border-radius: 10px;
     border: 1px solid rgba(0,0,0,0.08);
     background: rgba(0,0,0,0.03);
-    color: var(--ff-text-dark, #333);
+    color: var(--ff-text-dark);
     margin-left: 0.5rem;
     vertical-align: middle;
     cursor: pointer;
@@ -559,5 +559,5 @@
 
 .schedule-duration {
     background: rgba(255, 184, 0, 0.15) !important;
-    color: #FFB800 !important;
+    color: var(--ff-warning) !important;
 }

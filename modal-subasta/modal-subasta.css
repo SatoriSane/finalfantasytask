@@ -318,13 +318,13 @@
 .auction-message.bid { 
     border-left-color: var(--auction-green); 
     background: rgba(46, 213, 115, 0.12);
-    color: #b8f5d1;
+    color: var(--text-primary);
 }
 
 .auction-message.system { 
     border-left-color: var(--auction-blue); 
     background: rgba(55, 66, 250, 0.12);
-    color: #c2ccff;
+    color: var(--text-primary);
 }
 
 .auction-message.victory { 
@@ -338,14 +338,14 @@
     border-left-color: var(--auction-orange); 
     background: rgba(255, 99, 72, 0.12);
     font-style: italic;
-    color: #ffb8a8;
+    color: var(--text-primary);
 }
 
 .auction-message.participant-entry { 
     border-left-color: var(--auction-purple); 
     background: rgba(165, 94, 234, 0.12);
     font-style: italic;
-    color: #d8b3f0;
+    color: var(--text-primary);
     animation: participantPulse 1.5s ease-in-out, smoothSlideIn 0.5s ease-out;
 }
 
@@ -357,7 +357,7 @@
     text-transform: uppercase;
     box-shadow: 0 0 12px rgba(255, 71, 87, 0.3);
     border: 1px solid rgba(255, 71, 87, 0.4);
-    color: #ffb8c2;
+    color: var(--text-primary);
     animation: extremeGlow 1.8s ease-in-out infinite, smoothSlideIn 0.5s ease-out;
 }
 
@@ -451,7 +451,7 @@
 /* Botón de velocidad x20 durante la subasta - Estética extrema */
 .start-btn.speed-extreme {
     background: linear-gradient(135deg, rgba(255, 50, 50, 0.3), rgba(255, 100, 100, 0.25));
-    color: #ff5555;
+    color: var(--negative-color);
     border: 1px solid rgba(255, 50, 50, 0.7);
     box-shadow: 0 0 16px rgba(255, 50, 50, 0.3);
     position: relative;
@@ -488,7 +488,7 @@
 
 .take-btn {
     background: linear-gradient(135deg, var(--auction-gold), var(--auction-gold-light));
-    color: #1a1a1a;
+    color: var(--ff-black);
     box-shadow: 0 6px 15px rgba(255, 204, 2, 0.4);
     font-weight: 800;
 }
@@ -576,7 +576,7 @@
 .speech-bubble {
     position: absolute;
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.95), rgba(255, 204, 2, 0.9));
-    color: #1a1a1a;
+    color: var(--ff-black);
     padding: 0.4rem 0.8rem;
     border-radius: 12px;
     font-size: 0.7rem;

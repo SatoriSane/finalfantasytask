@@ -9,20 +9,21 @@
     gap: 0.4rem;
     padding: 0.5rem 0.75rem;
     background: transparent;
-    border: 1px solid rgba(var(--ff-accent-rgb), 0.2);
+    border: 1px solid rgba(var(--ff-border-rgb, var(--ff-accent-rgb)), 0.15);
     border-radius: var(--border-radius-sm, 8px);
-    color: var(--ff-text-light, #e0e6ed);
+    color: var(--ff-text-dark);
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 400;
     cursor: pointer;
     transition: all 0.3s ease;
     user-select: none;
+    opacity: 0.6;
 }
 
 .sync-btn:hover {
-    background: rgba(var(--ff-accent-rgb), 0.1);
-    border-color: rgba(var(--ff-accent-rgb), 0.4);
-    transform: translateY(-1px);
+    background: rgba(var(--ff-accent-rgb), 0.05);
+    border-color: rgba(var(--ff-accent-rgb), 0.3);
+    opacity: 1;
 }
 
 .sync-btn .sync-icon {
@@ -38,29 +39,33 @@
 
 /* Estados */
 .sync-btn.connected {
-    border-color: rgba(74, 222, 128, 0.3);
+    border-color: rgba(var(--positive-color), 0.25);
+    opacity: 0.8;
 }
 
 .sync-btn.connected .sync-icon {
-    color: #4ade80;
+    color: var(--positive-color);
 }
 
 .sync-btn.connected:hover {
-    background: rgba(74, 222, 128, 0.1);
-    border-color: rgba(74, 222, 128, 0.5);
+    background: rgba(var(--positive-color), 0.08);
+    border-color: rgba(var(--positive-color), 0.4);
+    opacity: 1;
 }
 
 .sync-btn.disconnected {
-    border-color: rgba(148, 163, 184, 0.2);
+    border-color: rgba(var(--ff-text-dark), 0.1);
+    opacity: 0.5;
 }
 
 .sync-btn.disconnected .sync-icon {
-    color: #94a3b8;
+    color: var(--ff-text-dark);
 }
 
 .sync-btn.disconnected:hover {
-    background: rgba(148, 163, 184, 0.05);
-    border-color: rgba(148, 163, 184, 0.3);
+    background: rgba(var(--ff-text-dark), 0.03);
+    border-color: rgba(var(--ff-text-dark), 0.2);
+    opacity: 0.8;
 }
 
 .sync-btn.syncing {
@@ -77,21 +82,21 @@
 }
 
 .sync-btn.downloading {
-    border-color: rgba(59, 130, 246, 0.5);
+    border-color: rgba(var(--ff-accent-rgb), 0.5);
     animation: pulse 1.5s ease-in-out infinite;
 }
 
 .sync-btn.downloading .sync-icon {
-    color: #3b82f6;
+    color: var(--ff-accent);
 }
 
 /* ========== ANIMACIONES ========== */
 @keyframes pulse {
     0%, 100% {
-        box-shadow: 0 0 0 0 rgba(148, 163, 184, 0.2);
+        box-shadow: 0 0 0 0 rgba(var(--ff-accent-rgb), 0.2);
     }
     50% {
-        box-shadow: 0 0 0 6px rgba(148, 163, 184, 0);
+        box-shadow: 0 0 0 6px rgba(var(--ff-accent-rgb), 0);
     }
 }
 
@@ -133,15 +138,15 @@
 }
 
 .sync-status-indicator.connected {
-    background: rgba(74, 222, 128, 0.1);
-    color: #4ade80;
-    border: 1px solid rgba(74, 222, 128, 0.3);
+    background: rgba(var(--positive-color), 0.1);
+    color: var(--positive-color);
+    border: 1px solid rgba(var(--positive-color), 0.3);
 }
 
 .sync-status-indicator.disconnected {
-    background: rgba(148, 163, 184, 0.1);
-    color: #94a3b8;
-    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(var(--ff-text-dark), 0.1);
+    color: var(--ff-text-dark);
+    border: 1px solid rgba(var(--ff-text-dark), 0.3);
 }
 
 /* ========== FORMULARIO (sin cambios) ========== */
@@ -279,12 +284,12 @@
 }
 
 .sync-option-btn.danger {
-    border-color: rgba(239, 68, 68, 0.3);
+    border-color: rgba(var(--negative-color), 0.3);
 }
 
 .sync-option-btn.danger:hover {
-    border-color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--negative-color);
+    background: rgba(var(--negative-color), 0.1);
 }
 
 .option-icon {
@@ -338,15 +343,15 @@
 }
 
 .sync-message.success {
-    background: rgba(74, 222, 128, 0.1);
-    border: 1px solid rgba(74, 222, 128, 0.3);
-    color: #4ade80;
+    background: rgba(var(--positive-color), 0.1);
+    border: 1px solid rgba(var(--positive-color), 0.3);
+    color: var(--positive-color);
 }
 
 .sync-message.error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #ef4444;
+    background: rgba(var(--negative-color), 0.1);
+    border: 1px solid rgba(var(--negative-color), 0.3);
+    color: var(--negative-color);
 }
 
 .message-icon {
@@ -384,21 +389,21 @@
 }
 
 .sync-action-btn.primary {
-    border-color: rgba(59, 130, 246, 0.5);
+    border-color: rgba(var(--ff-accent-rgb), 0.5);
 }
 
 .sync-action-btn.primary:hover:not(:disabled) {
-    border-color: #3b82f6;
-    background: rgba(59, 130, 246, 0.1);
+    border-color: var(--ff-accent);
+    background: rgba(var(--ff-accent-rgb), 0.1);
 }
 
 .sync-action-btn.success {
-    border-color: rgba(59, 130, 246, 0.5);
+    border-color: rgba(var(--positive-color), 0.5);
 }
 
 .sync-action-btn.success:hover:not(:disabled) {
-    border-color: #3b82f6;
-    background: rgba(59, 130, 246, 0.1);
+    border-color: var(--positive-color);
+    background: rgba(var(--positive-color), 0.1);
 }
 
 /* ========== MARCO ILUMINADO PARA CAMBIOS PENDIENTES ========== */
@@ -408,20 +413,20 @@
 
 /* Importar con cambios remotos - azul */
 .sync-action-btn.has-changes:not(.success) {
-    border-color: #3b82f6;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 
-                0 0 40px rgba(59, 130, 246, 0.2),
-                inset 0 0 20px rgba(59, 130, 246, 0.1);
-    background: rgba(59, 130, 246, 0.15);
+    border-color: var(--ff-accent);
+    box-shadow: 0 0 20px rgba(var(--ff-accent-rgb), 0.4), 
+                0 0 40px rgba(var(--ff-accent-rgb), 0.2),
+                inset 0 0 20px rgba(var(--ff-accent-rgb), 0.1);
+    background: rgba(var(--ff-accent-rgb), 0.15);
 }
 
 /* Exportar con cambios locales - verde */
 .sync-action-btn.success.has-changes {
-    border-color: #4ade80;
-    box-shadow: 0 0 20px rgba(74, 222, 128, 0.4), 
-                0 0 40px rgba(74, 222, 128, 0.2),
-                inset 0 0 20px rgba(74, 222, 128, 0.1);
-    background: rgba(74, 222, 128, 0.15);
+    border-color: var(--positive-color);
+    box-shadow: 0 0 20px rgba(var(--positive-color), 0.4), 
+                0 0 40px rgba(var(--positive-color), 0.2),
+                inset 0 0 20px rgba(var(--positive-color), 0.1);
+    background: rgba(var(--positive-color), 0.15);
 }
 
 /* Badge de cambios */
@@ -440,14 +445,14 @@
 /* Animación de pulso para el marco iluminado */
 @keyframes glowPulse {
     0%, 100% {
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 
-                    0 0 40px rgba(59, 130, 246, 0.2),
-                    inset 0 0 20px rgba(59, 130, 246, 0.1);
+        box-shadow: 0 0 20px rgba(var(--ff-accent-rgb), 0.4), 
+                    0 0 40px rgba(var(--ff-accent-rgb), 0.2),
+                    inset 0 0 20px rgba(var(--ff-accent-rgb), 0.1);
     }
     50% {
-        box-shadow: 0 0 30px rgba(59, 130, 246, 0.6), 
-                    0 0 60px rgba(59, 130, 246, 0.3),
-                    inset 0 0 30px rgba(59, 130, 246, 0.15);
+        box-shadow: 0 0 30px rgba(var(--ff-accent-rgb), 0.6), 
+                    0 0 60px rgba(var(--ff-accent-rgb), 0.3),
+                    inset 0 0 30px rgba(var(--ff-accent-rgb), 0.15);
     }
 }
 
@@ -458,14 +463,14 @@
 
 @keyframes glowPulseGreen {
     0%, 100% {
-        box-shadow: 0 0 20px rgba(74, 222, 128, 0.4), 
-                    0 0 40px rgba(74, 222, 128, 0.2),
-                    inset 0 0 20px rgba(74, 222, 128, 0.1);
+        box-shadow: 0 0 20px rgba(var(--positive-color), 0.4), 
+                    0 0 40px rgba(var(--positive-color), 0.2),
+                    inset 0 0 20px rgba(var(--positive-color), 0.1);
     }
     50% {
-        box-shadow: 0 0 30px rgba(74, 222, 128, 0.6), 
-                    0 0 60px rgba(74, 222, 128, 0.3),
-                    inset 0 0 30px rgba(74, 222, 128, 0.15);
+        box-shadow: 0 0 30px rgba(var(--positive-color), 0.6), 
+                    0 0 60px rgba(var(--positive-color), 0.3),
+                    inset 0 0 30px rgba(var(--positive-color), 0.15);
     }
 }
 

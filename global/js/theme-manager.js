@@ -76,7 +76,9 @@
                         'rose': 'Rose Gold',
                         'ocean': 'Ocean Blue',
                         'dark-mono': 'Dark Monochrome',
-                        'light-mono': 'Light Monochrome'
+                        'light-mono': 'Light Monochrome',
+                        'pastel-garden': 'Pastel Garden',
+                        'aurora': 'Aurora'
                     };
                     App.events.emit('showToast', `🎨 Tema cambiado a ${themeNames[selectedTheme]}`);
                 }

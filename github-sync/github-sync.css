@@ -199,11 +199,11 @@
     text-decoration: underline;
 }
 
-/* ========== INFO BOX (sin cambios) ========== */
+/* ========== INFO BOX ========== */
 .sync-info-box {
     padding: 1rem;
-    background: rgba(74, 158, 255, 0.1);
-    border: 1px solid rgba(74, 158, 255, 0.3);
+    background: rgba(var(--ff-accent-rgb), 0.1);
+    border: 1px solid rgba(var(--ff-accent-rgb), 0.3);
     border-radius: 8px;
     margin-bottom: 1rem;
 }
@@ -234,11 +234,11 @@
     line-height: 1.4;
 }
 
-/* ========== STATUS INFO (sin cambios) ========== */
+/* ========== STATUS INFO ========== */
 .sync-status-info {
     padding: 1rem;
-    background: rgba(74, 158, 255, 0.1);
-    border: 1px solid rgba(74, 158, 255, 0.3);
+    background: rgba(var(--ff-accent-rgb), 0.1);
+    border: 1px solid rgba(var(--ff-accent-rgb), 0.3);
     border-radius: 8px;
     margin-bottom: 1rem;
 }

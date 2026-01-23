@@ -277,3 +277,83 @@
     --ff-white: #FFFFFF;
     --ff-black: #000000;
 }
+
+/* ========================================
+   TEMA: PASTEL GARDEN (Verde y Rosa)
+   ======================================== */
+[data-theme="pastel-garden"] {
+    --ff-primary-dark: #1A2E26;
+    --ff-primary-dark-rgb: 26, 46, 38;
+    
+    --ff-secondary-light: #F5E6F0;
+    --ff-secondary-light-rgb: 245, 230, 240;
+
+    --ff-bg-dark: #1A2E26;
+    --ff-bg-medium: #2A3E36;
+    --ff-bg-light: #3A4E46;
+    --ff-bg-light-rgb: 58, 78, 70;
+    
+    --ff-accent: #A8D5BA;
+    --ff-accent-rgb: 168, 213, 186;
+    --ff-primary-color: #A8D5BA;
+
+    --ff-text-light: #E8F5E9;
+    --ff-text-dark: #C2D9C8;
+    
+    --positive-color: #F4A6C8;
+    --negative-color: #F8C4DC;
+    --ff-success-color: #F4A6C8;
+    --positive-gradient: linear-gradient(90deg, #A8D5BA, #F4A6C8);
+
+    --ff-border: #4F6A5A;
+    --ff-cyan: #F4A6C8;
+    
+    --ff-danger: #F8C4DC;
+    --ff-danger-hover: #FBD9E8;
+    --ff-warning: #F4D6A6;
+    --ff-warning-bg: rgba(244, 214, 166, 0.15);
+    --ff-accent-hover: #F4A6C8;
+    --ff-white: #FFFFFF;
+    --ff-black: #000000;
+}
+
+/* ========================================
+   TEMA: AURORA (Premium Design)
+   Inspirado en auroras boreales con paleta violeta-azul-verde
+   Diseñado para máxima estética y confort visual
+   ======================================== */
+[data-theme="aurora"] {
+    --ff-primary-dark: #0F0A1F;
+    --ff-primary-dark-rgb: 15, 10, 31;
+    
+    --ff-secondary-light: #E8E3FF;
+    --ff-secondary-light-rgb: 232, 227, 255;
+
+    --ff-bg-dark: #0F0A1F;
+    --ff-bg-medium: #1A1333;
+    --ff-bg-light: #251C47;
+    --ff-bg-light-rgb: 37, 28, 71;
+    
+    --ff-accent: #8B7FFF;
+    --ff-accent-rgb: 139, 127, 255;
+    --ff-primary-color: #8B7FFF;
+
+    --ff-text-light: #F0EDFF;
+    --ff-text-dark: #C4BFEB;
+    
+    --positive-color: #4FFFB0;
+    --negative-color: #FF6B9D;
+    --ff-success-color: #4FFFB0;
+    --positive-gradient: linear-gradient(135deg, #8B7FFF 0%, #4FFFB0 50%, #00D4FF 100%);
+
+    --ff-border: #3D2F6B;
+    --ff-cyan: #00D4FF;
+    
+    --ff-danger: #FF6B9D;
+    --ff-danger-hover: #FF8FB5;
+    --ff-warning: #FFB84D;
+    --ff-warning-bg: rgba(255, 184, 77, 0.15);
+    --ff-accent-hover: #A599FF;
+    --ff-white: #FFFFFF;
+    --ff-black: #000000;
+}

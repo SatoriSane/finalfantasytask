@@ -213,13 +213,43 @@
         completeTaskRepetition: function(taskId, options = {}) {
             const state = _get();
             const targetDate = options.targetDate || App.utils.getFormattedDate();
-            const tasks = state.tasksByDate[targetDate] || [];
-            const task = tasks.find(t => t.id === taskId);
+            
+            // Inicializar tasksByDate para esta fecha si no existe
+            if (!state.tasksByDate[targetDate]) {
+                state.tasksByDate[targetDate] = [];
+            }
+            
+            let task = state.tasksByDate[targetDate].find(t => t.id === taskId);
         
-            if (!task || task.completed) {
-                if (task && task.completed) {
-                    App.events.emit('shownotifyMessage', `"${task.name}" ya está completada.`);
+            // Si la tarea no existe en tasksByDate, puede ser una tarea generada dinámicamente
+            // desde scheduledMissions. Necesitamos crearla primero.
+            if (!task) {
+                const allTasksForDate = App.state.getTasksForDate(targetDate);
+                const dynamicTask = allTasksForDate.find(t => t.id === taskId);
+                
+                if (dynamicTask && dynamicTask.fromScheduled) {
+                    // Crear la tarea real en tasksByDate
+                    const newTask = {
+                        id: App.utils.genId("task"),
+                        name: dynamicTask.name,
+                        points: dynamicTask.points,
+                        missionId: dynamicTask.missionId,
+                        categoryId: dynamicTask.categoryId,
+                        completed: false,
+                        currentRepetitions: 0,
+                        dailyRepetitions: dynamicTask.dailyRepetitions || { max: 1 },
+                        scheduleTime: dynamicTask.scheduleTime || null,
+                        scheduleDuration: dynamicTask.scheduleDuration || null
+                    };
+                    state.tasksByDate[targetDate].push(newTask);
+                    task = newTask;
+                } else {
+                    return false;
                 }
+            }
+            
+            if (task.completed) {
+                App.events.emit('shownotifyMessage', `"${task.name}" ya está completada.`);
                 return false;
             }
         
